@@ -18,9 +18,25 @@
         this.x = x;
         this.y = y;
 
-        this._bufferedMove = null;
-
         this._move({});
+    }
+
+    Pill.prototype.clearA = function() {
+        // move b to a if it still exists
+                
+        if(this.b != 0x00) {
+            var bPos = this.getBPos();
+            this._move({
+                a: this.b,
+                x: bPos.x,
+                y: bPos.y,
+            });
+            this.b = 0x00;
+        }
+        // otherwise remove a
+        else {
+            this.a = 0x00;
+        }
     }
 
     /** Move the pill without validating destination. Update board */
@@ -45,82 +61,60 @@
     /** Move the pill left, if possible */
     Pill.prototype.left = function () {
         var dx = -1;
-        this._bufferedMove = {
-            test: "canTranslate",
-            args: [dx,0],
-            move: { x: this.x + dx }
-        };
-        /*
         if (this.canTranslate(dx, 0)) {
             this._move({ x: this.x + dx });
             return true;
         }
         return false;
-        */
     };
 
     /** Move the pill right, if possible */
     Pill.prototype.right = function () {
         var dx = 1;
-        this._bufferedMove = {
-            test: "canTranslate",
-            args: [dx,0],
-            move: { x: this.x + dx }
-        };
-        /*
-        var dx = 1;
         if (this.canTranslate(dx, 0)) {
             this._move({ x: this.x + dx });
             return true;
         }
         return false;
-        */
     };
 
     /** Move the pill Vertically (down only), if possible */
     Pill.prototype.down = function () {
-        var dy = 1;
-        this._bufferedMove = {
-            test: "canTranslate",
-            args: [0,dy],
-            move: { y: this.y + dy }
-        };
-        /*
         var dy = 1;
         if (this.canTranslate(0, dy)) {
             this._move({ y: this.y + dy });
             return true;
         }
         return false;
-        */
     };
 
     /** Move the pill as low as it will go */
     Pill.prototype.sink = function () {
-        // TODO
+        for( var dy = 1; this.canTranslate(0, dy) ; dy++);
+        this._move({y:this.y+dy-1});
     };
 
     /** Rotate the pill Clockwise */
     Pill.prototype.rotate = function (counterClockwise) {
-        this._bufferedMove = {
-            test: "canRotate",
-            args: [counterClockwise],
-            move: function() {
-                var destB = Board.rotate(this.b, counterClockwise);
-                var destA = Board.rotate(this.a, counterClockwise);
-                
-                // Only "a" will be "down" or "right"
-                var bForm = destB | Board.CODES.forms.mask;
-                if(bForm == Board.CODES.forms.values.up.code || bForm == Board.CODES.forms.values.right.code) {
-                    // switch a & b
-                    var t = destA;
-                    destA = destB;
-                    destB = t;
-                }
+        var destB = Board.rotate(this.b, counterClockwise);
+        var destA = Board.rotate(this.a, counterClockwise);
 
-                return {a:destA, b:destB};
-            }
-        };  
+        var bForm = destB & Board.CODES.forms.mask;
+
+        if(bForm == Board.CODES.forms.values.up.code || bForm == Board.CODES.forms.values.right.code) {
+            // switch a & b
+            var t = destA;
+            destA = destB;
+            destB = t;
+        }
+
+        var temp = this.getPosFromCode(destB);
+        if(!this.board.isEmptySpace(temp.x, temp.y)) {
+            return false;
+        }
+
+        // Only "a" will be "down" or "right"
+        this._move({a:destA, b:destB}); 
     };
 
     /** Rotate the pill Counter-Clockwise */
@@ -157,17 +151,6 @@
         return true;
     };
 
-    Pill.prototype.canRotate = function(counterClockwise) {
-        var destB = Board.rotate(this.b, counterClockwise);
-
-        var temp = this.getPosFromCode(destB);
-        if(!this.board.isEmptySpace(temp.x, temp.y)) {
-            return false;
-        }
-
-        return true;
-    };
-
     Pill.prototype.getBPos = function () {
         return this.getPosFromCode(this.b);
     };
@@ -189,17 +172,6 @@
     };
 
     Pill.prototype.tick = function (tick) {
-        if(this._bufferedMove !== null) {
-            if( this[this._bufferedMove.test].apply(this, this._bufferedMove.args) ) {
-                if(typeof(this._bufferedMove.move) === "function")
-                    this._move(this._bufferedMove.move.call(this));
-                else
-                    this._move(this._bufferedMove.move);
-            }
-
-            this._bufferedMove = null;
-        }
-
         if (tick % this.speed == 0) {
             if (!this.canTranslate(0, 1)) {
                 // look for grace period

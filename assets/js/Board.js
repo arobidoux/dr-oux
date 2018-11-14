@@ -68,8 +68,9 @@
 
         // update the _pills
         for(var i=0;i<this._pills.length;i++) {
-            if(this._pills[i].a != 0x00 && this._pills[i].x == x && this._pills[i].y == y)
-                this._pills[i].a = 0x00;
+            if(this._pills[i].a != 0x00 && this._pills[i].x == x && this._pills[i].y == y) {
+                this._pills[i].clearA();
+            }
             else if(this._pills[i].b != 0x00) {
                 var bPos = this._pills[i].getBPos();
                 if(bPos.x == x && bPos.y == y)
@@ -79,6 +80,7 @@
             if(this._pills[i].a == 0x00 && this._pills[i].b == 0x00) {
                 this._pills.splice(i--, 1);
             }
+            // update the removal of the form here
         }
 
         this._data[p] = Board.CODES.forms.values.exploding.code | (this._data[p] & Board.CODES.colors.mask);
@@ -112,16 +114,16 @@
         switch (r) {
             case Pill.TICK.STUCK:
                 // validate if we have broken anything
-                
-                if( pill.a != 0x00 && this._checkPillDestruction(pill.x, pill.y) ) {
-                    pill.a = 0x00;
-                }
 
                 if (pill.b != 0x00) {
                     var bPos = pill.getBPos();
                     if(this._checkPillDestruction(bPos.x, bPos.y)) {
                         pill.b = 0x00;
                     }
+                }
+
+                if( pill.a != 0x00 && this._checkPillDestruction(pill.x, pill.y) ) {
+                    pill.clearA();
                 }
 
                 if(pill.a == 0x00 && pill.b == 0x00) {
@@ -153,7 +155,7 @@
                     break;
                 case Pill.TICK.STUCK:
                     // make the pill move at every tick
-                    this._ownedPill.speed = 1;
+                    this._ownedPill.speed = .5*SPEED_FACTOR;
                     this._pills.push(this._ownedPill);
                     this._ownedPill = null;
                     break;

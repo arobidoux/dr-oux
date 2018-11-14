@@ -89,7 +89,15 @@
         this._mainPillBottle.tick(tick);
 
         // render
-        this._mainPillBottle.render(tick);
+        var virusCount = this._mainPillBottle.render(tick);
+
+        if(virusCount == 0) {
+            // render 1 last time to play the destroying animation
+            this.stop();
+            setTimeout(function(){
+                alert("Victory!");
+            });
+        }
     };
 
     global[ns] = DrMario;

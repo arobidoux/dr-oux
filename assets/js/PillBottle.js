@@ -77,6 +77,8 @@
 
         if (prevVirusCount != this._virusCount)
             this._status.innerText = "Virus Remaining: " + this._virusCount;
+        
+        return this._virusCount;
     };
 
     global[ns] = PillBottle;
