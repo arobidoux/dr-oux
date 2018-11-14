@@ -2,6 +2,7 @@
     const SPEED_FACTOR = 16;
     const ANIMATION_TICK_MULTIPLIER = .25;
     const SUITE_MIN_LENGTH = 3;
+    const BOARD_TICK_SPEED = 1 / ANIMATION_TICK_MULTIPLIER;
     /**
      * Represent a play board in memory
      * Handle piece movement, sprite rendering, etc
@@ -27,7 +28,6 @@
         else
             this._data = new Array(this._size).fill(0);
 
-        this._pills = [];
         this._ownedPill = null;
         this._generateNextOwnPillOn = 0;
     }
@@ -38,13 +38,13 @@
         FAST: 4,
     };
 
-    Board.prototype.registerInputs = function(input) {
-        inputs.register("RIGHT", this.action.bind(this,"right"), 1/ANIMATION_TICK_MULTIPLIER);
-        inputs.register("LEFT", this.action.bind(this,"left"), 1/ANIMATION_TICK_MULTIPLIER);
-        inputs.register("DOWN", this.action.bind(this,"down"), 1/ANIMATION_TICK_MULTIPLIER);
-        inputs.register("UP", this.action.bind(this,"sink"), 1/ANIMATION_TICK_MULTIPLIER);
-        inputs.register("ROTATE_CLOCKWISE", this.action.bind(this,"rotate"));
-        inputs.register("ROTATE_COUNTER_CLOCKWISE", this.action.bind(this,"rotateC"));
+    Board.prototype.registerInputs = function (input) {
+        inputs.register("RIGHT", this.action.bind(this, "right"), 1 / ANIMATION_TICK_MULTIPLIER);
+        inputs.register("LEFT", this.action.bind(this, "left"), 1 / ANIMATION_TICK_MULTIPLIER);
+        inputs.register("DOWN", this.action.bind(this, "down"), 1 / ANIMATION_TICK_MULTIPLIER);
+        inputs.register("UP", this.action.bind(this, "sink"), 1 / ANIMATION_TICK_MULTIPLIER);
+        inputs.register("ROTATE_CLOCKWISE", this.action.bind(this, "rotate"));
+        inputs.register("ROTATE_COUNTER_CLOCKWISE", this.action.bind(this, "rotateC"));
     };
 
     Board.prototype.destroyCell = function (x, y) {
@@ -53,34 +53,17 @@
 
         // update double pill
         var delta = 0;
-        switch(f) {
+        switch (f) {
             case Board.CODES.forms.values.up.code: delta = -1 * this._width; break;
             case Board.CODES.forms.values.down.code: delta = this._width; break;
             case Board.CODES.forms.values.left.code: delta = -1; break;
             case Board.CODES.forms.values.right.code: delta = 1; break;
         }
-        if(delta) {
-            var p2 = p+delta;
-            if(p2 > 0 && p2 < this._size) {
+        if (delta) {
+            var p2 = p + delta;
+            if (p2 > 0 && p2 < this._size) {
                 this._data[p2] = this._data[p2] & Board.CODES.colors.mask;
             }
-        }
-
-        // update the _pills
-        for(var i=0;i<this._pills.length;i++) {
-            if(this._pills[i].a != 0x00 && this._pills[i].x == x && this._pills[i].y == y) {
-                this._pills[i].clearA();
-            }
-            else if(this._pills[i].b != 0x00) {
-                var bPos = this._pills[i].getBPos();
-                if(bPos.x == x && bPos.y == y)
-                    this._pills[i].b = 0x00;
-            }
-
-            if(this._pills[i].a == 0x00 && this._pills[i].b == 0x00) {
-                this._pills.splice(i--, 1);
-            }
-            // update the removal of the form here
         }
 
         this._data[p] = Board.CODES.forms.values.exploding.code | (this._data[p] & Board.CODES.colors.mask);
@@ -109,35 +92,66 @@
         return destroyed;
     };
 
-    Board.prototype._tickPill = function (pill, tick) {
-        var r = pill.tick(tick);
-        switch (r) {
-            case Pill.TICK.STUCK:
-                // validate if we have broken anything
+    Board.prototype.tickBoard = function (tick) {
+        if (tick % BOARD_TICK_SPEED)
+            return true;
 
-                if (pill.b != 0x00) {
-                    var bPos = pill.getBPos();
-                    if(this._checkPillDestruction(bPos.x, bPos.y)) {
-                        pill.b = 0x00;
+        var changed = [];
+        // start 1 row to last (last row will not move anymore)
+        for (var i = this._size - this._width; i >= 0; i--) {
+            if(this._data[i]==0x00)
+                continue;
+
+            switch (this._data[i] & Board.CODES.forms.mask) {
+                // if the pill is left
+                case Board.CODES.forms.values.left.code:
+                    // check if it can move this one and the other half down
+                    var t = i + this._width;
+                    var t2 = t - 1;
+                    var i2 = i - 1;
+                    if (this._data[t] == 0x00 && this._data[t2] == 0x00) {
+                        this._data[t] = this._data[i];
+                        this._data[t2] = this._data[i2];
+                        this._data[i] = 0x00;
+                        this._data[i2] = 0x00;
+                        changed.push(i);
+                        changed.push(i2);
                     }
-                }
+                    break;
 
-                if( pill.a != 0x00 && this._checkPillDestruction(pill.x, pill.y) ) {
-                    pill.clearA();
-                }
+                // if the pill is up or alone
+                case Board.CODES.forms.values.up.code:
+                    // check if it can move down
+                    var t = i + this._width;
+                    if (this._data[t] == 0x00) {
+                        var p = i + this.width;
+                        this._data[t] = this._data[i];
+                        // TODO handle top alone pill?
+                        this._data[i] = this._data[p];
+                        this._data[p] = 0x00;
+                        changed.push(t);
+                        changed.push(i);
+                    }
+                    break;
 
-                if(pill.a == 0x00 && pill.b == 0x00) {
-                    return -1;
-                }
-
-            case Pill.TICK.MOVED:
-                // update board
-                break;
-            case Pill.TICK.SLEEP:
-                // nothing to do
-                break;
+                case Board.CODES.forms.values.single.code:
+                    // check if it can move down
+                    var t = i + this._width;
+                    if (this._data[t] == 0x00) {
+                        this._data[t] = this._data[i];
+                        this._data[i] = 0x00;
+                        changed.push(t);
+                    }
+                    break;
+            }
         }
-        return r;
+
+        for (var i = 0; i < changed.length; i++) {
+            var c = this.posToCoord(changed[i]);
+            this._checkPillDestruction(c.x, c.y);
+        }
+
+        return changed.length > 0;
     };
 
     Board.prototype.tick = function (tick) {
@@ -149,51 +163,20 @@
         }.bind(this));
 
         if (this._ownedPill) {
-            switch(this._tickPill(this._ownedPill, tick)) {
-                case -1:
-                    this._ownedPill = null;
-                    break;
-                case Pill.TICK.STUCK:
-                    // make the pill move at every tick
-                    this._ownedPill.speed = .5*SPEED_FACTOR;
-                    this._pills.push(this._ownedPill);
-                    this._ownedPill = null;
-                    break;
-                // no need to handle the rest
-                default:;
+            if (this._ownedPill.tick(tick) == Pill.TICK.STUCK) {
+                // check destructio
+                this._checkPillDestruction(this._ownedPill.x, this._ownedPill.y);
+                if (this._ownedPill.b) {
+                    var bPos = this._ownedPill.getBPos();
+                    this._checkPillDestruction(bPos.x, bPos.y);
+                }
+                this._ownedPill = null;
             }
         }
 
         // if no current main pill is in effect, tick the rest
         else {
-            var pillMoved = [];
-            do {
-                var change_made = false;
-                for (var i = 0; i < this._pills.length; i++) {
-                    if(pillMoved.indexOf(i) !== -1)
-                        continue;
-
-                    switch(this._tickPill(this._pills[i], tick)) {
-                        // do nothing in those cases
-                        case Pill.TICK.STUCK: break;
-                        
-                        // remove the pill, it is all destroyed
-                        case -1:
-                            this._pills.splice(i--,1); 
-                            // intentional no break;
-                        
-                        case Pill.TICK.SLEEP:
-                            // intentional no break;
-                        case Pill.TICK.MOVED:
-                            pillMoved.push(i);
-                            change_made = true;
-                            break;
-                    }
-                }
-            } while(change_made);
-            
-            // done updating the falling pills, throw the new one
-            if(pillMoved.length == 0) {
+            if (!this.tickBoard(tick)) {
                 if (this._generateNextOwnPillOn == 0) {
                     // queue next one
                     this._generateNextOwnPillOn = tick + this._effective_speed;
@@ -519,17 +502,17 @@
         }
     };
 
-    Board.rotate = function(code, counterClockwise) {
+    Board.rotate = function (code, counterClockwise) {
         var f = (code & Board.CODES.forms.mask) >> 2;
         f = f + (counterClockwise ? 1 : -1);
-        if(f <= 0)
+        if (f <= 0)
             f = 4;
-        else if(f > 4)
+        else if (f > 4)
             f = 1;
 
         f <<= 2;
 
-        return f | (code & (0xFF^Board.CODES.forms.mask));
+        return f | (code & (0xFF ^ Board.CODES.forms.mask));
     };
 
     var sprite = document.getElementById("sprite");
@@ -557,7 +540,7 @@
         }
 
         if (iy instanceof Array)
-            iy = iy[Math.floor(tick*ANIMATION_TICK_MULTIPLIER) % iy.length];
+            iy = iy[Math.floor(tick * ANIMATION_TICK_MULTIPLIER) % iy.length];
 
         context.drawImage(sprite, ix, iy, 8, 8, x, y, 8, 8);
     };
