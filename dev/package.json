@@ -1,0 +1,15 @@
+{
+  "name": "drmario",
+  "version": "1.0.0",
+  "description": "A Multiplayer web base port of Dr Mario",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node index.js"
+  },
+  "author": "Antoine Robidoux",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.16.4"
+  }
+}
