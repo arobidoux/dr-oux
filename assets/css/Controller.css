@@ -1,9 +1,9 @@
-.controller { border: 1px solid white; position:fixed; width: 280px; height:100px; bottom: 0; left: 40px }
+.controller { border: 1px solid white; position:fixed; width: 280px; height:100px; bottom: 0; left: 40px; background-color:gray; }
 .controller .controller-btn { position: absolute; border: 1px solid limegreen; }
 
-.controller .controller-arrow { width: 32px; height:32px; }
+.controller .controller-arrow { width: 32px; height:32px; background-color: black; }
 .controller .controller-button { width: 32px; height:32px; border-radius:16px; background-color:red; }
-.controller .controller-options { width: 32px; height:8px; border-radius:4px; background-color:black; color: white; transform: rotate(-45deg); top: 50px; }
+.controller .controller-options { width: 32px; height:10px; border-radius:4px; background-color:black; color: white; transform: rotate(-45deg); top: 50px; }
 
 .controller .controller-up, .controller .controller-down { left:50px }
 .controller .controller-up { top:15px; }
@@ -16,5 +16,8 @@
 .controller .controller-a { top:45px; left:200px }
 .controller .controller-b { top:45px; left:240px }
 
-.controller .controller-start { left: 120px; }
-.controller .controller-select { left: 160px; }
+.controller .controller-start { left: 160px; }
+.controller .controller-select { left: 120px; }
+
+.controller .controller-active { background-color: red;}
+.controller .controller-button.controller-active { background-color: blue;}

@@ -82,21 +82,41 @@
         }
     };
 
+    DrMario.prototype.defeat = function (tick) {
+        this.stop();
+        setTimeout(function(){
+            alert("Defeat :(");
+        });
+    };
+
+    DrMario.prototype.victory = function (tick) {
+        this.stop();
+        setTimeout(function(){
+            alert("Victory!");
+        });
+    };
+
     DrMario.prototype._tick = function (tick) {
         for(var i = 0; i<this._tickers.length; i++)
             this._tickers[i](tick);
 
-        this._mainPillBottle.tick(tick);
+        try {
+            this._mainPillBottle.tick(tick);
+        } catch(e) {
+            if(e.message == "Game Over") {
+                this.defeat();
+            }
+            else {
+                console.error(e);
+            }
+        }
 
         // render
         var virusCount = this._mainPillBottle.render(tick);
 
         if(virusCount == 0) {
             // render 1 last time to play the destroying animation
-            this.stop();
-            setTimeout(function(){
-                alert("Victory!");
-            });
+            this.victory();
         }
     };
 

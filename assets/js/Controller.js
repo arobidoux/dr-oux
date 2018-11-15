@@ -13,6 +13,8 @@
             {keyCode:27, label:"SELECT", className:"controller-options"},
         ]
 
+        var btns = {};
+
         for(var i=0; i<controls.length; i++) {
             var btn = document.createElement("button");
             btn.className = "controller-btn controller-"+controls[i].label.toLowerCase();
@@ -23,7 +25,30 @@
             btn.addEventListener("mousedown", inputs.press.bind(inputs, controls[i].keyCode));
             btn.addEventListener("mouseup", inputs.release.bind(inputs, controls[i].keyCode));
             root.appendChild(btn);
+
+            btns[controls[i].keyCode] = btn;
+            btn.setAttribute("org-class-name", btn.className);
         }
+
+        // monkey patch input press and release to add visual feedback
+        // TODO check for a clearner solution ;)
+        var orgPress = inputs.press;
+        var orgRelease = inputs.release;
+
+        inputs.press = function(keyCode){
+            if(typeof(btns[keyCode]) !== "undefined")
+                btns[keyCode].className = btns[keyCode].getAttribute("org-class-name") + " controller-active";
+
+                orgPress.apply(inputs,arguments);
+        };
+
+        inputs.release = function(keyCode){
+            if(typeof(btns[keyCode]) !== "undefined")
+                btns[keyCode].className = btns[keyCode].getAttribute("org-class-name");
+
+            orgRelease.apply(inputs,arguments);
+        };
+        
 
         parentElement.appendChild(root);
     }

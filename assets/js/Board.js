@@ -41,7 +41,7 @@
     Board.prototype.registerInputs = function (input) {
         inputs.register("RIGHT", this.action.bind(this, "right"), 1 / ANIMATION_TICK_MULTIPLIER);
         inputs.register("LEFT", this.action.bind(this, "left"), 1 / ANIMATION_TICK_MULTIPLIER);
-        inputs.register("DOWN", this.action.bind(this, "down"), 1 / ANIMATION_TICK_MULTIPLIER);
+        inputs.register("DOWN", this.action.bind(this, "down"), 1 / (2*ANIMATION_TICK_MULTIPLIER));
         inputs.register("UP", this.action.bind(this, "sink"), 1 / ANIMATION_TICK_MULTIPLIER);
         inputs.register("ROTATE_CLOCKWISE", this.action.bind(this, "rotate"));
         inputs.register("ROTATE_COUNTER_CLOCKWISE", this.action.bind(this, "rotateC"));
@@ -146,10 +146,12 @@
             }
         }
 
+        /*
         for (var i = 0; i < changed.length; i++) {
             var c = this.posToCoord(changed[i]);
             this._checkPillDestruction(c.x, c.y);
         }
+        */
 
         return changed.length > 0;
     };
@@ -164,22 +166,33 @@
 
         if (this._ownedPill) {
             if (this._ownedPill.tick(tick) == Pill.TICK.STUCK) {
-                // check destructio
-                this._checkPillDestruction(this._ownedPill.x, this._ownedPill.y);
-                if (this._ownedPill.b) {
-                    var bPos = this._ownedPill.getBPos();
-                    this._checkPillDestruction(bPos.x, bPos.y);
-                }
+                
+                this._ownedPill._move({
+                    a:(this._ownedPill.a & (0xff^Board.CODES.states.mask)) | Board.CODES.states.values.dead.code,
+                    b:(this._ownedPill.b & (0xff^Board.CODES.states.mask)) | Board.CODES.states.values.dead.code,
+                });
+
                 this._ownedPill = null;
             }
         }
 
         // if no current main pill is in effect, tick the rest
         else {
-            if (!this.tickBoard(tick)) {
+            if (this._generateNextOwnPillOn > 0 || !this.tickBoard(tick)) {
                 if (this._generateNextOwnPillOn == 0) {
-                    // queue next one
-                    this._generateNextOwnPillOn = tick + this._effective_speed;
+                    // see if we need to destroy some pills!
+                    var destroyed = false;
+                    for (var i = this._size-1; i >=0; i--) {
+                        var c = this.posToCoord(i);
+                        if(this._checkPillDestruction(c.x, c.y)) {
+                            destroyed = true;
+                        }
+                    }
+
+                    if(!destroyed) {
+                        // queue next one
+                        this._generateNextOwnPillOn = tick + this._effective_speed;
+                    }
                 }
                 else if (this._generateNextOwnPillOn >= tick) {
                     this._generateNextOwnPillOn = 0;
@@ -198,6 +211,8 @@
             return;
 
         this._ownedPill[method]();
+        if(method == "sink")
+            this._ownedPill = null;
     };
 
     Board.prototype.insertNextPill = function () {
@@ -210,8 +225,8 @@
                 this._effective_speed,
                 //Board.CODES.colors.values.red.code | Board.CODES.forms.values.right.code,
                 //Board.CODES.colors.values.blue.code | Board.CODES.forms.values.left.code,
-                Math.floor(Math.random() * Board.CODES.colors.mask) + 1 | Board.CODES.forms.values.right.code,
-                Math.floor(Math.random() * Board.CODES.colors.mask) + 1 | Board.CODES.forms.values.left.code,
+                Math.floor(Math.random() * Board.CODES.colors.mask) + 1 | Board.CODES.forms.values.right.code | Board.CODES.states.values.alive.code,
+                Math.floor(Math.random() * Board.CODES.colors.mask) + 1 | Board.CODES.forms.values.left.code | Board.CODES.states.values.alive.code,
                 x, y
             );
         }
@@ -335,7 +350,7 @@
 
         var density = virusCount / (this._height * this._width);
         if (density > .75) {
-            throw new error("Invalid difficulty, to high");
+            throw new Error("Invalid difficulty, to high");
         }
 
         // calculate how much space to leave empty at the top of the bottle
@@ -499,6 +514,21 @@
                     dy: 40
                 }
             }
+        },
+        states: {
+            mask: 0b00100000,
+            values: {
+                alive : {
+                    code: 0b00100000,
+                    oy: 0,
+                    ox: 0
+                },
+                dead : {
+                    code: 0b00000000,
+                    oy: 1,
+                    ox: 1
+                }
+            }
         }
     };
 
@@ -535,6 +565,15 @@
         for (var k in Board.CODES.forms.values) {
             if (f == Board.CODES.forms.values[k].code) {
                 iy = Board.CODES.forms.values[k].dy;
+                break;
+            }
+        }
+
+        var s = code & Board.CODES.states.mask;
+        for (var k in Board.CODES.states.values) {
+            if (s == Board.CODES.states.values[k].code) {
+                x += Board.CODES.states.values[k].ox;
+                y += Board.CODES.states.values[k].oy;
                 break;
             }
         }

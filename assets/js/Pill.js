@@ -91,7 +91,11 @@
     /** Move the pill as low as it will go */
     Pill.prototype.sink = function () {
         for( var dy = 1; this.canTranslate(0, dy) ; dy++);
-        this._move({y:this.y+dy-1});
+        this._move({
+            a: (this.a & (0xff^Board.CODES.states.mask)) | Board.CODES.states.values.dead.code,
+            b: (this.b & (0xff^Board.CODES.states.mask)) | Board.CODES.states.values.dead.code,
+            y:this.y+dy-1
+        });
     };
 
     /** Rotate the pill Clockwise */
