@@ -29,7 +29,10 @@
             this._data = new Array(this._size).fill(0);
 
         this._ownedPill = null;
+        this._nextPill = null;
         this._generateNextOwnPillOn = 0;
+
+        this.queueNextPill();
     }
 
     Board.SPEED = {
@@ -215,20 +218,24 @@
             this._ownedPill = null;
     };
 
+    Board.prototype.queueNextPill = function() {
+        this._nextPill = new Pill(
+            this,
+            this._effective_speed,
+            Math.floor(Math.random() * Board.CODES.colors.mask) + 1 | Board.CODES.forms.values.right.code | Board.CODES.states.values.alive.code,
+            Math.floor(Math.random() * Board.CODES.colors.mask) + 1 | Board.CODES.forms.values.left.code | Board.CODES.states.values.alive.code
+        );
+    };
+
     Board.prototype.insertNextPill = function () {
         var x = (this._width / 2) - 1;
         var y = 0;
 
         if (this.isEmptySpace(x, y) && this.isEmptySpace(x + 1, y)) {
-            this._ownedPill = new Pill(
-                this,
-                this._effective_speed,
-                //Board.CODES.colors.values.red.code | Board.CODES.forms.values.right.code,
-                //Board.CODES.colors.values.blue.code | Board.CODES.forms.values.left.code,
-                Math.floor(Math.random() * Board.CODES.colors.mask) + 1 | Board.CODES.forms.values.right.code | Board.CODES.states.values.alive.code,
-                Math.floor(Math.random() * Board.CODES.colors.mask) + 1 | Board.CODES.forms.values.left.code | Board.CODES.states.values.alive.code,
-                x, y
-            );
+            this._ownedPill = this._nextPill;
+            this._ownedPill.x = x;
+            this._ownedPill.y = y;
+            this.queueNextPill();
         }
         else {
             throw new Error("Game Over");
@@ -520,13 +527,13 @@
             values: {
                 alive : {
                     code: 0b00100000,
-                    oy: 0,
-                    ox: 0
+                    oy: 1,
+                    ox: 1
                 },
                 dead : {
                     code: 0b00000000,
-                    oy: 1,
-                    ox: 1
+                    oy: 1.1,
+                    ox: 1.1
                 }
             }
         }

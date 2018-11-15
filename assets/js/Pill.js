@@ -18,25 +18,13 @@
         this.x = x;
         this.y = y;
 
-        this._move({});
-    }
+        this._almost = false;
+        // TODO make sure the pill starts at the top row (Maybe even one before)
+        // TODO check to do the animation of the pill being thrown at the begening of the game
+        //      might take care of TODO above
 
-    Pill.prototype.clearA = function() {
-        // move b to a if it still exists
-                
-        if(this.b != 0x00) {
-            var bPos = this.getBPos();
-            this._move({
-                a: this.b,
-                x: bPos.x,
-                y: bPos.y,
-            });
-            this.b = 0x00;
-        }
-        // otherwise remove a
-        else {
-            this.a = 0x00;
-        }
+        if(typeof(x) !== "undefined")
+            this._move({});
     }
 
     /** Move the pill without validating destination. Update board */
@@ -171,17 +159,25 @@
 
     Pill.TICK = {
         STUCK: 0,
-        MOVED: 1,
-        SLEEP: 2
+        ALMOST:1,
+        MOVED: 2,
+        SLEEP: 3
     };
 
     Pill.prototype.tick = function (tick) {
         if (tick % this.speed == 0) {
             if (!this.canTranslate(0, 1)) {
                 // look for grace period
-                return Pill.TICK.STUCK;
+                if(!this._almost) {
+                    this._almost = true;
+                    return Pill.TICK.ALMOST;
+                }
+                else {
+                    return Pill.TICK.STUCK;
+                }
             }
 
+            this._almost = false;
             this._move({ y: this.y + 1 });
             return Pill.TICK.MOVED;
         }

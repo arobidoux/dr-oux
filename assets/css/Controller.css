@@ -19,5 +19,4 @@
 .controller .controller-start { left: 160px; }
 .controller .controller-select { left: 120px; }
 
-.controller .controller-active { background-color: red;}
-.controller .controller-button.controller-active { background-color: blue;}
+.controller .controller-active { background-color: yellow;}
