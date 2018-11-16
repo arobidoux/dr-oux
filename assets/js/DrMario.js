@@ -11,6 +11,7 @@
                 .append(this._root = document.createElement("div"));
         }
         this._fps = 16;
+        //this._fps = 8;
 
         this._fps_interval = 1000 / this._fps;
         this._fps_then = 0;
@@ -77,7 +78,6 @@
         if (elapsed > this._fps_interval) {
             this._fps_then = now - (elapsed % this._fps_interval);
 
-            // Put your drawing code here
             this._tick(++this._tick_counter);
         }
     };
@@ -97,6 +97,7 @@
     };
 
     DrMario.prototype._tick = function (tick) {
+        window.debug.set("Tick",tick);
         for(var i = 0; i<this._tickers.length; i++)
             this._tickers[i](tick);
 

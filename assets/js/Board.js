@@ -181,29 +181,27 @@
 
         // if no current main pill is in effect, tick the rest
         else {
-            if (this._generateNextOwnPillOn > 0 || !this.tickBoard(tick)) {
-                if (this._generateNextOwnPillOn == 0) {
-                    // see if we need to destroy some pills!
-                    var destroyed = false;
-                    for (var i = this._size-1; i >=0; i--) {
-                        var c = this.posToCoord(i);
-                        if(this._checkPillDestruction(c.x, c.y)) {
-                            destroyed = true;
-                        }
-                    }
-
-                    if(!destroyed) {
-                        // queue next one
-                        this._generateNextOwnPillOn = tick + this._effective_speed;
-                    }
-                }
-                else if (this._generateNextOwnPillOn >= tick) {
+            if(this._generateNextOwnPillOn > 0) {
+                if (this._generateNextOwnPillOn <= tick) {
                     this._generateNextOwnPillOn = 0;
                     // insert a new pill
                     this.insertNextPill();
                 }
-                else {
-                    // wait, patiently
+            }
+            else if (!this.tickBoard(tick)) {
+                // see if we need to destroy some pills!
+                var destroyed = false;
+                for (var i = this._size-1; i >=0; i--) {
+                    var c = this.posToCoord(i);
+                    if(this._checkPillDestruction(c.x, c.y)) {
+                        destroyed = true;
+                    }
+                }
+
+                if(!destroyed) {
+                    // queue next one
+                    this._generateNextOwnPillOn = tick + this._effective_speed;
+                    //window.debug.set("Generate Next Pill",this._generateNextOwnPillOn);
                 }
             }
         }
@@ -233,8 +231,7 @@
 
         if (this.isEmptySpace(x, y) && this.isEmptySpace(x + 1, y)) {
             this._ownedPill = this._nextPill;
-            this._ownedPill.x = x;
-            this._ownedPill.y = y;
+            this._ownedPill._move({x: x,y:y});
             this.queueNextPill();
         }
         else {
@@ -470,7 +467,21 @@
         return btoa(this._lvl_history.join(""));
     };
 
+    /**
+     * Return a compressed version of the changes made to the board
+     */
+    Board.prototype.getNewFrame = function() {
+        if(this._previousFrame) {
+            var compressed = new Int8Array();
+            
+        }
+    };
 
+
+    /**
+     * Describe the possible values for each cell of the game area
+     * the most siginificant bit should not be used.
+     */
     Board.CODES = {
         colors: {
             mask: 0b00000011,

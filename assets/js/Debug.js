@@ -21,7 +21,7 @@
         var line = ".".repeat(16);
 
         for(var k in this._values)
-            s += (k+line).slice(16) + ":" + this._values[k] + "\n";
+            s += (k+line).substr(0,16) + ":" + this._values[k] + "\n";
         
         return s;
     };

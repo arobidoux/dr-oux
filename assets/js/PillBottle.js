@@ -9,7 +9,12 @@
         RIGHT: SQUARE_LENGTH * 5,
         BOTTOM: SQUARE_LENGTH * 1
     };
-    
+
+    var NEXT_PILL_X = SQUARE_LENGTH*(BOTTLE_WIDTH+2);
+    var NEXT_PILL_Y = SQUARE_LENGTH*2;
+
+    var NEW_PILL_X = (BOTTLE_WIDTH+PADDING.LEFT+PADDING.RIGHT / 2) - 1;
+    var NEW_PILL_Y = PADDING.TOP;
 
     var sprite2Form = {
         bottle2: [98,187,178-98,363-187]
@@ -101,14 +106,67 @@
                 this._virusCount++;
         }.bind(this));
 
+
+
+
         // move this to not use private attribute
-        Board.renderSprite(this._context, this._board._nextPill.a, SQUARE_LENGTH*(BOTTLE_WIDTH+2) ,SQUARE_LENGTH*2 , tick);
-        Board.renderSprite(this._context, this._board._nextPill.b, SQUARE_LENGTH*(BOTTLE_WIDTH+3) ,SQUARE_LENGTH*2, tick);
+        this._context.save();
+        if(this._board._generateNextOwnPillOn == 0) {
+            this._context.translate(NEXT_PILL_X, NEXT_PILL_Y);
+            /*
+            window.debug.set("NEXT PILL X", NEXT_PILL_X);
+            window.debug.set("NEXT PILL Y", NEXT_PILL_Y);
+            */
+        }
+        else {
+            var time = this._board._effective_speed - (this._board._generateNextOwnPillOn-tick);
+            var h = this.getNextPillX(NEXT_PILL_X, NEW_PILL_X, time, this._board._effective_speed);
+            var v = this.getNextPillY(NEXT_PILL_Y, NEW_PILL_Y, time, this._board._effective_speed);
+
+            /*
+            window.debug.set("NEXT PILL X", h);
+            window.debug.set("NEXT PILL Y", v);
+            window.debug.set("NEW PILL X", NEW_PILL_X);
+            window.debug.set("NEW PILL Y", NEW_PILL_Y);
+            window.debug.set("NEXT PILL TIME", time);
+            window.debug.set("NEXT PILL SPEED", this._board._effective_speed);
+            */
+            
+            this._context.translate(h, v);
+            this._context.rotate(-time);
+        }
+        
+        Board.renderSprite(this._context, this._board._nextPill.a, 0 ,0 , tick);
+        Board.renderSprite(this._context, this._board._nextPill.b, SQUARE_LENGTH , 0, tick);
+
+        this._context.restore();
 
         if (prevVirusCount != this._virusCount)
             this._status.innerText = "Virus" + (this._virusCount>1?"es":"") + " Remaining: " + this._virusCount;
         
         return this._virusCount;
+    };
+
+    PillBottle.prototype.getNextPillX = function(sx, dx, time, delay) {
+        if(time > delay-2)
+            return dx;
+
+        return sx - ((sx-dx) / (delay-2) * time);
+    };
+
+    PillBottle.prototype.getNextPillY = function(sy, dy, time, delay) {
+        // todo put in a formula instead of those hardcoded values?
+        switch(time) {
+            case 0: return 12;
+            case 1: return 8;
+            case 2: return 8;
+            case 3: return 8;
+            case 4: return 8;
+            case 5: return 8;
+            case 6: return 24;
+            case 7: return 40;
+            default: return dy;
+        }
     };
 
     global[ns] = PillBottle;
