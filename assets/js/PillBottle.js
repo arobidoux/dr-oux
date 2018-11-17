@@ -99,15 +99,16 @@
         var prevVirusCount = this._virusCount;
 
         this._virusCount = 0;
+        this._explosionCount = 0;
         this._board.each(function (code, x, y) {
             Board.renderSprite(this._context, code, x * SQUARE_LENGTH + PADDING.LEFT, y * SQUARE_LENGTH + PADDING.TOP, tick);
 
             if (Board.isVirus(code))
                 this._virusCount++;
+            if (Board.isExploding(code) || Board.isExploded(code))
+                this._explosionCount++;
+
         }.bind(this));
-
-
-
 
         // move this to not use private attribute
         this._context.save();
@@ -144,7 +145,7 @@
         if (prevVirusCount != this._virusCount)
             this._status.innerText = "Virus" + (this._virusCount>1?"es":"") + " Remaining: " + this._virusCount;
         
-        return this._virusCount;
+        return this._virusCount + this._explosionCount;
     };
 
     PillBottle.prototype.getNextPillX = function(sx, dx, time, delay) {

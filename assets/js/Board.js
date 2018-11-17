@@ -44,7 +44,7 @@
     Board.prototype.registerInputs = function (input) {
         inputs.register("RIGHT", this.action.bind(this, "right"), 1 / ANIMATION_TICK_MULTIPLIER);
         inputs.register("LEFT", this.action.bind(this, "left"), 1 / ANIMATION_TICK_MULTIPLIER);
-        inputs.register("DOWN", this.action.bind(this, "down"), 1 / (2*ANIMATION_TICK_MULTIPLIER));
+        inputs.register("DOWN", this.action.bind(this, "down"), 1 / (2 * ANIMATION_TICK_MULTIPLIER));
         inputs.register("UP", this.action.bind(this, "sink"), 1 / ANIMATION_TICK_MULTIPLIER);
         inputs.register("ROTATE_CLOCKWISE", this.action.bind(this, "rotate"));
         inputs.register("ROTATE_COUNTER_CLOCKWISE", this.action.bind(this, "rotateC"));
@@ -102,7 +102,7 @@
         var changed = [];
         // start 1 row to last (last row will not move anymore)
         for (var i = this._size - this._width; i >= 0; i--) {
-            if(this._data[i]==0x00)
+            if (this._data[i] == 0x00)
                 continue;
 
             switch (this._data[i] & Board.CODES.forms.mask) {
@@ -127,7 +127,7 @@
                     // check if it can move down
                     var t = i + this._width;
                     if (this._data[t] == 0x00) {
-                        var p = i + this.width;
+                        var p = i - this._width;
                         this._data[t] = this._data[i];
                         // TODO handle top alone pill?
                         this._data[i] = this._data[p];
@@ -163,16 +163,19 @@
         // cleanup completed explosion
         this.each_raw(function (code, i) {
             if ((code & Board.CODES.forms.mask) == Board.CODES.forms.values.exploding.code) {
+                this._data[i] = (code & (0xFF ^ Board.CODES.forms.mask)) | Board.CODES.forms.values.exploded.code
+            } 
+            else if ((code & Board.CODES.forms.mask) == Board.CODES.forms.values.exploded.code) {
                 this._data[i] = 0x00;
             }
         }.bind(this));
 
         if (this._ownedPill) {
             if (this._ownedPill.tick(tick) == Pill.TICK.STUCK) {
-                
+
                 this._ownedPill._move({
-                    a:(this._ownedPill.a & (0xff^Board.CODES.states.mask)) | Board.CODES.states.values.dead.code,
-                    b:(this._ownedPill.b & (0xff^Board.CODES.states.mask)) | Board.CODES.states.values.dead.code,
+                    a: (this._ownedPill.a & (0xff ^ Board.CODES.states.mask)) | Board.CODES.states.values.dead.code,
+                    b: (this._ownedPill.b & (0xff ^ Board.CODES.states.mask)) | Board.CODES.states.values.dead.code,
                 });
 
                 this._ownedPill = null;
@@ -181,7 +184,7 @@
 
         // if no current main pill is in effect, tick the rest
         else {
-            if(this._generateNextOwnPillOn > 0) {
+            if (this._generateNextOwnPillOn > 0) {
                 if (this._generateNextOwnPillOn <= tick) {
                     this._generateNextOwnPillOn = 0;
                     // insert a new pill
@@ -191,14 +194,14 @@
             else if (!this.tickBoard(tick)) {
                 // see if we need to destroy some pills!
                 var destroyed = false;
-                for (var i = this._size-1; i >=0; i--) {
+                for (var i = this._size - 1; i >= 0; i--) {
                     var c = this.posToCoord(i);
-                    if(this._checkPillDestruction(c.x, c.y)) {
+                    if (this._checkPillDestruction(c.x, c.y)) {
                         destroyed = true;
                     }
                 }
 
-                if(!destroyed) {
+                if (!destroyed) {
                     // queue next one
                     this._generateNextOwnPillOn = tick + this._effective_speed;
                     //window.debug.set("Generate Next Pill",this._generateNextOwnPillOn);
@@ -208,15 +211,17 @@
     };
 
     Board.prototype.action = function (method) {
-        if (!this._ownedPill)
+        if (!this._ownedPill) {
+            console.warn("Action " + method + " occured but no _ownPill yet");
             return;
+        }
 
         this._ownedPill[method]();
-        if(method == "sink")
+        if (method == "sink")
             this._ownedPill = null;
     };
 
-    Board.prototype.queueNextPill = function() {
+    Board.prototype.queueNextPill = function () {
         this._nextPill = new Pill(
             this,
             this._effective_speed,
@@ -231,7 +236,7 @@
 
         if (this.isEmptySpace(x, y) && this.isEmptySpace(x + 1, y)) {
             this._ownedPill = this._nextPill;
-            this._ownedPill._move({x: x,y:y});
+            this._ownedPill._move({ x: x, y: y });
             this.queueNextPill();
         }
         else {
@@ -294,6 +299,14 @@
 
     Board.isVirus = function (code) {
         return (code & Board.CODES.forms.mask) == Board.CODES.forms.values.virus.code;
+    };
+
+    Board.isExploding = function (code) {
+        return (code & Board.CODES.forms.mask) == Board.CODES.forms.values.exploding.code;
+    };
+
+    Board.isExploded = function (code) {
+        return (code & Board.CODES.forms.mask) == Board.CODES.forms.values.exploded.code;
     };
 
     Board.isUp = function (code) {
@@ -470,10 +483,10 @@
     /**
      * Return a compressed version of the changes made to the board
      */
-    Board.prototype.getNewFrame = function() {
-        if(this._previousFrame) {
+    Board.prototype.getNewFrame = function () {
+        if (this._previousFrame) {
             var compressed = new Int8Array();
-            
+
         }
     };
 
@@ -530,18 +543,22 @@
                 exploding: {
                     code: 0b00011000,
                     dy: 40
+                },
+                exploded: {
+                    code: 0b00011100,
+                    dy: 64
                 }
             }
         },
         states: {
             mask: 0b00100000,
             values: {
-                alive : {
+                alive: {
                     code: 0b00100000,
                     oy: 1,
                     ox: 1
                 },
-                dead : {
+                dead: {
                     code: 0b00000000,
                     oy: 1.1,
                     ox: 1.1

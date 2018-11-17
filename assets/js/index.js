@@ -22,6 +22,6 @@ inputs.loadKeyMap({
     19: "PAUSE",
 });
 
-game.startSinglePlayer(5);
+game.startSinglePlayer(1);
 
 game.run();

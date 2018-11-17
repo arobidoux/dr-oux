@@ -88,25 +88,41 @@
 
     /** Rotate the pill Clockwise */
     Pill.prototype.rotate = function (counterClockwise) {
-        var destB = Board.rotate(this.b, counterClockwise);
-        var destA = Board.rotate(this.a, counterClockwise);
+        var move = {
+            a:Board.rotate(this.a, counterClockwise),
+            b:Board.rotate(this.b, counterClockwise)
+        };
 
-        var bForm = destB & Board.CODES.forms.mask;
+        var bForm = move.b & Board.CODES.forms.mask;
 
         if(bForm == Board.CODES.forms.values.up.code || bForm == Board.CODES.forms.values.right.code) {
             // switch a & b
-            var t = destA;
-            destA = destB;
-            destB = t;
+            var t = move.a;
+            move.a = move.b;
+            move.b = t;
         }
 
-        var temp = this.getPosFromCode(destB);
+        var temp = this.getPosFromCode(move.b);
         if(!this.board.isEmptySpace(temp.x, temp.y)) {
-            return false;
+            // if facing up, look of we can shift it left
+            var aForm = this.a & Board.CODES.forms.mask;
+            if(
+                (aForm == Board.CODES.forms.values.up.code) &&
+                this.board.isEmptySpace(this.x-1, this.y)
+            ) {
+                move.x = this.x-1; 
+            }
+            // if facing right and on the top row
+            else if(this.y == 0 && aForm == Board.CODES.forms.values.right.code) {
+                // allow it
+            }
+            else {   
+                return false;
+            }
         }
 
         // Only "a" will be "down" or "right"
-        this._move({a:destA, b:destB}); 
+        this._move(move); 
     };
 
     /** Rotate the pill Counter-Clockwise */
@@ -131,7 +147,7 @@
             if (this.x == bPos.x && this.y == bPos.y) {
                 // a is where b is going to be, no need to validate
             }
-            else if (!this.board.isEmptySpace(bPos.x, bPos.y))
+            else if (bPos.y >= 0 && !this.board.isEmptySpace(bPos.x, bPos.y))
                 return false;
         }
 
