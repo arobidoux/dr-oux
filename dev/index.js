@@ -1,6 +1,11 @@
 const path = require("path");
 const express = require("express");
 const app = express();
+var http = require("http").Server(app);
+var io = require("socket.io")(http);
+
+const Game = require("./lib/Game");
+
 const port = 8080;
 
 
@@ -16,4 +21,6 @@ app.get("/favicon.ico", (req, res) => {
 
 app.use("/assets",express.static(path.resolve("../assets")));
 
-app.listen(port, () => console.log(`DrMario listening on port ${port}!`));
+var game = new Game(io);
+
+http.listen(port, () => console.log(`DrMario listening on port ${port}!`));

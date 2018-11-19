@@ -12,8 +12,8 @@ import (
 var clientNumber int
 var upgrader websocket.Upgrader
 
-/*PiggyBackOn will start the websocket server and attach it to the desired path*/
-func PiggyBackOn(srv MyHTTPServer, path string) {
+/*PiggyBackWSOn will start the websocket server and attach it to the desired path*/
+func PiggyBackWSOn(srv MyHTTPServer, path string) {
 	upgrader = websocket.Upgrader{
 		ReadBufferSize:  1024,
 		WriteBufferSize: 1024,
@@ -38,8 +38,8 @@ func handle(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	go c.writeLoop()
-	go c.readLoop()
+	go c.goWriteLoop()
+	go c.goReadLoop()
 }
 
 /*client represent a connection from the websocket and regroup certain fonctions to handle it*/
@@ -72,7 +72,7 @@ func (c client) greet() error {
 	return c.conn.WriteMessage(websocket.TextMessage, []byte(fmt.Sprintf("Welcome client %v\n", c.id)))
 }
 
-func (c client) writeLoop() {
+func (c client) goWriteLoop() {
 	i := 0
 	for {
 		err := c.conn.WriteMessage(2, []byte(fmt.Sprintf("loop %v\n", i)))
@@ -86,7 +86,7 @@ func (c client) writeLoop() {
 	log.Println(c.logSalt(), "Exiting Write goroutine")
 }
 
-func (c client) readLoop() {
+func (c client) goReadLoop() {
 	for {
 		t, p, err := c.conn.ReadMessage()
 		if err != nil {

@@ -17,6 +17,9 @@
 
         this._effective_speed = (1 / this._speed) * SPEED_FACTOR;
         this._size = this._height * this._width;
+        this._previousFrame = null;
+        this._film = [];
+        this._filmWeight = 0;
 
         /** Full representation of the board on 1 string
          * Rows are represented from top to bottom, left to right
@@ -31,8 +34,13 @@
         this._ownedPill = null;
         this._nextPill = null;
         this._generateNextOwnPillOn = 0;
-
-        this.queueNextPill();
+        this._handicaps = [];
+        this._stats = {
+            virus: 0,
+            explosions: 0,
+            combos: 0,
+            gameOver: false
+        };
     }
 
     Board.SPEED = {
@@ -42,6 +50,8 @@
     };
 
     Board.prototype.registerInputs = function (input) {
+        this.queueNextPill();
+
         inputs.register("RIGHT", this.action.bind(this, "right"), 1 / ANIMATION_TICK_MULTIPLIER);
         inputs.register("LEFT", this.action.bind(this, "left"), 1 / ANIMATION_TICK_MULTIPLIER);
         inputs.register("DOWN", this.action.bind(this, "down"), 1 / (2 * ANIMATION_TICK_MULTIPLIER));
@@ -75,14 +85,14 @@
     Board.prototype._checkPillDestruction = function (x, y) {
         var l = this.getColorLength(x, y);
 
-        var destroyed = false;
+        var destroyed = 0;
 
         if (l.u + l.d >= SUITE_MIN_LENGTH) {
             for (var i = 0; i <= l.u; i++)
                 this.destroyCell(x, y - i);
             for (var i = 1; i <= l.d; i++)
                 this.destroyCell(x, y + i);
-            destroyed = true;
+            destroyed++;
         }
 
         if (l.l + l.r >= SUITE_MIN_LENGTH) {
@@ -90,7 +100,7 @@
                 this.destroyCell(x - i, y);
             for (var i = 1; i <= l.r; i++)
                 this.destroyCell(x + i, y);
-            destroyed = true;
+            destroyed++;
         }
         return destroyed;
     };
@@ -160,13 +170,24 @@
     };
 
     Board.prototype.tick = function (tick) {
+        // reset some stats
+        this._stats.combos = 0;
+        this._stats.explosions = 0;
+        this._stats.virus = 0;
+
         // cleanup completed explosion
         this.each_raw(function (code, i) {
-            if ((code & Board.CODES.forms.mask) == Board.CODES.forms.values.exploding.code) {
-                this._data[i] = (code & (0xFF ^ Board.CODES.forms.mask)) | Board.CODES.forms.values.exploded.code
-            } 
-            else if ((code & Board.CODES.forms.mask) == Board.CODES.forms.values.exploded.code) {
-                this._data[i] = 0x00;
+            switch(code & Board.CODES.forms.mask) {
+                case Board.CODES.forms.values.virus.code:
+                    this._stats.virus++;
+                    break;
+            
+                case Board.CODES.forms.values.exploding.code:
+                    this._data[i] = (code & (0xFF ^ Board.CODES.forms.mask)) | Board.CODES.forms.values.exploded.code;
+                    break;
+
+                case Board.CODES.forms.values.exploded.code:
+                    this._data[i] = 0x00;
             }
         }.bind(this));
 
@@ -188,26 +209,74 @@
                 if (this._generateNextOwnPillOn <= tick) {
                     this._generateNextOwnPillOn = 0;
                     // insert a new pill
-                    this.insertNextPill();
+                    if(!this.insertNextPill())
+                        this._stats.gameOver = true;
                 }
             }
             else if (!this.tickBoard(tick)) {
+                // reset virus count
+                this._stats.virus = 0;
+
                 // see if we need to destroy some pills!
-                var destroyed = false;
+                // gather stats about the current state of the game
                 for (var i = this._size - 1; i >= 0; i--) {
+                    // skip empty cell
+                    if(this._data[i] == 0x00)
+                        continue;
+
                     var c = this.posToCoord(i);
-                    if (this._checkPillDestruction(c.x, c.y)) {
-                        destroyed = true;
+                    var explosionCount = this._checkPillDestruction(c.x, c.y);
+                    this._stats.combos += explosionCount;
+                    this._stats.explosions += explosionCount;
+
+                    switch(this._data[i] & Board.CODES.forms.mask) {
+                        case Board.CODES.forms.values.virus.code:
+                            this._stats.virus++;
+                            break;
                     }
                 }
 
-                if (!destroyed) {
-                    // queue next one
-                    this._generateNextOwnPillOn = tick + this._effective_speed;
-                    //window.debug.set("Generate Next Pill",this._generateNextOwnPillOn);
+                if (!this._stats.explosions) {
+                    // look if we need to add the penalitity / handicap
+                    if(this._processExternalHandicap()) {   
+                        // queue next one
+                        this._generateNextOwnPillOn = tick + this._effective_speed;
+                        //window.debug.set("Generate Next Pill",this._generateNextOwnPillOn);
+                    }
                 }
             }
         }
+
+        return this._stats;
+    };
+
+    /**
+     * Queue pellet to be dropped on the board after the cuirrent pill touches the ground
+     */
+    Board.prototype.queueHandicap = function(...codes) {
+        for(var i=0;i<codes.length && this._handicaps.length < 4; i++) {
+            this._handicaps.push(codes[i] & Board.CODES.colors.mask);
+        }
+    };
+
+    Board.prototype._processExternalHandicap = function() {
+        var l=this._handicaps.length
+        if(l) {
+            var step = this._width/l;
+            for(var i=0; i<l; i++) {
+                var x = Math.floor(Math.random()*step) + i*step;
+                this._data[x] = this._handicaps[i];
+            }
+
+            // clear handicaps, they were processed
+            this._handicaps = [];
+
+            // handicap were processed, preventing next pill deployment
+            return false;
+        }
+
+        // done processing handicaps, allowing next pill to be dropped
+        return true;
     };
 
     Board.prototype.action = function (method) {
@@ -238,9 +307,10 @@
             this._ownedPill = this._nextPill;
             this._ownedPill._move({ x: x, y: y });
             this.queueNextPill();
+            return true;
         }
         else {
-            throw new Error("Game Over");
+            return false
         }
     };
 
@@ -295,34 +365,6 @@
 
     Board.prototype.getColorOf = function (x, y) {
         return this.isValidCoord(x, y) ? this._data[this.coordToPos(x, y)] & Board.CODES.colors.mask : null;
-    };
-
-    Board.isVirus = function (code) {
-        return (code & Board.CODES.forms.mask) == Board.CODES.forms.values.virus.code;
-    };
-
-    Board.isExploding = function (code) {
-        return (code & Board.CODES.forms.mask) == Board.CODES.forms.values.exploding.code;
-    };
-
-    Board.isExploded = function (code) {
-        return (code & Board.CODES.forms.mask) == Board.CODES.forms.values.exploded.code;
-    };
-
-    Board.isUp = function (code) {
-        return (code & Board.CODES.forms.mask) == Board.CODES.forms.values.up.code;
-    };
-
-    Board.isDown = function (code) {
-        return (code & Board.CODES.forms.mask) == Board.CODES.forms.values.down.code;
-    };
-
-    Board.isLeft = function (code) {
-        return (code & Board.CODES.forms.mask) == Board.CODES.forms.values.left.code;
-    };
-
-    Board.isRight = function (code) {
-        return (code & Board.CODES.forms.mask) == Board.CODES.forms.values.right.code;
     };
 
     /** return the position offset for the cell facing the code describe here */
@@ -482,14 +524,81 @@
 
     /**
      * Return a compressed version of the changes made to the board
+     * Every bytes returned with significant data will have it's most
+     * significant bit to 0.
+     * 
+     * Compression will be used (based on the previous frame), only
+     * sending the updated cells. If a byte with the most significant
+     * bit is set to 1, the value ( &0x7F ) is a count for how many
+     * time to repeat the next value
      */
-    Board.prototype.getNewFrame = function () {
-        if (this._previousFrame) {
-            var compressed = new Int8Array();
+    Board.prototype.getNewFrame = function (forceReferenceFrame) {
+        var frame = null;
+        var currentFrame = this._data.slice();
+        if (this._previousFrame && (typeof (forceReferenceFrame) === "undefined" || !forceReferenceFrame)) {
+            var frame = new Array();
 
+            var zeroCounts = 0;
+            for (var i = 0; i < this._size; i++) {
+                if (this._previousFrame[i] == currentFrame[i]) {
+                    zeroCounts++;
+                }
+                else {
+                    // put in the zeros
+                    if (zeroCounts) {
+                        // set most significant bit to indicate this is repetitive
+                        frame.push(zeroCounts | 0x80);
+
+                        zeroCounts = 0;
+                    }
+                    // then add the current value
+                    frame.push(currentFrame[i]);
+                }
+            }
+            frame = Uint8Array.from(frame);
         }
+        else {
+            frame = currentFrame.slice();
+        }
+
+        // keep a copy of what it is now to to send it back
+        this._previousFrame = currentFrame;
+
+        // keep the frame in internal memory
+        this._film.push(frame);
+        this._filmWeight += frame.length;
+        //window.debug.set("FILM SIZE", this._filmWeight);
+
+        return frame;
     };
 
+    
+    Board.prototype.playFrame = function(frame) {
+        var j = 0;
+        for(var i=0;i<frame.length;i++) {
+            // decompress
+            if(frame[i] & 0x80) {
+                j += (frame[i] & 0x7f);
+            }
+            else{
+                this._data[j++] = frame[i];
+            }
+        }
+
+        return frame.length;
+    };
+
+    /**
+     * Generate a base64 encoded version of the film of this game
+     */
+    Board.prototype.wrapUpFilm = function() {
+        var film = [];
+        for(var i=0; i<this._film.length;i++) {    
+            film.push(btoa(this._film[i].join("")));
+        }
+
+        return film.join(".");
+    };
 
     /**
      * Describe the possible values for each cell of the game area

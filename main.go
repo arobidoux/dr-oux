@@ -19,26 +19,35 @@ import (
 */
 
 func main() {
+	// create channel that will listen to the kill signal
 	stop := make(chan os.Signal, 1)
 
+	// bind Interrupt signal to the `stop` channel
 	signal.Notify(stop, os.Interrupt)
 
+	// Retrieve Parameters
+
+	// Get the http port to listen to
 	addr := ":" + os.Getenv("PORT")
 	if addr == ":" {
 		addr = ":8080"
 	}
 
+	// Start the web server
 	srv := StartHTTPServer(addr)
 
 	// TODO investigate command line arguments to optionnaly not launch the webview
+	// Start a Webview and open the main page
 	wbv := StartWebView(webview.Settings{
-		Title: "Dr. Mario",
+		Title: "Dr. OUX",
 		URL:   fmt.Sprintf("http://localhost%v/", addr),
 		Debug: true,
 	})
 
-	PiggyBackOn(srv, "/ws")
+	// Start the websocket server, piggybacking on the http server
+	PiggyBackWSOn(srv, "/ws")
 
+	//
 	select {
 	case <-stop:
 		log.Println("Received interrupt signal, exiting")

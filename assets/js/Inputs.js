@@ -30,6 +30,10 @@
         return this;
     };
 
+    Inputs.prototype.clearAll = function() {
+        this._actions = {};
+    };
+
     Inputs.prototype.register = function (actionName, handle, tick_repeat) {
         if (typeof (this._actions[actionName]) !== "undefined") {
             console.error("Input action conflict '" + actionName + "'");
@@ -51,7 +55,7 @@
                     this._actions[actionName].tickless = true;
                 }
                 else {
-                    console.error("Unhandeled repeat value for action '" + actionName + "': " + JSON.stringify(tick_repeat));
+                    console.error("Unhandled repeat value for action '" + actionName + "': " + JSON.stringify(tick_repeat));
                 }
         }
         return this;
@@ -59,10 +63,10 @@
 
     Inputs.prototype.press = function (keyCode) {
         if (typeof (this._mapping[keyCode]) === "undefined") {
-            console.error("[Inputs] No mapping for " + keyCode);
+            console.warn("[Inputs] No mapping for " + keyCode);
         }
         else if (typeof (this._actions[this._mapping[keyCode].action]) === "undefined") {
-            console.error("[Inputs] No action mapped on " + this._mapping[keyCode].action + " (keyCode:" + keyCode + ")");
+            console.warn("[Inputs] No action mapped on " + this._mapping[keyCode].action + " (keyCode:" + keyCode + ")");
         }
         else if(!this._mapping[keyCode].state) {
             this._mapping[keyCode].released = false;
@@ -70,7 +74,7 @@
 
             var action = this._actions[this._mapping[keyCode].action];
             if(action.tickless) {
-                console.debug("Running tickless action " + this._mapping[keyCode].action);
+                //console.debug("Running tickless action " + this._mapping[keyCode].action);
                 action.handle();
             }
             else {
@@ -93,14 +97,14 @@
                     this._mapping[keyCode].elapsed == 0 ||
                     (action.repeat && this._mapping[keyCode].elapsed % action.repeat == 0)
                 ) {
-                    console.debug("Running ticked action " + this._mapping[keyCode].action);
+                    //console.debug("Running ticked action " + this._mapping[keyCode].action);
                     action.handle(tick);
                 }
 
                 this._mapping[keyCode].elapsed++;
 
                 if(this._mapping[keyCode].released) {
-                    console.debug("Releasing key " + keyCode);
+                    //console.debug("Releasing key " + keyCode);
                     this._mapping[keyCode].state = false;
                 }
             } 

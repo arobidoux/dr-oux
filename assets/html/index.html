@@ -10,17 +10,32 @@
 </head>
 
 <body>
-    <h1>Dr. Mario</h1>
+    <div id="menu">
+        <label for="difficulty">Difficulty <span value-of="difficulty"></span></label><br/>
+        <input type="range" min="1" max="20" name="difficulty" value="4"><br/>
+        <button id="start-single"> Start Single Player </button>
+        <button id="start-multi"> Start Multi Player </button>
+    </div>
+
     <div id="main"></div>
+
+    <div id="opponents"></div>
+
     <img id="sprite" src="assets/img/reduced-sprites.png" style="display:none;" />
     <img id="sprite2" src="assets/img/sprites2.png" style="display:none;" />
+    
+    <script src="/socket.io/socket.io.js"></script>
     <script src="assets/js/Debug.js"></script>
+    <script src="assets/js/jsonp.js"></script>
+
     <script src="assets/js/Inputs.js"></script>
     <script src="assets/js/Controller.js"></script>
     <script src="assets/js/Pill.js"></script>
     <script src="assets/js/Board.js"></script>
     <script src="assets/js/PillBottle.js"></script>
     <script src="assets/js/DrMario.js"></script>
+    <script src="assets/js/Multiplayer.js"></script>
+    <script src="assets/js/menu.js"></script>
     <script src="assets/js/index.js"></script>
 </body>
 

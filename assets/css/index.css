@@ -1,1 +1,3 @@
 body { background: black; color: white; width: 480px; margin:auto;}
+
+#opponents { position: fixed; right: 5px; }

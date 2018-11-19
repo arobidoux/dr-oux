@@ -10,20 +10,26 @@
             document.getElementsByTagName("body")[0]
                 .append(this._root = document.createElement("div"));
         }
+
+        this._root.append(
+            this._status = document.createElement("div")
+        );
+        this._status.className = "game-status";
+
         this._fps = 16;
-        //this._fps = 8;
 
         this._fps_interval = 1000 / this._fps;
         this._fps_then = 0;
 
         this._root.className = (this._root.className ? this._root.className + " " : "") + "dr-mario";
 
-        this._mainPillBottle = new PillBottle(this,2);
         this.$animate = this._animate.bind(this);
         this._running = false;
         this._tick_counter = 0;
-
+        
         this._tickers = [];
+        
+        this._status.innerText = "Welcome";
     }
 
     DrMario.prototype.registerForTick = function(handle) {
@@ -43,13 +49,36 @@
     
 
     DrMario.prototype.startSinglePlayer = function (difficulty) {
+        if(this._mainPillBottle) {
+            this._mainPillBottle.destroy();
+        }
+        this._mainPillBottle = new PillBottle({scale:2, root:this._root});
         this._mainPillBottle.generateForDifficulty(difficulty);
+        this._mainPillBottle.record();
+
+        this._inputs.clearAll();
+        this._inputs.register("PAUSE", this.pause.bind(this), null);
+        this._mainPillBottle.registerInputs(this._inputs);
+    };
+
+    DrMario.prototype.prepareMultiPlayer = function() {
+        if(this._mainPillBottle) {
+            this._mainPillBottle.destroy();
+        }
+        this._mainPillBottle = new PillBottle({scale:2, root:this._root});
+
+        this._inputs.clearAll();
+        this._inputs.register("PAUSE", this.pause.bind(this), null);
+        this._mainPillBottle.registerInputs(this._inputs);
+    };
+
+    DrMario.prototype.setForMultiPlayer = function(difficulty) {
+        this._mainPillBottle.generateForDifficulty(difficulty);
+        this._mainPillBottle.record();
     };
 
     DrMario.prototype.registerInputs = function(inputs) {
-        inputs.register("PAUSE", this.pause.bind(this), null);
-        
-        this._mainPillBottle.registerInputs(inputs);
+        this._inputs = inputs;
     };
 
     DrMario.prototype.run = function () {
@@ -97,27 +126,31 @@
     };
 
     DrMario.prototype._tick = function (tick) {
-        window.debug.set("Tick",tick);
+        //window.debug.set("Tick",tick);
+        var prevStats = this._game_stats;
+
         for(var i = 0; i<this._tickers.length; i++)
             this._tickers[i](tick);
 
-        try {
-            this._mainPillBottle.tick(tick);
-        } catch(e) {
-            if(e.message == "Game Over") {
-                this.defeat();
-            }
-            else {
-                console.error(e);
-            }
-        }
+        
+        this._game_stats = this._mainPillBottle.tick(tick);
 
         // render
-        var virusCount = this._mainPillBottle.render(tick);
+        this._mainPillBottle.render(tick);
 
-        if(virusCount == 0) {
-            // render 1 last time to play the destroying animation
-            this.victory();
+        if(this._game_stats.gameOver) {
+            this.defeat();
+        }
+        else {
+            if (!prevStats || prevStats.virus != this._game_stats.virus)
+                this._status.innerText =
+                    "Virus" + (this._game_stats.virus>1?"es":"") +
+                    " Remaining: " + this._game_stats.virus;
+            
+            if(this._game_stats.virus == 0 && this._game_stats.explosions == 0) {
+                // render 1 last time to play the destroying animation
+                this.victory();
+            }
         }
     };
 
