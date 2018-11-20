@@ -105,8 +105,10 @@
         
         switch(name) {
             case "keymap":
-                if(current_inputs)
+                if(current_inputs) {
+                    current_inputs.clearAll();
                     current_inputs.loadKeyMap(keyMap[value]);
+                }
                 break;
         }
     }

@@ -13,11 +13,15 @@
     <div id="menu">
         <label for="difficulty">Difficulty <span value-of="difficulty"></span></label><br />
         <input type="range" min="1" max="20" name="difficulty" value="4"><br />
-        <fieldset style="display:inline-block">
-            <legend>Controls</legend>
-            <label><input type="radio" name="keymap" value="wasd"> WASD - Left-Right</label><br />
-            <label><input type="radio" name="keymap" value="arrows" checked> ARROWS - X-Z</label>
-        </fieldset><br />
+            <label>
+                Controls
+
+                <select name="keymap">
+                        <option value="wasd"> WASD - Left-Right</option>
+                        <option value="arrows" selected> ARROWS - X-Z</option>
+                </select>
+            </label>
+        
         <button id="start-single"> Start Single Player </button><br />
         <fieldset style="display:inline-block;">
             <legend>Multi Player</legend>
