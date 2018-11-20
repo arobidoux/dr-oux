@@ -6,15 +6,52 @@
     <link rel="stylesheet" href="assets/css/Controller.css">
     <link rel="stylesheet" href="assets/css/DrMario.css">
     <link rel="stylesheet" href="assets/css/index.css">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" />
 </head>
 
 <body>
     <div id="menu">
-        <label for="difficulty">Difficulty <span value-of="difficulty"></span></label><br/>
-        <input type="range" min="1" max="20" name="difficulty" value="4"><br/>
-        <button id="start-single"> Start Single Player </button>
-        <button id="start-multi"> Start Multi Player </button>
+        <label for="difficulty">Difficulty <span value-of="difficulty"></span></label><br />
+        <input type="range" min="1" max="20" name="difficulty" value="4"><br />
+        <fieldset style="display:inline-block">
+            <legend>Controls</legend>
+            <label><input type="radio" name="keymap" value="wasd"> WASD - Left-Right</label><br />
+            <label><input type="radio" name="keymap" value="arrows" checked> ARROWS - X-Z</label>
+        </fieldset><br />
+        <button id="start-single"> Start Single Player </button><br />
+        <fieldset style="display:inline-block;">
+            <legend>Multi Player</legend>
+            <label> My Name
+                <input type="text" name="multi-name" id="multi_name" readonly>
+            </label>
+            <table id="multi-rooms-table">
+                <thead>
+                    <tr>
+                        <th>Room</th>
+                        <th>Players</th>
+                        <th>In Progress</th>
+                        <th>Join</th>
+                    </tr>
+                </thead>
+                <tbody id="multi-rooms">
+                    <tr id="multi-room-template">
+                        <td class="room-value-name"></td>
+                        <td><span class="room-value-clientReady"></span> / <span class="room-value-clientCount"></span> </td>
+                        <td class="room-value-gameInProgress"></td>
+                        <td><button class="room-join-btn">Join</button></td>
+                    </tr>
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <th colspan="3"><input type="text" name="multi-new-room" placeholder="New Room"></th>
+                        <th><button id="multi-create-room">Create & Join</button></th>
+                    </tr>
+                </tfoot>
+            </table>
+
+            </ul>
+            <button id="start-multi"> Start Multi Player </button>
+        </fieldset>
     </div>
 
     <div id="main"></div>
@@ -23,7 +60,7 @@
 
     <img id="sprite" src="assets/img/reduced-sprites.png" style="display:none;" />
     <img id="sprite2" src="assets/img/sprites2.png" style="display:none;" />
-    
+
     <script src="/socket.io/socket.io.js"></script>
     <script src="assets/js/Debug.js"></script>
     <script src="assets/js/jsonp.js"></script>

@@ -8,15 +8,27 @@
         this._socket = io();
         this._game = game;
         this._name = null;
+        this._difficulty = 1;
+        this._opponents = [];
 
         this._socket.on("error",this.error.bind(this));
-        this._socket.once("connect",this.on_connect.bind(this));
-        this._socket.once("ready",this.on_ready.bind(this));
-        this._socket.once("countdown",this.on_countdown.bind(this));
-        this._socket.once("start",this.on_start.bind(this));
-        this._socket.once("gameover",this.on_gameover.bind(this));
 
-        this._opponents = [];
+        // bind all `on_` method of this class
+        for(var k in Multiplayer.prototype) {
+            var m = k.match(/^(on(?:ce)?)_(.+)$/);
+            if(m) {
+                this._socket[m[1]](m[2],this[k].bind(this));
+            }
+        }
+
+        this._game.onGameOver(function(state) {
+            if(state) {
+                this._socket.emit("victory");
+            }
+            else {
+                this._socket.emit("defeat");
+            }
+        }.bind(this));
     }
 
     Multiplayer.prototype.error = function(err) {
@@ -30,28 +42,45 @@
                 return this.error(roomDetails.error);
             }
 
+            var elem = upsertRoom({name:room});
+            elem.className = "active";
             // display players
             console.debug(room.clients);
         }.bind(this));
     };
 
-    Multiplayer.prototype.readyToStart = function() {
-        this._socket.emit("ready");
-       
-        // prepare game for streaming
-        this._game.prepareMultiPlayer();
-        this._game._mainPillBottle.streamTo(function(frame){
-            // encode it
-            var encoded = "";
-            for(var i=0;i<frame.length;i++) 
-            encoded += String.fromCharCode(frame[i]);
+    Multiplayer.prototype.readyToStart = function(difficulty) {
+        var p = new Promise(function(resolve, reject){
+            this._start_resolve = resolve;
+            this._start_reject = reject;
 
-            this._socket.emit("frame", btoa(encoded));
+            this._difficulty = parseInt(difficulty);
+            this._socket.emit("ready");
+            
+            // prepare game for streaming
+            this._game.prepareMultiPlayer();
+            this._game._mainPillBottle.streamTo(function(frame){
+                // encode it
+                var encoded = "";
+                for(var i=0;i<frame.length;i++) 
+                encoded += String.fromCharCode(frame[i]);
+                
+                this._socket.emit("frame", btoa(encoded));
+            }.bind(this));
         }.bind(this));
+
+        var cleanUp = function(){
+            this._start_resolve = null;
+            this._start_reject = null;
+        }.bind(this);
+        
+        p.then(cleanUp, cleanUp);
+
+        return p;
     };
 
 
-    Multiplayer.prototype.on_connect = function() {
+    Multiplayer.prototype.once_connect = function() {
         //this._name = prompt("Please input your name:");
         if(!this._name) {
             pickRandomName().then(function(name) {
@@ -93,12 +122,13 @@
     };
 
     Multiplayer.prototype.on_countdown = function(data) {
-        console.debug("Game starting in", data.sec, "sec");
+        this._start_resolve && this._start_resolve();
+        this._game.setStatus("Game starting in " + data.sec + " second" + (data.sec > 1 ? "s" :"" ));
     };
 
     Multiplayer.prototype.on_start = function(data) {
-        var difficulty = 1;
-        this._game.setForMultiPlayer(parseInt(difficulty));
+        this._start_resolve && this._start_resolve();
+        this._game.setForMultiPlayer(this._difficulty);
         this._game.run();
     };
 
@@ -108,14 +138,30 @@
         this.resetGame();
     };
 
+    Multiplayer.prototype.on_room_created = function(data) {
+        upsertRoom(data);
+    };
+
+    Multiplayer.prototype.on_room_updated = function(data) {
+        upsertRoom(data);
+    };
+
+    Multiplayer.prototype.on_room_removed = function(data) {
+        var id = upsertRoom.generateRoomID(data);
+        var elem = document.getElementById(id);
+        if(elem && elem.parentElement)
+            elem.parentElement.removeChild(elem);
+    };
+
     Multiplayer.prototype.resetGame = function() {
         for(var i=0; i < this._opponents.length; i++) {
-            this._opponents[i].destroy();
+            this._opponents[i].bottle.destroy();
         }
         this._opponents = [];
     };
 
     function authenticate() {
+        document.getElementById("multi_name").value = this._name;
         this._socket.emit("authenticate",{
             name: this._name
         }, function(welcome){
@@ -123,15 +169,50 @@
                 return this.error(welcome.error);
             }
             // list the rooms, and allow to join in one
-            welcome.rooms;
+            var root = document.getElementById("multi-rooms");
+            // empty the current room list
+            while(root.lastChild &&
+                root.lastChild.nodeType == 1 &&
+                root.lastChild.getAttribute("id") != "multi-room-template"
+            ) {
+                root.removeChild(root.lastChild);
+            }
 
-            // TEST
-            if(welcome.rooms.length)
-                this.join(welcome.rooms[0].name);
-            else
-                this.join("room1");
+            for(var i=0;i<welcome.rooms.length;i++) {
+                upsertRoom(welcome.rooms[i]);
+            }
         }.bind(this));
     }
+
+    function upsertRoom(room) {
+        var room_id = upsertRoom.generateRoomID(room);
+        var tr = document.getElementById(room_id);
+        if(!tr) {
+            var template = document.getElementById("multi-room-template");
+            var tr = template.cloneNode(true);
+            tr.setAttribute("id", room_id);
+            tr.setAttribute("room-name", room.name);
+            
+            document.getElementById("multi-rooms").appendChild(tr);
+        }
+        for(var k in room) {
+            var e = document.querySelector("#"+room_id+" .room-value-"+k);
+            if(e)
+                e.innerText = room[k];
+        }
+
+        return tr;
+    }
+
+    upsertRoom.createElem = function(type, className, childs) {
+        var e = document.createElement(type);
+        e.className = className;
+        return e;
+    };
+
+    upsertRoom.generateRoomID = function(room) {
+        return "room-row-" + btoa(room.name).replace(/[=+/]/g, "_");
+    };
 
     function pickRandomName() {
         return jsonp("https://randomuser.me/api/?inc=name&noinfo&callback=", 5)

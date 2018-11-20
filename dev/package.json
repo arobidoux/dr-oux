@@ -2,11 +2,11 @@
   "name": "drmario",
   "version": "1.0.0",
   "description": "A Multiplayer web base port of Dr Mario",
-  "main": "index.js",
+  "main": "server.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node index.js",
-    "dev": "nodemon index.js"
+    "start": "node server.js",
+    "dev": "nodemon server.js"
   },
   "author": "Antoine Robidoux",
   "license": "ISC",

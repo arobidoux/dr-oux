@@ -28,6 +28,7 @@
         this._tick_counter = 0;
         
         this._tickers = [];
+        this._on_game_over_handles = [];
         
         this._status.innerText = "Welcome";
     }
@@ -112,17 +113,41 @@
     };
 
     DrMario.prototype.defeat = function (tick) {
-        this.stop();
+        this.gameOver(false);
         setTimeout(function(){
             alert("Defeat :(");
         });
     };
 
     DrMario.prototype.victory = function (tick) {
-        this.stop();
+        this.gameOver(true);
         setTimeout(function(){
             alert("Victory!");
         });
+    };
+
+    DrMario.prototype.gameOver = function(state) {
+        this.stop();
+        for(var i=0; i<this._on_game_over_handles.length;i++) {
+            if(this._on_game_over_handles[i](state) === false) {
+                this._on_game_over_handles.splice(i,1);
+            }
+        }
+    };
+
+    /**
+     * Register a callback that will be called when the game is over.
+     * first parameter will be the status of the game: true=victory, false=defeat
+     * 
+     * return false to remove the handler
+     */
+    DrMario.prototype.onGameOver = function(handle) {
+        this._on_game_over_handles.push(handle);
+        return this;
+    };
+
+    DrMario.prototype.setStatus = function(status) {
+        this._status.innerText = status;
     };
 
     DrMario.prototype._tick = function (tick) {

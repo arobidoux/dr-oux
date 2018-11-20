@@ -59,6 +59,9 @@ class Client {
             this._room.removeClient(this);
             this._room = null;
         }
+        else {
+            this.log("Cannot leave, no room assigned");
+        }
     }
 
     reset() {

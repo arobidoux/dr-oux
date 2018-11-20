@@ -12,36 +12,7 @@ game.registerInputs(inputs);
 game.registerForTick(inputs.tick.bind(inputs));
 game.registerForTick(debug.tick.bind(debug));
 
-Controller(document.getElementById("main"), inputs);
+// onscreen controller
+//Controller(document.getElementById("main"), inputs);
 
-inputs.loadKeyMap({
-    // ARROWS
-    /*
-    40: "DOWN",
-    38: "UP",
-    37: "LEFT",
-    39: "RIGHT",
-    88: "ROTATE_CLOCKWISE",
-    90: "ROTATE_COUNTER_CLOCKWISE",
-    */
-
-    // WASD
-    83: "DOWN",
-    87: "UP",
-    65: "LEFT",
-    68: "RIGHT",
-    37: "ROTATE_CLOCKWISE",
-    39: "ROTATE_COUNTER_CLOCKWISE",
-
-    // Other
-    19: "PAUSE",
-});
-
-/*
-var mirror = new PillBottle({root:document.getElementById("opponents")});
-game._mainPillBottle.streamTo(mirror.generateStreamHandler());
-*/
-menu(game, multiplayer);
-
-//game.startSinglePlayer(1);
-//game.run();
+menu(game, multiplayer, inputs);

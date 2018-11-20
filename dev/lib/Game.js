@@ -7,25 +7,25 @@ class Game {
         this._clients = [];
         this._rooms = [];
 
-        io.on("connection", function(socket){
+        io.on("connection", function (socket) {
             this.addClient(new Client(socket, this));
         }.bind(this));
     }
 
-    addClient( client ) {
+    addClient(client) {
         this._clients.push(client);
     }
 
     removeClient(client) {
-        for(var i=0;i<this._clients.length;i++)
-            if(this._clients[i]==client)
-                return this._clients.splice(i,0);
+        for (var i = 0; i < this._clients.length; i++)
+            if (this._clients[i] == client)
+                return this._clients.splice(i, 0);
     }
 
     generateWelcomePackage() {
-        return new Promise((resolve, reject)=>{
+        return new Promise((resolve, reject) => {
             var rooms = [];
-            for(var k in this._rooms)
+            for (var k in this._rooms)
                 rooms.push(this._rooms[k].summary());
 
             resolve({
@@ -35,10 +35,15 @@ class Game {
     }
 
     getRoom(roomName) {
-        if(typeof(this._rooms[roomName]) ==="undefined")
-            this._rooms[roomName] = new Room(roomName, this._io);
-        
+        if (typeof (this._rooms[roomName]) === "undefined")
+            this._rooms[roomName] = new Room(roomName, this._io, this);
+
         return this._rooms[roomName];
+    }
+
+    removeRoom(roomName) {
+        if (typeof (this._rooms[roomName]) !== "undefined")
+            delete (this._rooms[roomName]);
     }
 }
 
