@@ -21,6 +21,7 @@ class Client {
         socket.on("ready", (data, ack) => { return this.on_ready(data, ack) });
         socket.on("frame", (data, ack) => { return this.on_frame(data, ack) });
         socket.on("victory", (data, ack) => { return this.on_victory(data, ack) });
+        socket.on("combos", (data, ack) => { return this.on_combos(data, ack) });
     }
 
     get name() {
@@ -126,6 +127,10 @@ class Client {
             
         // tell everybody else
         this._soc.to(this._room.name).emit("frame-"+this._id, frame);
+    }
+
+    on_combo(frame, ack) {
+        this._room.processHandicap(this, frame);
     }
 
     on_victory() {

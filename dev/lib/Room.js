@@ -82,6 +82,7 @@ class Room {
         
         this.launchGame();
     }
+
     launchGame() {
         if(this._gameInProgress)
             return;
@@ -104,6 +105,11 @@ class Room {
 
     startGame() {
         this._io.in(this._name).emit("start");
+    }
+
+    
+    processHandicap(client, frame) {
+        client._soc.to(this._name).emit("handicap", frame);
     }
 
     graspVictory(client) {
