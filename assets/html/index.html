@@ -29,6 +29,28 @@
                 <input type="text" name="multi-name" id="multi_name">
             </label>
 
+            <table id="players-table">
+                <thead>
+                    <tr><th colspan=3>Players</th></tr>
+                    <tr>
+                        <th>Name</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="players">
+                    <tr id="player-template">
+                        <td class="player-value-name"></td>
+                        <td class="player-value-status"></td>
+                        <td class="actions">
+                            <button class="player-invite">Invite</button>
+                            <button class="player-join">Join</button>
+                            <button class="player-spectate">Spectate</button>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+
             <table id="multi-rooms-table">
                 <thead>
                     <tr>
@@ -67,6 +89,7 @@
     <img id="sprite2" src="assets/img/sprites2.png" style="display:none;" />
 
     <script src="/socket.io/socket.io.js"></script>
+    <script src="/assets/uuid/v1.js"></script>
     <script src="assets/js/Debug.js"></script>
     <script src="assets/js/jsonp.js"></script>
 

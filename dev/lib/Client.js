@@ -5,6 +5,7 @@ class Client {
         this._soc = socket;
         this._game = game;
         this._name = "Anonymous";
+        this._uuid = null;
         this._room = null;
         this._id = nextClientID++;
         this._is_ready = false;
@@ -36,12 +37,25 @@ class Client {
         return this._id;
     }
 
+    get status() {
+        if(!this._room)
+            return "single";
+        else if(this._room.inProgress)
+            return "multi";
+        else if(this._is_ready)
+            return "waiting";
+        else
+            return "pending";
+    }
+
     getDetails() {
         return {
             name: this._name,
             ready: this._ready,
-            id: this._id
-        }
+            id: this._id,
+            room: this._room && this._room.summary() || null,
+            status: this.status
+        };
     }
 
     log(...msg) {
@@ -77,6 +91,8 @@ class Client {
 
     on_authenticate(data, ack) {
         this._name = data.name;
+        this._uuid = data.uuid;
+        this._game.addClient(this);
         this._game.generateWelcomePackage()
             .then(ack, ack.bind(null, { error: "Failled to generate welcome package" }));
     }

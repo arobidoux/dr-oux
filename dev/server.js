@@ -21,6 +21,8 @@ app.get("/favicon.ico", (req, res) => {
 
 app.use("/assets",express.static(path.resolve("../assets")));
 
+app.use("/assets/uuid/",express.static(path.resolve("node_modules/uuid-browser")));
+
 var game = new Game(io);
 
 http.listen(port, () => console.log(`DrMario listening on port ${port}!`));

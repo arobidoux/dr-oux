@@ -4,6 +4,12 @@
 
 (function (global, ns){
     "use strict";
+
+    var uuid = preference("multi-uuid", null);
+    if(!uuid) {
+        preference.set("multi-uuid",uuid = uuidv1());
+    }
+
     function Multiplayer(game) {
         this._socket = io();
         this._game = game;
@@ -162,7 +168,7 @@
     };
 
     Multiplayer.prototype.on_room_removed = function(data) {
-        var id = upsertRoom.generateRoomID(data);
+        var id = generateRoomID(data);
         var elem = document.getElementById(id);
         if(elem && elem.parentElement)
             elem.parentElement.removeChild(elem);
@@ -170,6 +176,15 @@
 
     Multiplayer.prototype.on_handicap = function(encoded) {
         this._game._mainPillBottle._board.queueHandicap(decodeFrame(encoded));
+    };
+
+    Multiplayer.prototype.on_client_update = function(data) {
+        var updated = [];
+        for(var i=0;i<data.clients.length;i++) {
+            updated.push(upsertPlayer(data.clients[i]));
+        }
+
+        upsertPlayer.removeNotIn(updated);
     };
 
     Multiplayer.prototype.resetGame = function() {
@@ -188,11 +203,13 @@
     function authenticate() {
         document.getElementById("multi_name").value = this._name;
         this._socket.emit("authenticate",{
+            uuid: uuid,
             name: this._name
         }, function(welcome){
             if(welcome.error) {
                 return this.error(welcome.error);
             }
+            /*
             // list the rooms, and allow to join in one
             var root = document.getElementById("multi-rooms");
             // empty the current room list
@@ -206,37 +223,82 @@
             for(var i=0;i<welcome.rooms.length;i++) {
                 upsertRoom(welcome.rooms[i]);
             }
+            */
+
+            upsertPlayer.clear();
+            for(var i=0;i<welcome.clients.length;i++) {
+                upsertPlayer(welcome.clients[i]);
+            }
         }.bind(this));
     }
 
-    function upsertRoom(room) {
-        var room_id = upsertRoom.generateRoomID(room);
-        var tr = document.getElementById(room_id);
-        if(!tr) {
-            var template = document.getElementById("multi-room-template");
-            var tr = template.cloneNode(true);
-            tr.setAttribute("id", room_id);
-            tr.setAttribute("room-name", room.name);
-            
-            document.getElementById("multi-rooms").appendChild(tr);
+    var upsertRoom = generateUpsertElem(
+        document.getElementById("multi-room-template"),
+        generateRoomID,
+        ".room-value-%name%",
+        function(elem, obj) {
+            elem.setAttribute("room-name", obj.name);
         }
-        for(var k in room) {
-            var e = document.querySelector("#"+room_id+" .room-value-"+k);
-            if(e)
-                e.innerText = room[k];
-        }
+    );
 
-        return tr;
+    var upsertPlayer = generateUpsertElem(
+        document.getElementById("player-template"),
+        generatePlayerID,
+        ".player-value-%name%",
+        function(elem, obj) {
+            elem.className += (elem.className?" ":"")+ obj.status;
+        }
+    );
+    
+    function generateUpsertElem(template, generateId, field_value_selector, postCreate) {
+        var root = template.parentElement;
+        root.removeChild(template);
+
+        var fn = function(obj) {
+            var id = generateId(obj);
+            var elem = document.getElementById(id);
+            if(!elem) {
+                var elem = template.cloneNode(true);
+                elem.setAttribute("id", id);
+                root.appendChild(elem);
+                if(typeof(postCreate) === "function")
+                    postCreate(elem, obj);
+            }
+
+            for(var k in obj) {
+                var e = document.querySelector("#"+id+" " + field_value_selector.replace("%name%",k));
+                if(e)
+                    e.innerText = obj[k];
+            }
+
+            return elem;
+        };
+
+        fn.clear = function() {
+            while(root.lastChid)
+                root.removeChild(root.lastChid);
+        };
+
+        fn.removeNotIn = function(list) {
+            var nextElem, elem = root.firstChild;
+            while(elem) {
+                nextElem = elem.nextElementSibling;
+                if(list.indexOf(elem) == -1) {
+                    root.removeChild(elem);
+                }
+                elem = nextElem;
+            }
+        };
+
+        return fn;
     }
 
-    upsertRoom.createElem = function(type, className, childs) {
-        var e = document.createElement(type);
-        e.className = className;
-        return e;
+    function generateRoomID(room) {
+        return "room-row-" + btoa(room.name).replace(/[=+/]/g, "_");
     };
 
-    upsertRoom.generateRoomID = function(room) {
-        return "room-row-" + btoa(room.name).replace(/[=+/]/g, "_");
+    function generatePlayerID(client) {
+        return "player-row-" + btoa(client.name).replace(/[=+/]/g, "_");
     };
 
     function pickRandomName() {

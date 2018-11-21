@@ -13,6 +13,10 @@ class Room {
         return this._name;
     }
 
+    get inProgress() {
+        return this._gameInProgress;
+    }
+
     /**
      * return a summary to the client
      */
