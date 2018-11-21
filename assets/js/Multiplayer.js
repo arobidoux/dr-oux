@@ -180,7 +180,7 @@
     };
 
     Multiplayer.prototype.tick = function(tick) {
-        if(this._game._game_stats && this._game._game_stats.combos && this._game._game_stats.combos.length) {
+        if(this._game._game_stats && this._game._game_stats.combos && this._game._game_stats.combos.length > 1) {
             this._socket.emit("combos", encodeFrame(this._game._game_stats.combos));
         }
     };
