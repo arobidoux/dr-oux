@@ -129,11 +129,15 @@ class Client {
         this._soc.to(this._room.name).emit("frame-"+this._id, frame);
     }
 
-    on_combo(frame, ack) {
+    on_combos(frame, ack) {
+        if( !this._room )
+            return this.error("marked as ready but not in a room");
         this._room.processHandicap(this, frame);
     }
 
     on_victory() {
+        if( !this._room )
+            return this.error("marked as ready but not in a room");
         this._room.graspVictory(this);
     }
 }

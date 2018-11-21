@@ -38,6 +38,7 @@
         this._stats = {
             virus: 0,
             explosions: 0,
+            counting_combos: [],
             combos: [],
             gameOver: false
         };
@@ -212,6 +213,8 @@
                     if(!this.insertNextPill())
                         this._stats.gameOver = true;
                 }
+                this._stats.combos = this._stats.counting_combos;
+                this._stats.counting_combos = [];
             }
             else if (!this.tickBoard(tick)) {
                 // reset virus count
@@ -225,8 +228,20 @@
                         continue;
 
                     var c = this.posToCoord(i);
+
+                    var currentForm = this._data[i] & Board.CODES.forms.mask;
+
+                    if(
+                        currentForm == Board.CODES.forms.values.exploding.code
+                        || currentForm == Board.CODES.forms.values.exploded.code
+                    )
+                        continue;
+                    
+
                     var explosionCount = this._checkPillDestruction(c.x, c.y);
-                    this._stats.combos.push(this._data[i] & Board.CODES.colors.mask);
+                    if(explosionCount) {
+                        this._stats.counting_combos.push(this._data[i] & Board.CODES.colors.mask);
+                    }
                     this._stats.explosions += explosionCount;
 
                     switch(this._data[i] & Board.CODES.forms.mask) {

@@ -11,6 +11,7 @@ var multiplayer = new Multiplayer(game);
 game.registerInputs(inputs);
 game.registerForTick(inputs.tick.bind(inputs));
 game.registerForTick(debug.tick.bind(debug));
+game.registerForTick(multiplayer.tick.bind(multiplayer));
 
 // onscreen controller
 //Controller(document.getElementById("main"), inputs);
