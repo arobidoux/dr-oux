@@ -82,8 +82,8 @@
                 // we're good
             }
             else {
-
                 this._name = prompt("Please input your name:");
+                preference.set("multi-name", this._name);
             }
         }
         
