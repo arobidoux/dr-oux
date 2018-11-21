@@ -77,8 +77,15 @@
 
     Multiplayer.prototype.once_connect = function() {
         this._name = document.getElementById("multi_name").value;
-        if(!this._name)
-            this._name = prompt("Please input your name:");
+        if(!this._name) {
+            if(this._name = preference("multi-name", null)) {
+                // we're good
+            }
+            else {
+
+                this._name = prompt("Please input your name:");
+            }
+        }
         
         if(!this._name) {
             pickRandomName().then(function(name) {
