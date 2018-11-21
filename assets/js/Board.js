@@ -38,7 +38,7 @@
         this._stats = {
             virus: 0,
             explosions: 0,
-            combos: 0,
+            combos: [],
             gameOver: false
         };
     }
@@ -171,7 +171,7 @@
 
     Board.prototype.tick = function (tick) {
         // reset some stats
-        this._stats.combos = 0;
+        this._stats.combos = [];
         this._stats.explosions = 0;
         this._stats.virus = 0;
 
@@ -226,7 +226,7 @@
 
                     var c = this.posToCoord(i);
                     var explosionCount = this._checkPillDestruction(c.x, c.y);
-                    this._stats.combos += explosionCount;
+                    this._stats.combos.push(this._data[i] & Board.CODES.colors.mask);
                     this._stats.explosions += explosionCount;
 
                     switch(this._data[i] & Board.CODES.forms.mask) {

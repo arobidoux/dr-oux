@@ -60,12 +60,7 @@
             // prepare game for streaming
             this._game.prepareMultiPlayer();
             this._game._mainPillBottle.streamTo(function(frame){
-                // encode it
-                var encoded = "";
-                for(var i=0;i<frame.length;i++) 
-                encoded += String.fromCharCode(frame[i]);
-                
-                this._socket.emit("frame", btoa(encoded));
+                this._socket.emit("frame", encodeFrame(frame));
             }.bind(this));
         }.bind(this));
 
@@ -81,7 +76,10 @@
 
 
     Multiplayer.prototype.once_connect = function() {
-        //this._name = prompt("Please input your name:");
+        this._name = document.getElementById("multi_name").value;
+        if(!this._name)
+            this._name = prompt("Please input your name:");
+        
         if(!this._name) {
             pickRandomName().then(function(name) {
                 this._name = name;
@@ -110,16 +108,26 @@
 
         var handle = bottle.generateStreamHandler();
         this._socket.on("frame-"+data.id, function(encoded) {
-            var frame = [];
-
-            var r = atob(encoded);
-
-            for(var i=0;i<r.length;i++) 
-                frame.push(r.charCodeAt(i));
-            
-            handle(frame);
+            handle(decodeFrame(encoded));
         });
     };
+
+    function encodeFrame(frame) {
+        // encode it
+        var encoded = "";
+        for(var i=0;i<frame.length;i++) 
+        encoded += String.fromCharCode(frame[i]);
+        return btoa(encoded);
+    }
+
+    function decodeFrame(encoded) {
+        var frame = [];
+        var r = atob(encoded);
+        for(var i=0;i<r.length;i++) 
+            frame.push(r.charCodeAt(i));
+        
+        return frame;
+    }
 
     Multiplayer.prototype.on_countdown = function(data) {
         this._start_resolve && this._start_resolve();
@@ -153,11 +161,21 @@
             elem.parentElement.removeChild(elem);
     };
 
+    Multiplayer.prototype.on_handicap = function(encoded) {
+        this._game._mainPillBottle._board.queueHandicap(decodeFrame(encoded));
+    };
+
     Multiplayer.prototype.resetGame = function() {
         for(var i=0; i < this._opponents.length; i++) {
             this._opponents[i].bottle.destroy();
         }
         this._opponents = [];
+    };
+
+    Multiplayer.prototype.tick = function(tick) {
+        if(this._game._game_stats.combos.length) {
+            this._socket.emit("combos", encodeFrame(this._game._game_stats.combos));
+        }
     };
 
     function authenticate() {

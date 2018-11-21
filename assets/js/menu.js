@@ -86,6 +86,11 @@
         // initialize the current option values
         var menu_inputs = document.querySelectorAll("#menu [name]");
         for(var i=0;i<menu_inputs.length;i++) {
+            
+            var v = preference(menu_inputs[i].name, null);
+            if(v)
+                menu_inputs[i].value = v;
+            
             updateValueFor(menu_inputs[i].name, menu_inputs[i].value);
         }
     }
@@ -111,6 +116,8 @@
                 }
                 break;
         }
+
+        preference.set(name, value);
     }
 
     function parentUntil(elem,test) {
@@ -122,3 +129,24 @@
 
     global[ns] = menu;
 })(this, "menu");
+
+(function (global, ns){
+    "use strict";
+    function preference(key, defaultValue) {
+        try {
+            var v = localStorage.getItem(key);
+            return v === null ? defaultValue : v;
+        }
+        catch(e) {
+            return defaultValue;
+        }
+    }
+
+    preference.set = function(name, value) {
+        try {
+            localStorage.setItem(name, value);
+        } catch(e) {}
+    };
+
+    global[ns] = preference;
+})(this, "preference");
