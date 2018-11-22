@@ -140,6 +140,10 @@
                     current_inputs.loadKeyMap(keyMap[value]);
                 }
                 break;
+            
+            case "sensitivity":
+                game.touch_sensitivity = value;
+                break;
         }
 
         preference.set(name, value);

@@ -31,6 +31,10 @@
         this._on_game_over_handles = [];
         
         this._status.innerText = "Welcome";
+
+        this.$touchstart = this.touchstart.bind(this);
+        this.$touchmove = this.touchmove.bind(this);
+        this.$touchend = this.touchend.bind(this);
     }
 
     DrMario.prototype.registerForTick = function(handle) {
@@ -85,10 +89,12 @@
     DrMario.prototype.run = function () {
         this._running = true;
         this.$animate();
+        this.bindTouch();
     };
 
     DrMario.prototype.stop = function () {
         this._running = false;
+        this.releaseTouch();
     };
 
     DrMario.prototype.pause = function () {
@@ -148,6 +154,115 @@
 
     DrMario.prototype.setStatus = function(status) {
         this._status.innerText = status;
+    };
+
+    DrMario.prototype.touch_sensitivity = 5;
+    DrMario.touch_sink_sensitivity_multiplyer = 2;
+    DrMario.touch_dead_zone = 3;
+    DrMario.touch_tap_time = 250;
+
+    DrMario.prototype.bindTouch = function() {
+        document.addEventListener("touchstart", this.$touchstart,{ passive: false });
+        document.addEventListener("touchmove", this.$touchmove,{passive: false});
+        document.addEventListener("touchend", this.$touchend,{passive: false});
+    };
+    
+    DrMario.prototype.releaseTouch = function() {
+        document.removeEventListener("touchstart", this.$touchstart,{ passive: false });
+        document.removeEventListener("touchmove", this.$touchmove,{passive: false});
+        document.removeEventListener("touchend", this.$touchend,{passive: false});
+    };
+
+
+    DrMario.prototype.touchstart = function(ev) {
+        this._touches = {};
+        //multiplayer._socket.emit("log", "touchstart");
+        
+        for(var i=0; i<ev.touches.length;i++) {
+            this._touches[ev.touches[i].identifier] = {
+                x:ev.touches[i].screenX,
+                y:ev.touches[i].screenY,
+                orgX:ev.touches[i].screenX,
+                orgY:ev.touches[i].screenY,
+                ts:(new Date()).getTime()
+            }; 
+        }
+
+        ev.preventDefault();
+        ev.stopImmediatePropagation();
+    };
+
+    DrMario.prototype.touchmove = function(ev) {
+        //multiplayer._socket.emit("log", "touchmove");
+
+        for(var i=0; i<ev.changedTouches.length;i++) {
+            var id = ev.changedTouches[i].identifier;
+            if(typeof(this._touches[id]) !== "undefined") {
+                // find out how much it changed
+                
+                var dx=this._touches[id].x-ev.changedTouches[i].screenX;
+                var dy=this._touches[id].y-ev.changedTouches[i].screenY;
+
+                if(Math.abs(dx) > this.touch_sensitivity) {
+                    this._touches[id].x = ev.changedTouches[i].screenX;
+                    if(dx < 0) {
+                        this._inputs.press(39);
+                        this._inputs.release(39);
+                        //this._mainPillBottle._board.action("right");
+                    }
+                    else {
+                        this._inputs.press(37);
+                        this._inputs.release(37);
+                        //this._mainPillBottle._board.action("left");
+                    }
+                }
+
+                var abs_dy = Math.abs(dy);
+                if(abs_dy > this.touch_sensitivity) {
+                    this._touches[id].y = ev.changedTouches[i].screenY;
+                    if(dy < 0) {
+                        this._inputs.press(40);
+                        this._inputs.release(40);
+                        //this._mainPillBottle._board.action("down");
+                    }
+                    else if(abs_dy > DrMario.touch_sink_sensitivity_multiplyer*this.touch_sensitivity) {
+                        this._inputs.press(38);
+                        this._inputs.release(38);
+                        //this._mainPillBottle._board.action("sink");
+                    }
+                }
+            }
+        }
+
+        ev.preventDefault();
+        ev.stopImmediatePropagation();
+    };
+
+    DrMario.prototype.touchend = function(ev) {
+        //multiplayer._socket.emit("log", "touchend");
+        
+        for(var i=0; i<ev.changedTouches.length;i++) {
+            var id = ev.changedTouches[i].identifier;
+            if(typeof(this._touches[id]) !== "undefined") {
+                // find out how much it changed
+                
+                var dx=this._touches[id].orgX-ev.changedTouches[i].screenX;
+                var dy=this._touches[id].orgY-ev.changedTouches[i].screenY;
+                var dt=(new Date()).getTime() - this._touches[id].ts;
+
+                //multiplayer._socket.emit("log", ["dx",dx,"dy",dy,"dt",dt].join(" "));
+
+                if(Math.abs(dx) < DrMario.touch_dead_zone && Math.abs(dy) < DrMario.touch_dead_zone && dt < DrMario.touch_tap_time) {
+                    this._inputs.press(88);
+                    this._inputs.release(88);
+                }
+            }
+        }
+
+        // clear touches
+        this._touches = {}
+        ev.preventDefault();
+        ev.stopImmediatePropagation();
     };
 
     DrMario.prototype._tick = function (tick) {

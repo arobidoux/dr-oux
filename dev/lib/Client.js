@@ -28,6 +28,7 @@ class Client {
         socket.on("victory", (data, ack) => { return this.on_victory(data, ack) });
         socket.on("combos", (data, ack) => { return this.on_combos(data, ack) });
         socket.on("invite", (data, ack) => { return this.on_invite(data, ack) });
+        socket.on("log", (data, ack) => { return this.on_log(data, ack) });
     }
 
     get name() {
@@ -125,6 +126,10 @@ class Client {
         
         this.log("Authenticated")
         this._game.addClient(this);
+    }
+
+    on_log(msg) {
+        this.log(">", msg);
     }
 
     on_join(data, ack) {
