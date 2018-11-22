@@ -7,3 +7,16 @@ body { background: black; color: white; width: 480px; margin:auto;}
 #multi-room-template { display: none; }
 
 #multi-rooms .active td { background-color: #4caf50; border-bottom-color:greenyellow;}
+
+
+#players .boring .player-spectate,
+
+#players .pending .player-invite,
+#players .pending .player-spectate,
+
+#players .waiting .player-invite,
+
+#players .multi .player-invite,
+#players .multi .player-join
+
+{ display:none; }

@@ -47,11 +47,6 @@
             if(roomDetails.error) {
                 return this.error(roomDetails.error);
             }
-
-            var elem = upsertRoom({name:room});
-            elem.className = "active";
-            // display players
-            console.debug(room.clients);
         }.bind(this));
     };
 
@@ -102,6 +97,11 @@
         else {
             authenticate.call(this);
         }
+    };
+
+    Multiplayer.prototype.on_joined = function(room) {
+        var elem = upsertRoom(room);
+            elem.className = "active";
     };
 
     Multiplayer.prototype.on_ready = function(data) {
@@ -167,6 +167,15 @@
         upsertRoom(data);
     };
 
+    Multiplayer.prototype.on_rooms_updated = function(data) {
+        var updated = [];
+        for(var i=0;i<data.rooms.length;i++) {
+            updated.push(upsertRoom(data.rooms[i]));
+        }
+
+        upsertRoom.removeNotIn(updated);
+    };
+
     Multiplayer.prototype.on_room_removed = function(data) {
         var id = generateRoomID(data);
         var elem = document.getElementById(id);
@@ -187,11 +196,36 @@
         upsertPlayer.removeNotIn(updated);
     };
 
+    Multiplayer.prototype.on_update_one_client = function(details) {
+        upsertPlayer(details);
+    };
+
+    Multiplayer.prototype.on_invited = function(data) {
+        if(confirm(data.from.name + " is inviting you to a game, Join?")) {
+            this.join(data.room);
+        }
+    };
+
     Multiplayer.prototype.resetGame = function() {
         for(var i=0; i < this._opponents.length; i++) {
             this._opponents[i].bottle.destroy();
         }
         this._opponents = [];
+    };
+
+    Multiplayer.prototype.invite = function(player_id) {
+        this._socket.emit("invite", {
+            players: [ player_id ]
+        });
+    };
+
+    
+    Multiplayer.prototype.joinPlayer = function(player_id) {
+        this._socket.emit("joinPlayer", player_id);
+    };
+
+    Multiplayer.prototype.spectate = function(player_id) {
+        this._socket.emit("spectate", player_id);
     };
 
     Multiplayer.prototype.tick = function(tick) {
@@ -205,31 +239,7 @@
         this._socket.emit("authenticate",{
             uuid: uuid,
             name: this._name
-        }, function(welcome){
-            if(welcome.error) {
-                return this.error(welcome.error);
-            }
-            /*
-            // list the rooms, and allow to join in one
-            var root = document.getElementById("multi-rooms");
-            // empty the current room list
-            while(root.lastChild &&
-                root.lastChild.nodeType == 1 &&
-                root.lastChild.getAttribute("id") != "multi-room-template"
-            ) {
-                root.removeChild(root.lastChild);
-            }
-
-            for(var i=0;i<welcome.rooms.length;i++) {
-                upsertRoom(welcome.rooms[i]);
-            }
-            */
-
-            upsertPlayer.clear();
-            for(var i=0;i<welcome.clients.length;i++) {
-                upsertPlayer(welcome.clients[i]);
-            }
-        }.bind(this));
+        });
     }
 
     var upsertRoom = generateUpsertElem(
@@ -246,11 +256,18 @@
         generatePlayerID,
         ".player-value-%name%",
         function(elem, obj) {
-            elem.className += (elem.className?" ":"")+ obj.status;
+            if(obj.uuid == uuid) {
+                // prevent us from being added
+                elem.parentElement.removeChild(elem);
+            }
+            elem.setAttribute("player-uuid", obj.uuid);
+        },
+        function(elem, obj){
+            elem.className = obj.status;
         }
     );
     
-    function generateUpsertElem(template, generateId, field_value_selector, postCreate) {
+    function generateUpsertElem(template, generateId, field_value_selector, postCreate, postUpdate) {
         var root = template.parentElement;
         root.removeChild(template);
 
@@ -270,6 +287,9 @@
                 if(e)
                     e.innerText = obj[k];
             }
+
+            if(typeof(postUpdate) === "function")
+                postUpdate(elem, obj);
 
             return elem;
         };
@@ -298,7 +318,7 @@
     };
 
     function generatePlayerID(client) {
-        return "player-row-" + btoa(client.name).replace(/[=+/]/g, "_");
+        return "player-row-" + client.uuid;
     };
 
     function pickRandomName() {

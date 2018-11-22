@@ -55,11 +55,13 @@
 
         
         // create a new room
+        /*
         document.getElementById("multi-create-room").addEventListener("click", function(){
             if(typeof(settings["multi-new-room"]) !== "undefined" && settings["multi-new-room"]) {
                 multiplayer.join(settings["multi-new-room"]);
             }
         });
+        */
 
         // join multiplayer room
         document.getElementById("multi-rooms").addEventListener("click", function(ev) {
@@ -67,6 +69,29 @@
                 var tr = parentUntil(ev.target, function(e){return e.tagName=="TR";});
                 var roomName = tr.getAttribute("room-name");
                 multiplayer.join(roomName);
+            }
+        });
+
+        // players actions
+        document.getElementById("players").addEventListener("click", function(ev) {
+            if(ev.target.tagName == "BUTTON") {
+                var tr = parentUntil(ev.target, function(e){return e.tagName=="TR";});
+                var playeruuid = tr.getAttribute("player-uuid");
+                // invite
+                if(/player-invite/.test(ev.target.className)) {
+                    multiplayer.invite(playeruuid);
+                    ev.target.style.display = "none";
+                }
+
+                else if(/player-join/.test(ev.target.className)) {
+                    multiplayer.joinPlayer(playeruuid);
+                    ev.target.style.display = "none";
+                }
+
+                else if(/player-spectate/.test(ev.target.className)) {
+                    multiplayer.spectate(playeruuid);
+                    ev.target.style.display = "none";
+                }
             }
         });
 
@@ -129,24 +154,3 @@
 
     global[ns] = menu;
 })(this, "menu");
-
-(function (global, ns){
-    "use strict";
-    function preference(key, defaultValue) {
-        try {
-            var v = localStorage.getItem(key);
-            return v === null ? defaultValue : v;
-        }
-        catch(e) {
-            return defaultValue;
-        }
-    }
-
-    preference.set = function(name, value) {
-        try {
-            localStorage.setItem(name, value);
-        } catch(e) {}
-    };
-
-    global[ns] = preference;
-})(this, "preference");

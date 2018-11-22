@@ -1,3 +1,6 @@
+const path = require("path");
+const File = require("./File");
+
 var nextClientID=1;
 
 class Client {
@@ -9,6 +12,7 @@ class Client {
         this._room = null;
         this._id = nextClientID++;
         this._is_ready = false;
+        this._replay_file = null;
 
         this.log("New client connected");
         socket.on("error", (err) => { return this.error(err) });
@@ -23,6 +27,7 @@ class Client {
         socket.on("frame", (data, ack) => { return this.on_frame(data, ack) });
         socket.on("victory", (data, ack) => { return this.on_victory(data, ack) });
         socket.on("combos", (data, ack) => { return this.on_combos(data, ack) });
+        socket.on("invite", (data, ack) => { return this.on_invite(data, ack) });
     }
 
     get name() {
@@ -39,7 +44,7 @@ class Client {
 
     get status() {
         if(!this._room)
-            return "single";
+            return "boring";
         else if(this._room.inProgress)
             return "multi";
         else if(this._is_ready)
@@ -48,11 +53,19 @@ class Client {
             return "pending";
     }
 
+    get uuid() {
+        return this._uuid;
+    }
+
+    setReplayFolder(folder) {
+        this._replay_file = new File(path.join(folder,this._uuid));
+    }
+
     getDetails() {
         return {
             name: this._name,
             ready: this._ready,
-            id: this._id,
+            uuid: this._uuid,
             room: this._room && this._room.summary() || null,
             status: this.status
         };
@@ -68,8 +81,20 @@ class Client {
         console.error("[" + this._name + "]" + msg.join(" "));
     }
 
+    join(roomName) {
+        this.leave();
+        this._room = this._game.getRoom(roomName, this);
+        this._room.addClient(this);
+
+        this._soc.join(this._room.socRoomName);
+
+        this.log("Joined room " + roomName);
+        this._soc.emit("joined", this._room.summary());
+    }
+
     leave() {
         if (this._room) {
+            this._soc.leave(this._room.socRoomName);
             this.log("Left the room", this._room.name);
             this._room.removeClient(this);
             this._room = null;
@@ -80,6 +105,11 @@ class Client {
     }
 
     reset() {
+        if(this._replay_file) {
+            this._replay_file.close();
+            this._replay_file = null;
+        }
+
         this._is_ready = false;
     }
 
@@ -92,19 +122,13 @@ class Client {
     on_authenticate(data, ack) {
         this._name = data.name;
         this._uuid = data.uuid;
+        
+        this.log("Authenticated")
         this._game.addClient(this);
-        this._game.generateWelcomePackage()
-            .then(ack, ack.bind(null, { error: "Failled to generate welcome package" }));
     }
 
     on_join(data, ack) {
-        this.leave();
-        this._room = this._game.getRoom(data.room, this);
-        this._room.addClient(this);
-
-        this._soc.join(data.room);
-
-        this.log("Joined room " + data.room);
+        this.join(data.room);
 
         this._room.generateDetails()
             .then(ack, (err)=>{
@@ -117,6 +141,36 @@ class Client {
             });
     }
 
+    on_invite(data, ack) {
+        if(!this._room) {
+            this.join(this.name + "'s Game");
+        }
+
+        var invitation = {
+            room:this._room.name,
+            from:this.getDetails()
+        };
+
+        for(var i=0;i<data.players.length;i++) {
+            var p = this._game.getClient(data.players[i]);
+            if(p) {
+                this.log("Inviting",p.name);
+                p._soc.emit("invited", invitation);
+            }
+        }
+    }
+
+    
+    on_joinPlayer(data, ack) {
+        var p = this._game.getClient(data);
+        if(p) {
+            this.log("Joining the game of ",p.name,"("+p._room.name+")");
+            this.join(p._room.name);
+        } else {
+            this.error("Cannot join, invalid player id",data);
+        }
+    }
+
     on_leave(data, ack) {
         this.leave();
         ack("left");
@@ -127,7 +181,7 @@ class Client {
             return this.error("marked as ready but not in a room");
             
         // tell everybody else
-        this._soc.to(this._room.name).emit("ready", {
+        this._soc.to(this._room.socRoomName).emit("ready", {
             id: this.id,
             name: this.name
         });
@@ -138,11 +192,14 @@ class Client {
     }
 
     on_frame(frame, ack) {
+        if(this._replay_file)
+            this._replay_file.write(frame+"\n");
+
         if( !this._room )
             return this.error("received a frame but not in a room");
-            
+
         // tell everybody else
-        this._soc.to(this._room.name).emit("frame-"+this._id, frame);
+        this._soc.to(this._room.socRoomName).emit("frame-"+this._id, frame);
     }
 
     on_combos(frame, ack) {

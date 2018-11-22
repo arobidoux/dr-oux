@@ -12,9 +12,25 @@ class Game {
         }.bind(this));
     }
 
+    log(...msg) {
+        // TODO look to format object better
+        console.log("[GAME]" + msg.join(" "));
+    }
+
     addClient(client) {
         this._clients[client.uuid] = client;
+
+        this.log(`Client ${client.uuid} added, name: ${client.name}`);
         this.sendUpdatedClients();
+
+        // send current room to the client
+        var rooms = [];
+        for(var k in this._rooms)
+            rooms.push(this._rooms[k].summary());
+
+        client._soc.emit("rooms_updated",{
+            rooms:rooms
+        });
     }
 
     removeClient(client) {
@@ -24,29 +40,16 @@ class Game {
         }
     }
 
-    sendUpdatedClients() {
-        var clients = [];
-        for(var i=0;i<this._clients.length;i++)
-            clients.push(this._clients[i].getDetails());
-        
-        this._io.emit("client_update",{clients:clients});
+    getClient(uuid) {
+        return this._clients[uuid];
     }
 
-    generateWelcomePackage() {
-        return new Promise((resolve, reject) => {
-            var rooms = [];
-            for (var k in this._rooms)
-                rooms.push(this._rooms[k].summary());
-
-            var clients = [];
-            for(var i=0;i<this._clients.length;i++)
-                clients.push(this._clients[i].getDetails());
-
-            resolve({
-                rooms: rooms,
-                clients: clients
-            });
-        });
+    sendUpdatedClients() {
+        var clients = [];
+        for(var k in this._clients)
+            clients.push(this._clients[k].getDetails());
+        
+        this._io.emit("client_update",{clients:clients});
     }
 
     getRoom(roomName) {
