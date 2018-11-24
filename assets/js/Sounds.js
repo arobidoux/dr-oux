@@ -66,6 +66,10 @@
             async: true,
             group: "bg"
         },
+        "nes-game-lost":{
+            src:"/assets/sounds/07_-_Dr._Mario_-_NES_-_Game_Over.ogg",
+            group:"bg"
+        },
         "wii-title":{
             src: "/assets/sounds/wii-02_Title.mp3",
             async: true,

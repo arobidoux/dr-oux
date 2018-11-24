@@ -162,8 +162,6 @@
 
     Multiplayer.prototype.on_gameover = function(data) {
         this._game.stop();
-        
-        Sounds.play("nes-vs-game-over");
 
         for(var i = 0;i<this._opponents.length;i++) {
             if(this._opponents[i].uuid == data.winner.uuid) {
@@ -175,9 +173,11 @@
         }
 
         if(uuid != data.winner.uuid) {
+            Sound.play("nes-game-lost");
             this._game._mainPillBottle.setMessage("You Lost");
         }
         else {
+            Sounds.play("nes-vs-game-over");
             this._game._mainPillBottle.setMessage("You won!");
         }
 

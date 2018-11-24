@@ -142,11 +142,17 @@
     DrMario.prototype.gameOver = function(state) {
         this.stop();
         if(this._soundtrack) {
-            if(Sounds.has(this._soundtrack + "-clear"))
-                Sounds.play(this._soundtrack + "-clear");
-            else
-                Sounds.play("wii-clear");
+            if(state) {
+                if(Sounds.has(this._soundtrack + "-clear"))
+                   Sounds.play(this._soundtrack + "-clear");
+                else
+                    Sounds.play("wii-clear");
+            }
+            else {
+                Sounds.play("nes-game-lost");
+            }
         }
+
         var preventAlert = false;
         for(var i=0; i<this._on_game_over_handles.length;i++) {
             if(this._on_game_over_handles[i](state) === false) {
