@@ -168,12 +168,12 @@
                 this._opponents[i].bottle.setMessage("Winner!");
             }
             else {
-                this._opponents[i].bottle.setMessage("Looser");
+                this._opponents[i].bottle.setMessage("Loser");
             }
         }
 
         if(uuid != data.winner.uuid) {
-            Sound.play("nes-game-lost");
+            Sounds.play("nes-game-lost");
             this._game._mainPillBottle.setMessage("You Lost");
         }
         else {
