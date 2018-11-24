@@ -610,13 +610,7 @@
                 j += (frame[i] & 0x7f);
             }
             else {
-                j++;
-                if(frame[i] == 0x00) {
-                    if(this._data[i] & Board.CODES.forms.mask == Board.CODES.forms.values.virus.code)
-                        virusOffset--;
-                }
-                
-                this._data[j] = frame[i];
+                this._data[j++] = frame[i];
             }
         }
 

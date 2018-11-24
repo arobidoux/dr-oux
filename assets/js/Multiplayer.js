@@ -100,9 +100,11 @@
         }
     };
 
+    document.getElementById("start-multi").disabled = true;
     Multiplayer.prototype.on_joined = function(room) {
         var elem = upsertRoom(room);
-            elem.className = "active";
+        elem.className = "active";
+        document.getElementById("start-multi").disabled = false;
     };
 
     Multiplayer.prototype.on_ready = function(data) {

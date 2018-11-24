@@ -70,6 +70,7 @@
                 var tr = parentUntil(ev.target, function(e){return e.tagName=="TR";});
                 var roomName = tr.getAttribute("room-name");
                 multiplayer.join(roomName);
+                ev.target.disabled = true;
             }
         });
 
@@ -123,7 +124,9 @@
 
             multiplayer.readyToStart(settings.difficulty).then(function(){
                 menuRootObj.style.display = "none";
-            });
+                this.disabled = false;
+            }.bind(this));
+            this.disabled = true;
         });
 
         

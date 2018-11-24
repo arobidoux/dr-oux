@@ -41,7 +41,7 @@ class Client {
 
     get status() {
         if(!this._room)
-            return "boring";
+            return "idle";
         else if(this._room.inProgress)
             return "multi";
         else if(this._is_ready)
