@@ -110,7 +110,7 @@ class Room {
         this._gameInProgress = true;
 
         // countdown
-        this.countDown(5);
+        this.countDown(3);
 
         // send update to Client instances
         this._initReplayFolder().then((folder)=>{

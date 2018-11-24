@@ -48,8 +48,10 @@
         var start_single = document.getElementById("start-single");
         start_single.addEventListener("click", function(){
             game.setSoundTrack(getSoundTrack());
-            game.startSinglePlayer(parseInt(settings.difficulty));
-            game.run();
+            setTimeout(function(){
+                game.startSinglePlayer(parseInt(settings.difficulty));
+                game.run();
+            },0);
             menuRootObj.style.display = "none";
         });
         start_single.focus();

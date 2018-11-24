@@ -172,10 +172,10 @@
             }
         }
 
-        if (!this._prevStats || this._prevStats.virus != tickStats.virus)
+        if (!this._last_virus_count || this._last_virus_count != tickStats.virus)
             this.updateVirusCount(tickStats.virus);
 
-        this._prevStats = tickStats;
+        this._last_virus_count = tickStats.virus;
 
         return tickStats;
     };

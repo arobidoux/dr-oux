@@ -3,8 +3,6 @@
 // var ws = new WebSocket(window.location.origin.replace(/^http/,"ws") + "/ws");
 window.debug = new Debug(document.getElementById("main"));
 
-Sounds.initialize();
-
 var inputs = new Inputs().bindKeys();
 
 var game = new DrMario({ root: document.getElementById("main") });
@@ -22,7 +20,8 @@ menu(game, multiplayer, inputs);
 
 (function(){
     function play(){
-        Sounds.play("nes-title");
+        Sounds.initialize();
+        Sounds.play("wii-title");
         document.removeEventListener("click",play);
         document.removeEventListener("keydown",play);
     }

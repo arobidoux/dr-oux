@@ -69,6 +69,14 @@
         this._inputs.clearAll();
         this._inputs.register("PAUSE", this.pause.bind(this), null);
         this._mainPillBottle.registerInputs(this._inputs);
+
+
+        if(this._soundtrack) {
+            if(Sounds.has(this._soundtrack + "-clear"))
+               Sounds._load(this._soundtrack + "-clear");
+            else
+                Sounds._load("wii-clear");
+        }
     };
 
     DrMario.prototype.prepareMultiPlayer = function() {
@@ -94,7 +102,7 @@
     DrMario.prototype.run = function () {
         this._running = true;
         if(this._soundtrack)
-            Sounds.play(this._soundtrack);
+            Sounds.resume(this._soundtrack);
         else
             Sounds.stopGroup("bg");
     

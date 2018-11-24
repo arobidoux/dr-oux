@@ -20,15 +20,12 @@
         },
         "fall": {
             src: "/assets/sounds/effects/pill-fall.wav",
-            inst: 8
         },
         "move": {
             src: "/assets/sounds/effects/pill-move.wav",
-            inst: 8
         },
         "rotate": {
             src: "/assets/sounds/effects/pill-rotate.wav",
-            inst: 8
         },
 
         "nes-title":{
@@ -63,7 +60,6 @@
         },
         "nes-vs-game-over":{
             src: "/assets/sounds/08_VS_Game_Over.mp3",
-            async: true,
             group: "bg"
         },
         "nes-game-lost":{
@@ -116,6 +112,25 @@
     };
 
     Sounds.play = function(key) {
+        var idx = prepareToPlay(key);
+        if(idx !== null) {  
+            elements[key].audio[idx].currentTime = 0;
+            elements[key].audio[idx].play().catch(function(err) {
+               console.log("Sound error: " + err);
+            });
+        }
+    };
+
+    Sounds.resume = function(key) {
+        var idx = prepareToPlay(key);
+        if(idx !== null) {  
+           elements[key].audio[idx].play().catch(function(err) {
+               console.log("Sound error: " + err);
+            });
+        }
+    };
+
+    function prepareToPlay(key) {
         if(typeof(library[key]) !== "undefined") {
             if(library[key].group)
                 Sounds.stopGroup(library[key].group);
@@ -123,13 +138,10 @@
             if(library[key].async)
                 Sounds._load(key);
 
-            var idx = get_idx_for(key);
-            
-            elements[key].audio[idx].play().catch(function(err) {
-                console.log("Sound error: " + err);
-            });
+            return get_idx_for(key);
         }
-    };
+        return null;
+    }
 
     function get_idx_for(key) {
         if(typeof(library[key].srcs) !== "undefined") {
@@ -145,8 +157,7 @@
             return 0;
         }
         else {
-            var l = elements[key].audio.length;
-            return l==1 ? 0:elements[key].cur++ % l;
+            return 0;
         }
     }
 
@@ -166,21 +177,22 @@
         var audio = new Audio(src);
         if(typeof(library[key].group) !== "undefined" && library[key].group == "bg")
             audio.volume = .5;
+        
+        audio.currentTime = 0;
+        
         return audio;
     };
 
     Sounds._load = function(key) {
         if(elements[key].audio.length)
             return;
-
-        for(var i=0, l=library[key].inst||1;i<l;i++) {
-            if(typeof(library[key].src) !== "undefined") {
-                elements[key].audio.push(Sounds._generateAudioFor(key,library[key].src));
-            }
-            else if(typeof(library[key].srcs) !== "undefined") {
-                for(var j=0;j<library[key].srcs.length;j++) {
-                    elements[key].audio.push(Sounds._generateAudioFor(key, library[key].srcs[j][1]));
-                }
+        
+        if(typeof(library[key].src) !== "undefined") {
+            elements[key].audio.push(Sounds._generateAudioFor(key,library[key].src));
+        }
+        else if(typeof(library[key].srcs) !== "undefined") {
+            for(var j=0;j<library[key].srcs.length;j++) {
+                elements[key].audio.push(Sounds._generateAudioFor(key, library[key].srcs[j][1]));
             }
         }
     };
@@ -193,8 +205,7 @@
         elements = {};
         for(var k in library) {
             elements[k] = {
-                audio: [],
-                cur:0
+                audio: []
             };
 
             if(typeof(library[k].async) === "undefined" || !library[k].async)
