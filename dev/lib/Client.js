@@ -19,8 +19,6 @@ class Client {
         socket.on("error", (err) => { return this.error(err) });
 
         //socket.on("disconnecting", (reason) => { return this.on_disconnecting(reason) });
-        socket.on("disconnect", (reason) => { return this.on_disconnect(reason) });
-
         var methods = Object.getOwnPropertyNames(Client.prototype);
         for(var i=0;i<methods.length;i++) {
             var m = methods[i].match(/^on_(.+)$/);
