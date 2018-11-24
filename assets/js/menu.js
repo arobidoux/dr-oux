@@ -34,7 +34,7 @@
         // add value change listener
         menuRootObj.addEventListener("input", function(ev) {
             if(ev.target.name) {
-                updateValueFor(ev.target.name, ev.target.value)
+                updateValueFor(ev.target.name, ev.target.value, false);
             }
         });
 
@@ -47,6 +47,7 @@
         // Handle the start button
         var start_single = document.getElementById("start-single");
         start_single.addEventListener("click", function(){
+            game.setSoundTrack(getSoundTrack());
             game.startSinglePlayer(parseInt(settings.difficulty));
             game.run();
             menuRootObj.style.display = "none";
@@ -95,8 +96,31 @@
             }
         });
 
+        function getSoundTrack() {
+            if(settings.soundtrack === "random") {
+                var options = document.querySelectorAll("#soundtrack option");
+                var count = options.length-2;
+                var idx = Math.floor(Math.random()*count);
+                for(var i=0;i<options.length;i++) {
+                    if(options[i].value == "none" || options[i].value == "random") {
+                        continue;
+                    }
+                    else if(--idx<=0) {
+                        return options[i].value;
+                    }
+                }
+            }
+            else if(settings.soundtrack === "none") {
+                return null
+            }
+
+            return settings.soundtrack;
+        }
+
         // start multi player
         document.getElementById("start-multi").addEventListener("click", function(){
+            game.setSoundTrack(getSoundTrack());
+
             multiplayer.readyToStart(settings.difficulty).then(function(){
                 menuRootObj.style.display = "none";
             });
@@ -116,7 +140,7 @@
             if(v)
                 menu_inputs[i].value = v;
             
-            updateValueFor(menu_inputs[i].name, menu_inputs[i].value);
+            updateValueFor(menu_inputs[i].name, menu_inputs[i].value, true);
         }
     }
 
@@ -127,7 +151,7 @@
      * @param {string} name Name of the setting to be changed
      * @param {mixed} value New value to change it to
      */
-    function updateValueFor(name, value) {
+    function updateValueFor(name, value, initial) {
         settings[name] = value;
         var labels = document.querySelectorAll("#menu [value-of='" + name + "']");
         for(var i = 0; i<labels.length; i++)
@@ -143,6 +167,13 @@
             
             case "sensitivity":
                 game.touch_sensitivity = value;
+                break;
+
+            case "soundtrack":
+                if(value != "random" && value != "none") {
+                    if(!initial)
+                        Sounds.play(value);
+                }
                 break;
         }
 

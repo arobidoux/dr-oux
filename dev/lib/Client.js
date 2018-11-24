@@ -1,5 +1,5 @@
 const path = require("path");
-const File = require("./File");
+const Replay = require("./Replay");
 
 var nextClientID=1;
 
@@ -13,7 +13,7 @@ class Client {
         this._id = nextClientID++;
         this._is_ready = false;
         this._game_status = null;
-        this._replay_file = null;
+        this._replay = null;
 
         this.log("New client connected");
         socket.on("error", (err) => { return this.error(err) });
@@ -55,7 +55,10 @@ class Client {
     }
 
     setReplayFolder(folder) {
-        this._replay_file = new File(path.join(folder,this._uuid));
+        this._replay = new Replay(path.join(folder,this._uuid));
+        if(this._frame_meta)
+            this._replay.meta(this._frame_meta);
+            
     }
 
     getDetails() {
@@ -102,17 +105,17 @@ class Client {
     }
 
     reset() {
-        if(this._replay_file) {
-            this._replay_file.close();
-            this._replay_file = null;
+        if(this._replay) {
+            this._replay.close();
+            this._replay = null;
         }
 
         this._is_ready = false;
     }
 
     sendHandicap(frame) {
-        if(this._replay_file)
-            this._replay_file.write("h" + frame+"\n");
+        if(this._replay)
+            this._replay.handicap(frame);
         this._soc.emit("handicap", frame);
     }
 
@@ -125,6 +128,7 @@ class Client {
     on_authenticate(data, ack) {
         this._name = data.name;
         this._uuid = data.uuid;
+        this._frame_meta = data.meta;
         
         this.log("Authenticated")
         this._game.addClient(this);
@@ -190,6 +194,7 @@ class Client {
         // tell everybody else
         this._soc.to(this._room.socRoomName).emit("ready", {
             id: this.id,
+            uuid: this.uuid,
             name: this.name
         });
 
@@ -200,8 +205,8 @@ class Client {
     }
 
     on_frame(frame, ack) {
-        if(this._replay_file)
-            this._replay_file.write("f" + frame+"\n");
+        if(this._replay)
+            this._replay.frame(frame);
 
         if( !this._room )
             return this.error("received a frame but not in a room");
@@ -211,8 +216,8 @@ class Client {
     }
 
     on_combos(frame, ack) {
-        if(this._replay_file)
-            this._replay_file.write("c" + frame+"\n");
+        if(this._replay)
+            this._replay.combo(frame);
 
         if( !this._room )
             return this.error("marked as ready but not in a room");
@@ -223,6 +228,8 @@ class Client {
     on_victory() {
         if( !this._room )
             return this.error("cannot grasp victory - not in a room");
+        
+        this.log("Victory");
         this._game_status = Client.GAME_STATUS.VICTORY;
         this._room.graspVictory(this);
     }
@@ -235,11 +242,18 @@ class Client {
         this._game_status = Client.GAME_STATUS.DEFEAT;
         this._room.announceDefeat(this);
     }
+
+    /*on_play_replay(path) {
+        Replay.read(path)
+            .on_frame((frame)=>{ this._soc.emit("frame-")
+                
+            })
+    }*/
 }
 
 Client.GAME_STATUS = {
     PENDING: 1,
-    VICTORY: 2,
+    VICTORY: 2, 
     DEFEAT : 3
 };
 

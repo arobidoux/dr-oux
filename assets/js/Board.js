@@ -167,6 +167,10 @@
         }
         */
 
+        if(changed.length) {
+            Sounds.play("fall");
+        }
+
         return changed.length > 0;
     };
 
@@ -215,6 +219,10 @@
                 }
                 if(this._stats.counting_combos.length) {
                     console.debug("Assigning Combos");
+                    if(this._stats.counting_combos.length>1) {
+                        Sounds.play("combo1");
+                    }
+
                     this._stats.combos = this._stats.counting_combos;
                     this._stats.counting_combos = [];
                 }
@@ -244,6 +252,7 @@
                     var explosionCount = this._checkPillDestruction(c.x, c.y);
                     if(explosionCount) {
                         console.debug("Pushing Combos");
+                        Sounds.play("destroy");
                         this._stats.counting_combos.push(this._data[i] & Board.CODES.colors.mask);
                     }
                     this._stats.explosions += explosionCount;
@@ -276,6 +285,7 @@
         for(var i=0;i<codes.length && this._handicaps.length < 4; i++) {
             this._handicaps.push(codes[i] & Board.CODES.colors.mask);
         }
+        Sounds.play("combo2");
     };
 
     Board.prototype._processExternalHandicap = function() {
@@ -599,14 +609,28 @@
             if(frame[i] & 0x80) {
                 j += (frame[i] & 0x7f);
             }
-            else{
-                this._data[j++] = frame[i];
+            else {
+                j++;
+                if(frame[i] == 0x00) {
+                    if(this._data[i] & Board.CODES.forms.mask == Board.CODES.forms.values.virus.code)
+                        virusOffset--;
+                }
+                
+                this._data[j] = frame[i];
             }
         }
 
-        return frame.length;
-    };
+        var virusCount = 0;
+        for(var i=0;i<this._size;i++) {
+            if((this._data[i] & Board.CODES.forms.mask) == Board.CODES.forms.values.virus.code)
+                virusCount++;
+        }
 
+        return {
+            updated: frame.length,
+            virus: virusCount
+        };
+    };
     /**
      * Generate a base64 encoded version of the film of this game
      */

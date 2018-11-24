@@ -3,6 +3,8 @@
 // var ws = new WebSocket(window.location.origin.replace(/^http/,"ws") + "/ws");
 window.debug = new Debug(document.getElementById("main"));
 
+Sounds.initialize();
+
 var inputs = new Inputs().bindKeys();
 
 var game = new DrMario({ root: document.getElementById("main") });
@@ -17,3 +19,14 @@ game.registerForTick(multiplayer.tick.bind(multiplayer));
 //Controller(document.getElementById("main"), inputs);
 
 menu(game, multiplayer, inputs);
+
+(function(){
+    function play(){
+        Sounds.play("nes-title");
+        document.removeEventListener("click",play);
+        document.removeEventListener("keydown",play);
+    }
+
+    document.addEventListener("click",play);
+    document.addEventListener("keydown",play);
+})();

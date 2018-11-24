@@ -14,16 +14,31 @@
         <label for="difficulty">Difficulty <span value-of="difficulty"></span></label><br />
         <input type="range" min="1" max="20" name="difficulty" value="4"><br />
         <label for="sensitivity">Touch Sensitivity <span value-of="sensitivity"></span></label><br />
-        <input type="range" min="1" max="16" name="sensitivity" value="3"><br />
+        <input type="range" min="1" max="16" name="sensitivity" value="16"><br />
         <label>
             Controls
+            <select name="keymap">
+                    <option value="wasd"> WASD - Left-Right</option>
+                    <option value="arrows" selected> ARROWS - X-Z</option>
+            </select>
+        </label>
 
-                <select name="keymap">
-                        <option value="wasd"> WASD - Left-Right</option>
-                        <option value="arrows" selected> ARROWS - X-Z</option>
-                </select>
-            </label>
+        <label>
+            Soundtrack
+            <select id="soundtrack" name="soundtrack">
+                <option value="none">None</option>
+                <option value="random">Random</option>
+                <option value="nes-fever">NES fever</option>
+                <option value="nes-chill">NES chill</option>
+                <option value="wii-fever">Wii fever</option>
+                <option value="wii-chill">Wii chill</option>
+                <option value="wii-cough">Wii cough</option>
+                <option value="wii-sneeze">Wii sneeze</option>
+            </select>
+        </label>
+
         
+        <br/>
         <button id="start-single"> Start Single Player </button><br />
         <fieldset style="display:inline-block;">
             <legend>Multi Player</legend>
@@ -95,7 +110,8 @@
     <script src="assets/js/Debug.js"></script>
     <script src="assets/js/jsonp.js"></script>
     <script src="assets/js/preference.js"></script>
-
+    
+    <script src="assets/js/Sounds.js"></script>
     <script src="assets/js/Inputs.js"></script>
     <script src="assets/js/Controller.js"></script>
     <script src="assets/js/Pill.js"></script>

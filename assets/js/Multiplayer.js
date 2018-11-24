@@ -116,6 +116,7 @@
         this._opponents.push(
             {
                 id: data.id,
+                uuid: data.uuid,
                 bottle: bottle
             }
         );
@@ -144,12 +145,15 @@
     }
 
     Multiplayer.prototype.on_countdown = function(data) {
+        Sounds.stopGroup("bg");
+        Sounds.play("move");
         this._start_resolve && this._start_resolve();
         this._game.setStatus("Game starting in " + data.sec + " second" + (data.sec > 1 ? "s" :"" ));
     };
 
     Multiplayer.prototype.on_start = function(data) {
         this._start_resolve && this._start_resolve();
+        this._game.setStatus("");
         this._game.setForMultiPlayer(this._difficulty);
         this._game.run();
     };
@@ -157,14 +161,30 @@
     Multiplayer.prototype.on_gameover = function(data) {
         this._game.stop();
         
-        alert(data.winner.name + " won the game!");
-        this.resetGame();
-    };
+        Sounds.play("nes-vs-game-over");
 
-    Multiplayer.prototype.on_last_man_standing = function() {
-        this._game.stop();
-        alert("You Won!");
-        this.resetGame();
+        for(var i = 0;i<this._opponents.length;i++) {
+            if(this._opponents[i].uuid == data.winner.uuid) {
+                this._opponents[i].bottle.setMessage("Winner!");
+            }
+            else {
+                this._opponents[i].bottle.setMessage("Looser");
+            }
+        }
+
+        if(uuid != data.winner.uuid) {
+            this._game._mainPillBottle.setMessage("You Lost");
+        }
+        else {
+            this._game._mainPillBottle.setMessage("You won!");
+        }
+
+        var reset = function() {
+            this.resetGame();
+            document.removeEventListener("click", reset);
+        }.bind(this);
+
+        document.addEventListener("click", reset);
     };
 
     Multiplayer.prototype.on_room_created = function(data) {
@@ -247,7 +267,10 @@
         document.getElementById("multi_name").value = this._name;
         this._socket.emit("authenticate",{
             uuid: uuid,
-            name: this._name
+            name: this._name,
+            meta: btoa(JSON.stringify({
+                fps: this._game._fps
+            }))
         });
     }
 

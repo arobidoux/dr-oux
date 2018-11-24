@@ -51,6 +51,7 @@
         var dx = -1;
         if (this.canTranslate(dx, 0)) {
             this._move({ x: this.x + dx });
+            Sounds.play("move");
             return true;
         }
         return false;
@@ -61,6 +62,7 @@
         var dx = 1;
         if (this.canTranslate(dx, 0)) {
             this._move({ x: this.x + dx });
+            Sounds.play("move");
             return true;
         }
         return false;
@@ -79,6 +81,7 @@
     /** Move the pill as low as it will go */
     Pill.prototype.sink = function () {
         for( var dy = 1; this.canTranslate(0, dy) ; dy++);
+        Sounds.play("fall");
         this._move({
             a: (this.a & (0xff^Board.CODES.states.mask)) | Board.CODES.states.values.dead.code,
             b: (this.b & (0xff^Board.CODES.states.mask)) | Board.CODES.states.values.dead.code,
@@ -120,6 +123,8 @@
                 return false;
             }
         }
+
+        Sounds.play("rotate");
 
         // Only "a" will be "down" or "right"
         this._move(move); 
@@ -189,6 +194,7 @@
                     return Pill.TICK.ALMOST;
                 }
                 else {
+                    Sounds.play("fall");
                     return Pill.TICK.STUCK;
                 }
             }

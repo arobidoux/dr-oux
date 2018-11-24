@@ -182,12 +182,14 @@ class Room {
     graspVictory(client) {
         this._io.in(this.socRoomName).emit("gameover", {winner:client.getDetails()});
         // write victor in the meta file
-        this._meta.write(
-            "Victory: " + client.uuid + "\n" +
-            "end " + (new Date()).toISOString() + "\n"
-        );
-        this._meta.close();
-        this._meta = null;
+        if(this._meta) {
+            this._meta.write(
+                "Victory: " + client.uuid + "\n" +
+                "end " + (new Date()).toISOString() + "\n"
+            );
+            this._meta.close();
+            this._meta = null;
+        }
         this.reset();
     }
 
@@ -200,8 +202,6 @@ class Room {
         
         if(pending_idxs.length == 1) {
             this.graspVictory(this._clients[pending_idxs[0]]);
-
-            this._clients[pending_idxs[0]]._soc.emit("last_man_standing");
         }
     }
 

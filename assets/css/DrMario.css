@@ -1,4 +1,8 @@
 
-.dr-mario .pill-bottle-root { display: inline-block; }
-.dr-mario .pill-bottle-root .pill-bottle-status { display: inline-block; }
+.pill-bottle-root { display: inline-block; position:relative; }
+.pill-bottle-root .pill-bottle-status { font-size: 9px; }
+
+.pill-bottle-root .pill-bottle-msg { position:absolute; top:50px; left:0; bottom:50px; right:32px; background-color:rgba(55,55,55,.5); font-weight: bold; line-height: 78px; text-align:center;}
+
+#opponents .pill-bottle-root .pill-bottle-msg { top:110px; }
 /*.dr-mario .pill-bottle-root canvas.pill-bottle-canvas { border: 1px solid gainsboro; display: inline-block; }*/

@@ -70,20 +70,53 @@
         }
 
         this._root.append(
+            this._status = document.createElement("div")
+        );
+
+        this._root.append(
             this._canvas = document.createElement("canvas")
         );
 
-        this._root.className = "pill-bottle-root";
+        this._root.append(
+            this._msg = document.createElement("div")
+        );
 
+        this._root.className = "pill-bottle-root";
+        this._status.className = "pill-bottle-status";
         this._canvas.className = "pill-bottle-canvas";
+        this._msg.className = "pill-bottle-msg";
+
         this._canvas.width = BOTTLE_WIDTH * SQUARE_LENGTH + PADDING.TOP + PADDING.BOTTOM;
         this._canvas.height = BOTTLE_HEIGHT * SQUARE_LENGTH + PADDING.RIGHT + PADDING.LEFT;
         if (this._scale > 1) {
-            this._canvas.style.transform = "scale(" + this._scale + ")";
-            this._canvas.style.transformOrigin = "top left";
+            this._root.style.transform = "scale(" + this._scale + ")";
+            this._root.style.transformOrigin = "top left";
         }
 
         this._context = this._canvas.getContext("2d");
+        this.setMessage(null);
+    };
+
+    PillBottle.prototype.setMessage = function(msg) {
+        if(msg) {
+            this._msg.innerText = msg;
+            this._msg.style.display = "block";
+        }
+        else {
+            this._msg.innerText = "";
+            this._msg.style.display = "none";
+        }
+    };
+
+    PillBottle.prototype.setStatus = function(status) {
+        if(status) {
+            this.status.innerText = status;
+            //this.status.style.display = "block";
+        }
+        else {
+            this.status.innerText = "";
+            //this.status.style.display = "none";
+        }
     };
 
     PillBottle.prototype.registerInputs = function (inputs) {
@@ -113,14 +146,23 @@
         var tick = 0;
         return function (frame) {
             tick++;
-            if (this._board.playFrame(frame))
+            var stats = this._board.playFrame(frame);
+            if (stats.updated) {
                 this.render(tick);
+                // look at virus count
+                this.updateVirusCount(stats.virus);
+            }
         }.bind(this);
+    };
+
+    PillBottle.prototype.updateVirusCount = function(count) {
+        this._status.innerText =
+            "Virus" + (count>1?"es":"") +
+            " Remaining: " + count;
     };
 
     PillBottle.prototype.tick = function (tick) {
         var tickStats = this._board.tick(tick);
-
 
         // TODO look to offload this to a new worker
         if (this._recording) {
@@ -129,6 +171,11 @@
                 this._stream_to[i](frame);
             }
         }
+
+        if (!this._prevStats || this._prevStats.virus != tickStats.virus)
+            this.updateVirusCount(tickStats.virus);
+
+        this._prevStats = tickStats;
 
         return tickStats;
     };

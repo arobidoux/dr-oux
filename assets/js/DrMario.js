@@ -31,10 +31,15 @@
         this._on_game_over_handles = [];
         
         this._status.innerText = "Welcome";
+        this._soundtrack = null;
 
         this.$touchstart = this.touchstart.bind(this);
         this.$touchmove = this.touchmove.bind(this);
         this.$touchend = this.touchend.bind(this);
+    }
+
+    DrMario.prototype.setSoundTrack = function(track) {
+        this._soundtrack = track;
     }
 
     DrMario.prototype.registerForTick = function(handle) {
@@ -88,11 +93,17 @@
 
     DrMario.prototype.run = function () {
         this._running = true;
+        if(this._soundtrack)
+            Sounds.play(this._soundtrack);
+        else
+            Sounds.stopGroup("bg");
+    
         this.$animate();
         this.bindTouch();
     };
 
     DrMario.prototype.stop = function () {
+        Sounds.stopGroup("bg");
         this._running = false;
         this.releaseTouch();
     };
@@ -120,20 +131,22 @@
 
     DrMario.prototype.defeat = function (tick) {
         if(!this.gameOver(false))
-            setTimeout(function(){
-                alert("Defeat :(");
-            });
+            this._mainPillBottle.setMessage("Defeat :(");
     };
 
     DrMario.prototype.victory = function (tick) {
         if(!this.gameOver(true))
-            setTimeout(function(){
-                alert("Victory!");
-            });
+            this._mainPillBottle.setMessage("Victory!");
     };
 
     DrMario.prototype.gameOver = function(state) {
         this.stop();
+        if(this._soundtrack) {
+            if(Sounds.has(this._soundtrack + "-clear"))
+                Sounds.play(this._soundtrack + "-clear");
+            else
+                Sounds.play("wii-clear");
+        }
         var preventAlert = false;
         for(var i=0; i<this._on_game_over_handles.length;i++) {
             if(this._on_game_over_handles[i](state) === false) {
@@ -285,11 +298,6 @@
             this.defeat();
         }
         else {
-            if (!prevStats || prevStats.virus != this._game_stats.virus)
-                this._status.innerText =
-                    "Virus" + (this._game_stats.virus>1?"es":"") +
-                    " Remaining: " + this._game_stats.virus;
-            
             if(this._game_stats.virus == 0 && this._game_stats.explosions == 0) {
                 // render 1 last time to play the destroying animation
                 this.victory();
