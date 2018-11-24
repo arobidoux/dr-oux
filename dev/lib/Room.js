@@ -2,6 +2,7 @@ const uuidv1 = require("uuid/v1");
 const fs = require("fs");
 const path = require("path");
 const File = require("./File");
+const Client = require("./Client");
 
 class Room {
     constructor(name, io, game) {
@@ -171,11 +172,15 @@ class Room {
 
     
     processHandicap(client, frame) {
-        client._soc.to(this.socRoomName).emit("handicap", frame);
+        // determine who should get the handicap
+        for(var i=0;i<this._clients.length;i++) {
+            if(this._clients[i].uuid != client.uuid)
+                this._clients[i].sendHandicap(frame);
+        }
     }
 
     graspVictory(client) {
-        client._soc.to(this.socRoomName).emit("gameover", {winner:client.getDetails()});
+        this._io.in(this.socRoomName).emit("gameover", {winner:client.getDetails()});
         // write victor in the meta file
         this._meta.write(
             "Victory: " + client.uuid + "\n" +
@@ -184,6 +189,20 @@ class Room {
         this._meta.close();
         this._meta = null;
         this.reset();
+    }
+
+    announceDefeat(client) {
+        // check if only 1 remain
+        var pending_idxs = [];
+        for(var i=0;i<this._clients.length;i++)
+            if(this._clients[i]._game_status == Client.GAME_STATUS.PENDING)
+                pending_idxs.push(i);
+        
+        if(pending_idxs.length == 1) {
+            this.graspVictory(this._clients[pending_idxs[0]]);
+
+            this._clients[pending_idxs[0]]._soc.emit("last_man_standing");
+        }
     }
 
     reset() {

@@ -12,6 +12,7 @@ class Client {
         this._room = null;
         this._id = nextClientID++;
         this._is_ready = false;
+        this._game_status = null;
         this._replay_file = null;
 
         this.log("New client connected");
@@ -20,15 +21,12 @@ class Client {
         //socket.on("disconnecting", (reason) => { return this.on_disconnecting(reason) });
         socket.on("disconnect", (reason) => { return this.on_disconnect(reason) });
 
-        socket.on("authenticate", (data, ack) => { return this.on_authenticate(data, ack) });
-        socket.on("join", (data, ack) => { return this.on_join(data, ack) });
-        socket.on("leave", (data, ack) => { return this.on_leave(data, ack) });
-        socket.on("ready", (data, ack) => { return this.on_ready(data, ack) });
-        socket.on("frame", (data, ack) => { return this.on_frame(data, ack) });
-        socket.on("victory", (data, ack) => { return this.on_victory(data, ack) });
-        socket.on("combos", (data, ack) => { return this.on_combos(data, ack) });
-        socket.on("invite", (data, ack) => { return this.on_invite(data, ack) });
-        socket.on("log", (data, ack) => { return this.on_log(data, ack) });
+        var methods = Object.getOwnPropertyNames(Client.prototype);
+        for(var i=0;i<methods.length;i++) {
+            var m = methods[i].match(/^on_(.+)$/);
+            if(m)
+                socket.on(m[1], this[methods[i]].bind(this));
+        }
     }
 
     get name() {
@@ -114,6 +112,12 @@ class Client {
         this._is_ready = false;
     }
 
+    sendHandicap(frame) {
+        if(this._replay_file)
+            this._replay_file.write("h" + frame+"\n");
+        this._soc.emit("handicap", frame);
+    }
+
     on_disconnect(reason) {
         this._game.removeClient(this);
         this.leave();
@@ -192,13 +196,14 @@ class Client {
         });
 
         this._is_ready = true;
+        this._game_status = Client.GAME_STATUS.PENDING;
 
         this._room.oneMoreReady();
     }
 
     on_frame(frame, ack) {
         if(this._replay_file)
-            this._replay_file.write(frame+"\n");
+            this._replay_file.write("f" + frame+"\n");
 
         if( !this._room )
             return this.error("received a frame but not in a room");
@@ -208,16 +213,36 @@ class Client {
     }
 
     on_combos(frame, ack) {
+        if(this._replay_file)
+            this._replay_file.write("c" + frame+"\n");
+
         if( !this._room )
             return this.error("marked as ready but not in a room");
+        this.log("Combos!");
         this._room.processHandicap(this, frame);
     }
 
     on_victory() {
         if( !this._room )
-            return this.error("marked as ready but not in a room");
+            return this.error("cannot grasp victory - not in a room");
+        this._game_status = Client.GAME_STATUS.VICTORY;
         this._room.graspVictory(this);
     }
+
+    on_defeat() {
+        if( !this._room )
+            return this.error("cannot announce defeat - not in a room");
+        
+        this.log("Defeated");
+        this._game_status = Client.GAME_STATUS.DEFEAT;
+        this._room.announceDefeat(this);
+    }
 }
+
+Client.GAME_STATUS = {
+    PENDING: 1,
+    VICTORY: 2,
+    DEFEAT : 3
+};
 
 module.exports = Client;

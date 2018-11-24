@@ -213,8 +213,11 @@
                     if(!this.insertNextPill())
                         this._stats.gameOver = true;
                 }
-                this._stats.combos = this._stats.counting_combos;
-                this._stats.counting_combos = [];
+                if(this._stats.counting_combos.length) {
+                    console.debug("Assigning Combos");
+                    this._stats.combos = this._stats.counting_combos;
+                    this._stats.counting_combos = [];
+                }
             }
             else if (!this.tickBoard(tick)) {
                 // reset virus count
@@ -240,6 +243,7 @@
 
                     var explosionCount = this._checkPillDestruction(c.x, c.y);
                     if(explosionCount) {
+                        console.debug("Pushing Combos");
                         this._stats.counting_combos.push(this._data[i] & Board.CODES.colors.mask);
                     }
                     this._stats.explosions += explosionCount;

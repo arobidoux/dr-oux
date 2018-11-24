@@ -10,6 +10,7 @@ body { background: black; color: white; width: 480px; margin:auto;}
 
 
 #players .boring .player-spectate,
+#players .boring .player-join,
 
 #players .pending .player-invite,
 #players .pending .player-spectate,

@@ -105,6 +105,24 @@
     <script src="assets/js/Multiplayer.js"></script>
     <script src="assets/js/menu.js"></script>
     <script src="assets/js/index.js"></script>
+
+    <!--pre id="dump"></pre>
+    <script>
+        
+        document.addEventListener("keydown",function(ev){
+            var r = "";
+            for(var k in ev)
+                r += k+":" + ev[k]+"\n";
+
+            document.getElementById("dump").innerText = r;
+        });
+
+        document.addEventListener("click",function(ev){
+            document.getElementById("dump").innerText = "";
+        });
+        
+
+    </script-->
 </body>
 
 </html>

@@ -34,6 +34,7 @@
             else {
                 this._socket.emit("defeat");
             }
+            return false;
         }.bind(this));
     }
 
@@ -155,7 +156,14 @@
 
     Multiplayer.prototype.on_gameover = function(data) {
         this._game.stop();
-        alert("You lost!");
+        
+        alert(data.winner.name + " won the game!");
+        this.resetGame();
+    };
+
+    Multiplayer.prototype.on_last_man_standing = function() {
+        this._game.stop();
+        alert("You Won!");
         this.resetGame();
     };
 
@@ -184,7 +192,8 @@
     };
 
     Multiplayer.prototype.on_handicap = function(encoded) {
-        this._game._mainPillBottle._board.queueHandicap(decodeFrame(encoded));
+        console.debug("Queueing Handicap");
+        this._game._mainPillBottle._board.queueHandicap(...decodeFrame(encoded));
     };
 
     Multiplayer.prototype.on_client_update = function(data) {

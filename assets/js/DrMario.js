@@ -119,26 +119,29 @@
     };
 
     DrMario.prototype.defeat = function (tick) {
-        this.gameOver(false);
-        setTimeout(function(){
-            alert("Defeat :(");
-        });
+        if(!this.gameOver(false))
+            setTimeout(function(){
+                alert("Defeat :(");
+            });
     };
 
     DrMario.prototype.victory = function (tick) {
-        this.gameOver(true);
-        setTimeout(function(){
-            alert("Victory!");
-        });
+        if(!this.gameOver(true))
+            setTimeout(function(){
+                alert("Victory!");
+            });
     };
 
     DrMario.prototype.gameOver = function(state) {
         this.stop();
+        var preventAlert = false;
         for(var i=0; i<this._on_game_over_handles.length;i++) {
             if(this._on_game_over_handles[i](state) === false) {
-                this._on_game_over_handles.splice(i,1);
+                if(this._on_game_over_handles.splice(i,1) === false)
+                    preventAlert = true;
             }
         }
+        return preventAlert;
     };
 
     /**
@@ -267,7 +270,7 @@
 
     DrMario.prototype._tick = function (tick) {
         //window.debug.set("Tick",tick);
-        var prevStats = this._game_stats;
+        var prevStats = Object.assign({}, this._game_stats);
 
         for(var i = 0; i<this._tickers.length; i++)
             this._tickers[i](tick);
