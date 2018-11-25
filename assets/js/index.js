@@ -16,7 +16,7 @@ game.registerForTick(multiplayer.tick.bind(multiplayer));
 // onscreen controller
 //Controller(document.getElementById("main"), inputs);
 
-menu(game, multiplayer, inputs);
+//menu.init(game, multiplayer, inputs);
 
 (function(){
     function play(){

@@ -78,32 +78,31 @@
 
 
     Multiplayer.prototype.once_connect = function() {
-        this._name = document.getElementById("multi_name").value;
-        if(!this._name) {
-            if(this._name = preference("multi-name", null)) {
-                // we're good
+        menu.init.then(function(){
+            menu.set("uuid", uuid);
+            this._name = menu.get("multi_name");
+            if(!this._name) {
+                this._name = prompt("Please input your name:");
+            }
+            
+            if(!this._name) {
+                pickRandomName().then(function(name) {
+                    this._name = name;
+                    menu.set("multi_name",this._name);
+                    authenticate.call(this);
+                }.bind(this));
             }
             else {
-                this._name = prompt("Please input your name:");
-                preference.set("multi-name", this._name);
-            }
-        }
-        
-        if(!this._name) {
-            pickRandomName().then(function(name) {
-                this._name = name;
+                menu.set("multi_name",this._name);
                 authenticate.call(this);
-            }.bind(this));
-        }
-        else {
-            authenticate.call(this);
-        }
+            }
+        }.bind(this));
     };
-
-    document.getElementById("start-multi").disabled = true;
+        
+    //document.getElementById("start-multi").disabled = true;
     Multiplayer.prototype.on_joined = function(room) {
-        var elem = upsertRoom(room);
-        elem.className = "active";
+        //var elem = upsertRoom(room);
+        //elem.className = "active";
         document.getElementById("start-multi").disabled = false;
     };
 
@@ -190,20 +189,20 @@
     };
 
     Multiplayer.prototype.on_room_created = function(data) {
-        upsertRoom(data);
+        //upsertRoom(data);
     };
 
     Multiplayer.prototype.on_room_updated = function(data) {
-        upsertRoom(data);
+        //upsertRoom(data);
     };
 
     Multiplayer.prototype.on_rooms_updated = function(data) {
         var updated = [];
         for(var i=0;i<data.rooms.length;i++) {
-            updated.push(upsertRoom(data.rooms[i]));
+            //updated.push(upsertRoom(data.rooms[i]));
         }
 
-        upsertRoom.removeNotIn(updated);
+        //upsertRoom.removeNotIn(updated);
     };
 
     Multiplayer.prototype.on_room_removed = function(data) {
@@ -219,16 +218,11 @@
     };
 
     Multiplayer.prototype.on_client_update = function(data) {
-        var updated = [];
-        for(var i=0;i<data.clients.length;i++) {
-            updated.push(upsertPlayer(data.clients[i]));
-        }
-
-        upsertPlayer.removeNotIn(updated);
+        menu.set("players", data.clients);
     };
 
     Multiplayer.prototype.on_update_one_client = function(details) {
-        upsertPlayer(details);
+        //upsertPlayer(details);
     };
 
     Multiplayer.prototype.on_invited = function(data) {
@@ -266,7 +260,6 @@
     };
 
     function authenticate() {
-        document.getElementById("multi_name").value = this._name;
         this._socket.emit("authenticate",{
             uuid: uuid,
             name: this._name,
@@ -275,7 +268,7 @@
             }))
         });
     }
-
+/*
     var upsertRoom = generateUpsertElem(
         document.getElementById("multi-room-template"),
         generateRoomID,
@@ -354,7 +347,7 @@
     function generatePlayerID(client) {
         return "player-row-" + client.uuid;
     };
-
+    */
     function pickRandomName() {
         return jsonp("https://randomuser.me/api/?inc=name&noinfo&callback=", 5)
         .then(function(res){

@@ -1,13 +1,21 @@
 body { background: black; color: white; width: 480px; margin:auto;}
 
 #opponents { position: fixed; right: 5px; top: 5px; }
+
+#my-settings { display: inline-block; margin:5px; width:calc(50% - 10px); }
+#multiplayer { display: inline-block; margin:5px; width:calc(50% - 10px); }
+
+/*
 #multi-rooms-table { border:1px solid white; border-collapse: collapse;}
 #multi-rooms-table th, #multi-rooms-table td { border: 1px solid white; }
 
 #multi-room-template { display: none; }
 
 #multi-rooms .active td { background-color: #4caf50; border-bottom-color:greenyellow;}
+*/
 
+
+.room-template .readyness { float: right; }
 
 #players .idle .player-spectate,
 #players .idle .player-join,

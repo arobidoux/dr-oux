@@ -9,93 +9,85 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" />
 </head>
 
-<body>
-    <div id="menu">
-        <label for="difficulty">Difficulty <span value-of="difficulty"></span></label><br />
-        <input type="range" min="1" max="20" name="difficulty" value="4"><br />
-        <label for="sensitivity">Touch Sensitivity <span value-of="sensitivity"></span></label><br />
-        <input type="range" min="1" max="16" name="sensitivity" value="16"><br />
-        <label>
-            Controls
-            <select name="keymap">
-                    <option value="wasd"> WASD - Left-Right</option>
-                    <option value="arrows" selected> ARROWS - X-Z</option>
-            </select>
-        </label>
-
-        <label>
-            Soundtrack
-            <select id="soundtrack" name="soundtrack">
-                <option value="none">None</option>
-                <option value="random">Random</option>
-                <option value="nes-fever">NES fever</option>
-                <option value="nes-chill">NES chill</option>
-                <option value="wii-fever">Wii fever</option>
-                <option value="wii-chill">Wii chill</option>
-                <option value="wii-cough">Wii cough</option>
-                <option value="wii-sneeze">Wii sneeze</option>
-            </select>
-        </label>
-
-        
-        <br/>
-        <button id="start-single"> Start Single Player </button><br />
-        <fieldset style="display:inline-block;">
-            <legend>Multi Player</legend>
+<body ng-app="app">
+    <div id="menu" ng-controller="MenuController">
+        <div id="my-settings">
             <label> My Name
-                <input type="text" name="multi-name" id="multi_name">
+                <input type="text" ng-model="multi_name" style="width: 10em;">
             </label>
+            <br />
 
-            <table id="players-table">
-                <thead>
-                    <tr><th colspan=3>Players</th></tr>
-                    <tr>
-                        <th>Name</th>
-                        <th>Status</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody id="players">
-                    <tr id="player-template">
-                        <td class="player-value-name"></td>
-                        <td class="player-value-status"></td>
-                        <td class="actions">
-                            <button class="player-invite">Invite</button>
-                            <button class="player-join">Join</button>
-                            <button class="player-spectate">Spectate</button>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
+            <label> Difficulty <span style="width:2em;">{{difficulty}}</span>
+                <input type="range" min="1" max="20" ng-model="difficulty">
+            </label>
+            <br />
 
-            <table id="multi-rooms-table">
-                <thead>
-                    <tr>
-                        <th>Room</th>
-                        <th>Players</th>
-                        <th>In Progress</th>
-                        <th>Join</th>
-                    </tr>
-                </thead>
-                <tbody id="multi-rooms">
-                    <tr id="multi-room-template">
-                        <td class="room-value-name"></td>
-                        <td><span class="room-value-clientReady"></span> / <span class="room-value-clientCount"></span> </td>
-                        <td class="room-value-gameInProgress"></td>
-                        <td><button class="room-join-btn">Join</button></td>
-                    </tr>
-                </tbody>
-                <!--tfoot>
-                    <tr>
-                        <th colspan="3"><input type="text" name="multi-new-room" placeholder="New Room"></th>
-                        <th><button id="multi-create-room">Create & Join</button></th>
-                    </tr>
-                </tfoot-->
-            </table>
+            <label> Touch Sensitivity <span style="width:2em;">{{sensitivity}}</span>
+                <input type="range" min="1" max="16" ng-model="sensitivity">
+            </label>
+            <br />
 
-            </ul>
-            <button id="start-multi"> Ready! </button>
-        </fieldset>
+            <label>
+                Controls
+                <select ng-model="controls" ng-options="key as kmap.label for ( key, kmap ) in keyMap"></select>
+            </label>
+            <br />
+            <label>
+                Soundtrack
+                <select id="soundtrack" ng-model="soundtrack">
+                    <option value="none">None</option>
+                    <option value="random">Random</option>
+                    <option value="nes-fever">NES fever</option>
+                    <option value="nes-chill">NES chill</option>
+                    <option value="wii-fever">Wii fever</option>
+                    <option value="wii-chill">Wii chill</option>
+                    <option value="wii-cough">Wii cough</option>
+                    <option value="wii-sneeze">Wii sneeze</option>
+                </select>
+            </label>
+            <br />
+
+            <button id="start-single"> Start Single Player </button>
+            <br />
+
+            <button id="host-new-multi"> New MultiPlayer Game </button>
+            <br />
+
+            <fieldset style="display:inline-block;">
+                <legend>Idle online players</legend>
+                <ul id="players">
+                    <li ng-repeat="player in players | filter:{uuid: '!'+uuid} ">
+                        <span class="player-name">{{player.name}}</span>
+                        <button class="player-invite" ng-click="invite(player.uuid)">
+                            Invite
+                        </button>
+                    </li>
+                </ul>
+            </fieldset>
+        </div>
+
+        <div id="multiplayer">
+            <div id="opened-rooms">
+                <fieldset id="room-template">
+                    <legend>
+                        <span class="room-value-name"> John Smith's Game</span>
+                        <span class="readyness">
+                            <span class="room-value-clientReady">0</span> / <span class="room-value-clientCount">1</span>
+                        </span>
+                    </legend>
+                    <ul class="room-player-list">
+                        <li class="room-player-template">
+                            <span class="room-player-value-name"> John Smith </span>
+                            <span class="room-player-ready"> - </span>
+                        </li>
+                    </ul>
+
+                    <button class="room-join-btn">Join</button>
+                    <button class="start-multi"> Ready! </button>
+                </fieldset>
+
+            </div>
+        </div>
     </div>
 
     <div id="main"></div>
@@ -110,7 +102,8 @@
     <script src="assets/js/Debug.js?v5"></script>
     <script src="assets/js/jsonp.js?v5"></script>
     <script src="assets/js/preference.js?v5"></script>
-    
+    <script src="assets/vendor/js/angular.min.js?v5"></script>
+
     <script src="assets/js/Sounds.js?v5"></script>
     <script src="assets/js/Inputs.js?v5"></script>
     <script src="assets/js/Controller.js?v5"></script>
@@ -119,7 +112,7 @@
     <script src="assets/js/PillBottle.js?v5"></script>
     <script src="assets/js/DrMario.js?v5"></script>
     <script src="assets/js/Multiplayer.js?v5"></script>
-    <script src="assets/js/menu.js?v5"></script>
+    <script src="assets/js/ng-menu.js?v5"></script>
     <script src="assets/js/index.js?v5"></script>
 
     <!--pre id="dump"></pre>
