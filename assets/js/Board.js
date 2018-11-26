@@ -11,9 +11,9 @@
      * @param {int} height how many square high is the bottle
      */
     function Board(options) {
-        this._width = options.width || 8;
-        this._height = options.height || 16;
-        this._speed = options.speed || Board.SPEED.NORMAL;
+        this._width = options && options.width || 8;
+        this._height = options && options.height || 16;
+        this._speed = options && options.speed || Board.SPEED.NORMAL;
 
         this._effective_speed = (1 / this._speed) * SPEED_FACTOR;
         this._size = this._height * this._width;
@@ -27,9 +27,18 @@
          * offseted by this._width
          */
         if (typeof (Uint8Array) !== "undefined")
-            this._data = new Uint8Array(this._size).fill(0);
+            this._data = new Uint8Array(this._size);
         else
-            this._data = new Array(this._size).fill(0);
+            this._data = new Array(this._size);
+
+        // fill in with zeros
+        if(typeof(this._data.fill)!=="function") {
+            for(var i=0;i<this._data.length;i++)
+                this._data[i] = 0x00;
+        }
+        else {
+            this._data.fill(0x00);
+        }
 
         this._ownedPill = null;
         this._nextPill = null;
@@ -217,15 +226,6 @@
                     if(!this.insertNextPill())
                         this._stats.gameOver = true;
                 }
-                if(this._stats.counting_combos.length) {
-                    console.debug("Assigning Combos");
-                    if(this._stats.counting_combos.length>1) {
-                        Sounds.play("combo1");
-                    }
-
-                    this._stats.combos = this._stats.counting_combos;
-                    this._stats.counting_combos = [];
-                }
             }
             else if (!this.tickBoard(tick)) {
                 // reset virus count
@@ -265,6 +265,16 @@
                 }
 
                 if (!this._stats.explosions) {
+                    // process combos
+                    if(this._stats.counting_combos.length) {
+                        console.debug("Assigning Combos");
+                        if(this._stats.counting_combos.length>1) {
+                            Sounds.play("combo1");
+                        }
+    
+                        this._stats.combos = this._stats.counting_combos;
+                        this._stats.counting_combos = [];
+                    }
                     // look if we need to add the penalitity / handicap
                     if(this._processExternalHandicap()) {   
                         // queue next one
@@ -518,7 +528,13 @@
         }
 
         // clear old game
-        this._data.fill(0);
+        if(typeof(this._data.fill)!=="function") {
+            for(var i=0;i<this._data.length;i++)
+                this._data[i] = 0x00;
+        }
+        else {
+            this._data.fill(0x00);
+        }
         this._lvl_history = [];
 
         for (var i = 0, x = generator(i); x !== null; x = generator(++i)) {
@@ -551,6 +567,35 @@
         return btoa(this._lvl_history.join(""));
     };
 
+    
+    // monkey patch for firefox
+    function cloneArray(src) {
+        if(typeof(src.slice) !== "function") {
+            var res;
+            if (typeof (Uint8Array) !== "undefined")
+                res = new Uint8Array(src.length);
+            else
+                res = new Array(src.length);
+
+            for(var i=0;i<src.length;i++)
+                res[i] = src[i];
+            
+            return res;
+        }
+        else {
+            return src.slice();
+        }
+    }
+
+    function pactArray(src) {
+        if(typeof(Uint8Array.from) !== "function") {
+            return cloneArray(src);
+        }
+        else {
+            return Uint8Array.from(src);
+        }
+    }
+
     /**
      * Return a compressed version of the changes made to the board
      * Every bytes returned with significant data will have it's most
@@ -563,7 +608,8 @@
      */
     Board.prototype.getNewFrame = function (forceReferenceFrame) {
         var frame = null;
-        var currentFrame = this._data.slice();
+        var currentFrame = cloneArray(this._data);
+
         if (this._previousFrame && (typeof (forceReferenceFrame) === "undefined" || !forceReferenceFrame)) {
             var frame = new Array();
 
@@ -584,10 +630,10 @@
                     frame.push(currentFrame[i]);
                 }
             }
-            frame = Uint8Array.from(frame);
+            frame = pactArray(frame);
         }
         else {
-            frame = currentFrame.slice();
+            frame = cloneArray(currentFrame);
         }
 
         // keep a copy of what it is now to to send it back
@@ -604,26 +650,28 @@
     
     Board.prototype.playFrame = function(frame) {
         var j = 0;
+        var updated=0;
         for(var i=0;i<frame.length;i++) {
             // decompress
             if(frame[i] & 0x80) {
                 j += (frame[i] & 0x7f);
             }
             else {
+                updated++;
                 this._data[j++] = frame[i];
             }
         }
 
+        return updated;        
+    };
+
+    Board.prototype.getVirusCount = function() {
         var virusCount = 0;
         for(var i=0;i<this._size;i++) {
             if((this._data[i] & Board.CODES.forms.mask) == Board.CODES.forms.values.virus.code)
                 virusCount++;
         }
-
-        return {
-            updated: frame.length,
-            virus: virusCount
-        };
+        return virusCount;
     };
     /**
      * Generate a base64 encoded version of the film of this game
@@ -726,12 +774,15 @@
         return f | (code & (0xFF ^ Board.CODES.forms.mask));
     };
 
-    var sprite = document.getElementById("sprite");
+    var sprite = null;
 
     /** Render a cell on the context, based on the code, located at rect */
     Board.renderSprite = function (context, code, x, y, tick) {
         if (code == 0x00)
             return;
+
+        if(sprite === null)
+            sprite = document.getElementById("sprite");
 
         var c = code & Board.CODES.colors.mask;
         var ix = 0, iy = 0;
@@ -766,4 +817,4 @@
     };
 
     global[ns] = Board;
-})(this, "Board");
+}).apply(null,typeof(window) !== "undefined" ? [this, "Board"] : [module,"exports"]);

@@ -45,9 +45,36 @@
 
     Multiplayer.prototype.join = function(room) {
         this._socket.emit("join", {room:room}, function(roomDetails){
+            Sounds.play("wii-select");
             if(roomDetails.error) {
                 return this.error(roomDetails.error);
             }
+            if(roomDetails.gameInProgress) {
+                // add the pill bottle of the other players and display their current state
+                for(var i=0; i<roomDetails.clients.length; i++ ) {
+                    // skip us
+                    if(roomDetails.clients[i].uuid !== uuid) {
+                        var opponent = addOpponent.call(this, roomDetails.clients[i]);
+                        if(roomDetails.clients[i].board) {
+                            opponent.bottle._board.playFrame(decodeFrame(roomDetails.clients[i].board));
+                        }
+                    }
+                }
+
+                // auto set ready & start my game
+                this.readyToStart(parseInt(menu.get("difficulty", 4)));
+
+                // auto start it
+                if(roomDetails.startingIn == 0)
+                    this.on_start();
+            }
+        }.bind(this));
+    };
+
+    Multiplayer.prototype._prepareStreaming = function() {
+        this._game.prepareMultiPlayer();
+        this._game._mainPillBottle.streamTo(function(frame){
+            this._socket.emit("frame", encodeFrame(frame));
         }.bind(this));
     };
 
@@ -60,10 +87,7 @@
             this._socket.emit("ready");
             
             // prepare game for streaming
-            this._game.prepareMultiPlayer();
-            this._game._mainPillBottle.streamTo(function(frame){
-                this._socket.emit("frame", encodeFrame(frame));
-            }.bind(this));
+            this._prepareStreaming();
         }.bind(this));
 
         var cleanUp = function(){
@@ -99,14 +123,11 @@
         }.bind(this));
     };
         
-    //document.getElementById("start-multi").disabled = true;
     Multiplayer.prototype.on_joined = function(room) {
-        //var elem = upsertRoom(room);
-        //elem.className = "active";
-        document.getElementById("start-multi").disabled = false;
+        menu.set("room", room);
     };
 
-    Multiplayer.prototype.on_ready = function(data) {
+    function addOpponent(data) {
         console.debug(data.name, "is ready to play");
 
         var bottle = new PillBottle({
@@ -114,18 +135,33 @@
             title: data.name
         });
 
-        this._opponents.push(
-            {
-                id: data.id,
-                uuid: data.uuid,
-                bottle: bottle
-            }
-        );
+        var opponent = {
+            id: data.id,
+            uuid: data.uuid,
+            bottle: bottle
+        };
+
+        this._opponents.push(opponent);
 
         var handle = bottle.generateStreamHandler();
         this._socket.on("frame-"+data.id, function(encoded) {
             handle(decodeFrame(encoded));
         });
+
+        return opponent;
+    }
+
+    Multiplayer.prototype.on_ready = function(data) {
+        var room = menu.get("room");
+        menu.splice("players", function(player){
+            if(data.uuid == player.uuid) {
+                player.ready = true;
+
+                // check if we are in the same game
+                if(player.room && room && player.room.uuid==room.uuid)
+                    addOpponent.call(this,data);
+            }
+        }.bind(this));
     };
 
     function encodeFrame(frame) {
@@ -146,6 +182,7 @@
     }
 
     Multiplayer.prototype.on_countdown = function(data) {
+        menu.set("playing", true);
         Sounds.stopGroup("bg");
         Sounds.play("move");
         this._start_resolve && this._start_resolve();
@@ -153,6 +190,7 @@
     };
 
     Multiplayer.prototype.on_start = function(data) {
+        menu.set("playing", true);
         this._start_resolve && this._start_resolve();
         this._game.setStatus("");
         this._game.setForMultiPlayer(this._difficulty);
@@ -160,6 +198,7 @@
     };
 
     Multiplayer.prototype.on_gameover = function(data) {
+        menu.set("playing", false);
         this._game.stop();
 
         for(var i = 0;i<this._opponents.length;i++) {
@@ -189,27 +228,24 @@
     };
 
     Multiplayer.prototype.on_room_created = function(data) {
+        menu.push("rooms", data);
         //upsertRoom(data);
     };
 
     Multiplayer.prototype.on_room_updated = function(data) {
-        //upsertRoom(data);
-    };
-
-    Multiplayer.prototype.on_rooms_updated = function(data) {
-        var updated = [];
-        for(var i=0;i<data.rooms.length;i++) {
-            //updated.push(upsertRoom(data.rooms[i]));
-        }
-
-        //upsertRoom.removeNotIn(updated);
+        menu.splice("rooms", function(elem) {
+            return elem.uuid == data.uuid;
+        }, data);
     };
 
     Multiplayer.prototype.on_room_removed = function(data) {
-        var id = generateRoomID(data);
-        var elem = document.getElementById(id);
-        if(elem && elem.parentElement)
-            elem.parentElement.removeChild(elem);
+        menu.splice("rooms", function(elem) {
+            return elem.uuid == data.uuid;
+        });
+    };
+
+    Multiplayer.prototype.on_room_list = function(data) {
+        menu.set("rooms", data.rooms);
     };
 
     Multiplayer.prototype.on_handicap = function(encoded) {
@@ -222,13 +258,28 @@
     };
 
     Multiplayer.prototype.on_update_one_client = function(details) {
-        //upsertPlayer(details);
+        menu.splice("players", function(elem){
+            return details.uuid == elem.uuid;
+        },details);
     };
 
     Multiplayer.prototype.on_invited = function(data) {
-        if(confirm(data.from.name + " is inviting you to a game, Join?")) {
-            this.join(data.room);
-        }
+        menu.push("invitations", data);
+    };
+
+    Multiplayer.prototype.on_chat = function(data) {
+        menu.push("chats", data);
+
+        // dirty fix to scroll down
+        setTimeout(function(){
+            var chatBoxes = document.querySelectorAll(".chat-box");
+            for(var i=0;i<chatBoxes.length;i++)
+                chatBoxes[i].scrollTop = chatBoxes[i].scrollHeight;
+        });
+    };
+
+    Multiplayer.prototype.chat = function(msg) {
+        this._socket.emit("chat", msg);
     };
 
     Multiplayer.prototype.resetGame = function() {
@@ -249,9 +300,11 @@
         this._socket.emit("joinPlayer", player_id);
     };
 
+    /*
     Multiplayer.prototype.spectate = function(player_id) {
         this._socket.emit("spectate", player_id);
     };
+    */
 
     Multiplayer.prototype.tick = function(tick) {
         if(this._game._game_stats && this._game._game_stats.combos && this._game._game_stats.combos.length > 1) {

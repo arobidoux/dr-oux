@@ -1,5 +1,10 @@
 const path = require("path");
+const atob = require("atob");
+const btoa = require("btoa");
+
+
 const Replay = require("./Replay");
+const Board = require("../../assets/js/Board");
 
 var nextClientID=1;
 
@@ -14,6 +19,8 @@ class Client {
         this._is_ready = false;
         this._game_status = null;
         this._replay = null;
+
+        this._board = new Board();
 
         this.log("New client connected");
         socket.on("error", (err) => { return this.error(err) });
@@ -65,8 +72,10 @@ class Client {
         return {
             name: this._name,
             ready: this._ready,
+            id: this._id,
             uuid: this._uuid,
             room: this._room && this._room.summary() || null,
+            board: encodeFrame(this._board.getNewFrame(true)),
             status: this.status
         };
     }
@@ -138,6 +147,22 @@ class Client {
         this.log(">", msg);
     }
 
+    on_chat(msg) {
+        if(this._room) {
+            this.log("chat:"+this._room.socRoomName+"] " + msg);
+            this._game._io.in(this._room.socRoomName).emit("chat",{
+                from: {
+                    name: this.name,
+                    uuid: this.uuid
+                },
+                msg: msg
+            });
+        }
+        else {
+            this.log("chat:open-channel] " + msg);
+        }
+    }
+
     on_join(data, ack) {
         this.join(data.room);
 
@@ -158,7 +183,10 @@ class Client {
         }
 
         var invitation = {
-            room:this._room.name,
+            room:{
+                name:this._room.name,
+                uuid:this._room.uuid
+            },
             from:this.getDetails()
         };
 
@@ -192,7 +220,7 @@ class Client {
             return this.error("marked as ready but not in a room");
             
         // tell everybody else
-        this._soc.to(this._room.socRoomName).emit("ready", {
+        this._soc.broadcast.emit("ready", {
             id: this.id,
             uuid: this.uuid,
             name: this.name
@@ -213,6 +241,9 @@ class Client {
 
         // tell everybody else
         this._soc.to(this._room.socRoomName).emit("frame-"+this._id, frame);
+
+        // update our internal board
+        this._board.playFrame(decodeFrame(frame));
     }
 
     on_combos(frame, ack) {
@@ -256,5 +287,24 @@ Client.GAME_STATUS = {
     VICTORY: 2, 
     DEFEAT : 3
 };
+
+
+// look to centralize this
+function encodeFrame(frame) {
+    // encode it
+    var encoded = "";
+    for(var i=0;i<frame.length;i++) 
+    encoded += String.fromCharCode(frame[i]);
+    return btoa(encoded);
+}
+
+function decodeFrame(encoded) {
+    var frame = [];
+    var r = atob(encoded);
+    for(var i=0;i<r.length;i++) 
+        frame.push(r.charCodeAt(i));
+    
+    return frame;
+}
 
 module.exports = Client;

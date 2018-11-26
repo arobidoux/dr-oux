@@ -8,10 +8,10 @@
         this._root = options && options.root || null;
         if (!this._root) {
             document.getElementsByTagName("body")[0]
-                .append(this._root = document.createElement("div"));
+                .appendChild(this._root = document.createElement("div"));
         }
 
-        this._root.append(
+        this._root.appendChild(
             this._status = document.createElement("div")
         );
         this._status.className = "game-status";
@@ -30,7 +30,6 @@
         this._tickers = [];
         this._on_game_over_handles = [];
         
-        this._status.innerText = "Welcome";
         this._soundtrack = null;
 
         this.$touchstart = this.touchstart.bind(this);
@@ -183,7 +182,7 @@
     };
 
     DrMario.prototype.setStatus = function(status) {
-        this._status.innerText = status;
+        this._status.textContent = status;
     };
 
     DrMario.prototype.touch_sensitivity = 5;
@@ -297,7 +296,6 @@
 
     DrMario.prototype._tick = function (tick) {
         //window.debug.set("Tick",tick);
-        var prevStats = Object.assign({}, this._game_stats);
 
         for(var i = 0; i<this._tickers.length; i++)
             this._tickers[i](tick);

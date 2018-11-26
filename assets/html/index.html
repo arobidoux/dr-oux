@@ -9,29 +9,29 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" />
 </head>
 
-<body ng-app="app">
-    <div id="menu" ng-controller="MenuController">
+<body ng-app="app" ng-controller="MenuController">
+    <div id="menu" ng-hide="playing">
         <div id="my-settings">
             <label> My Name
                 <input type="text" ng-model="multi_name" style="width: 10em;">
             </label>
-            <br />
+            
 
-            <label> Difficulty <span style="width:2em;">{{difficulty}}</span>
-                <input type="range" min="1" max="20" ng-model="difficulty">
+            <label> Difficulty
+                <input type="number" min="1" max="20" ng-model="difficulty">
             </label>
-            <br />
+            
 
-            <label> Touch Sensitivity <span style="width:2em;">{{sensitivity}}</span>
-                <input type="range" min="1" max="16" ng-model="sensitivity">
+            <label> Touch Sensitivity
+                <input type="number" min="1" max="16" ng-model="sensitivity">
             </label>
-            <br />
+            
 
             <label>
                 Controls
                 <select ng-model="controls" ng-options="key as kmap.label for ( key, kmap ) in keyMap"></select>
             </label>
-            <br />
+            
             <label>
                 Soundtrack
                 <select id="soundtrack" ng-model="soundtrack">
@@ -45,50 +45,94 @@
                     <option value="wii-sneeze">Wii sneeze</option>
                 </select>
             </label>
-            <br />
 
-            <button id="start-single"> Start Single Player </button>
-            <br />
+            <label>
+                Enable Sound
+                <input type="checkbox" ng-model="enable_sound" ng-true-value="'yes'" ng-false-value="'no'">
+            </label>
+            
 
-            <button id="host-new-multi"> New MultiPlayer Game </button>
-            <br />
+            <button id="start-single" class="row" ng-click="startSingle()"> Start Single Player </button>
+            
+            <button ng-if="!hosting" ng-click="host()" class="row"> New MultiPlayer Game </button>
+            
+            <p ng-if="hosting && !room">
+                Creating game...
+            </p>
 
-            <fieldset style="display:inline-block;">
-                <legend>Idle online players</legend>
+            <fieldset ng-if="hosting && room">
+                <legend>Multiplayer</legend>
+                <h4>Invite players</h4>
                 <ul id="players">
-                    <li ng-repeat="player in players | filter:{uuid: '!'+uuid} ">
-                        <span class="player-name">{{player.name}}</span>
-                        <button class="player-invite" ng-click="invite(player.uuid)">
-                            Invite
-                        </button>
+                    <li ng-repeat="player in players | filter:{uuid: '!'+uuid} " ng-if="player.room==null">
+                        <button class="row" ng-click="invite(player)" ng-disabled="player.invited">{{player.name}}</button>
                     </li>
                 </ul>
             </fieldset>
         </div>
 
         <div id="multiplayer">
-            <div id="opened-rooms">
-                <fieldset id="room-template">
-                    <legend>
-                        <span class="room-value-name"> John Smith's Game</span>
-                        <span class="readyness">
-                            <span class="room-value-clientReady">0</span> / <span class="room-value-clientCount">1</span>
+            <fieldset ng-if="invitations.length>0">
+                <legend>Invitation{{invitations.length.length > 1 ? 's' :''}}</legend>
+                <button class="row" ng-repeat="invitation in invitations" ng-click="acceptInvitation(invitation)">
+                    Join {{invitation.from.name}}
+                </button>
+            </fieldset>
+            
+            <fieldset ng-if="room" class="my-room">
+                <legend>
+                    {{ room.name }}
+                </legend>
+                <ul class="room-player-list">
+                    <li ng-repeat="player in players | filter: {room: {name:room.name}}">
+                        <span class="room-player-ready">
+                            {{((player.uuid==uuid && is_ready) || player.ready) ? '&#10004;' : '-'}}
                         </span>
-                    </legend>
-                    <ul class="room-player-list">
-                        <li class="room-player-template">
-                            <span class="room-player-value-name"> John Smith </span>
-                            <span class="room-player-ready"> - </span>
-                        </li>
-                    </ul>
+                        {{player.name}}
+                    </li>
+                </ul>
 
-                    <button class="room-join-btn">Join</button>
-                    <button class="start-multi"> Ready! </button>
-                </fieldset>
+                <div class="chat-box">
+                    <p ng-repeat="chat in chats" ng-class="{'my-chat':chat.from.uuid==uuid}">
+                        <span ng-if="chat.from.uuid!=uuid"> {{chat.from.name}}: </span>
+                        {{chat.msg}}
+                    </p>
+                </div>
+                <form ng-submit="submitChat(chat_input); chat_input=''">
+                    <input type="text" ng-model="chat_input" placeholder="Chat - enter to send" class="chat-input">
+                    <button>Send</button>
+                </form>
+                
+                <button ng-disabled="is_ready" class="row" ng-click="ready()"> Ready! </button>
+            </fieldset>
 
-            </div>
+            <fieldset ng-repeat="_room in rooms" ng-if="!room || room.uuid != _room.uuid">
+                <legend>
+                    {{ _room.name }}
+                </legend>
+                <ul class="room-player-list">
+                    <li ng-repeat="player in players | filter: {room: {name:_room.name}}">
+                        <span class="room-player-ready">
+                            {{((player.uuid==uuid && is_ready) || player.ready) ? '&#10004;' : '-'}}
+                        </span>
+                        {{player.name}}
+                    </li>
+                </ul>
+                
+                <button ng-if="!room || room.name != _room.name" class="row" ng-click="join(_room)">Join</button>
+            </fieldset>
         </div>
     </div>
+
+    <!--fieldset style="position:absolute; left:0; top:500px;">
+        <legend>players</legend>
+        <pre>{{players|json}}</pre>
+    </fieldset>
+    
+    <fieldset style="position:absolute; left:600px; top:500px;">
+            <legend>rooms</legend>
+            <pre>{{rooms|json}}</pre>
+        </fieldset-->
 
     <div id="main"></div>
 
@@ -109,6 +153,7 @@
     <script src="assets/js/Controller.js?v5"></script>
     <script src="assets/js/Pill.js?v5"></script>
     <script src="assets/js/Board.js?v5"></script>
+    <script src="assets/js/BoardPreview.js?v5"></script>
     <script src="assets/js/PillBottle.js?v5"></script>
     <script src="assets/js/DrMario.js?v5"></script>
     <script src="assets/js/Multiplayer.js?v5"></script>

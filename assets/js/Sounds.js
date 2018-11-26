@@ -107,31 +107,61 @@
         Sounds.play(key);
     }
 
+    var muted = false;
+
+    Sounds.mute = function() {
+        Sounds.stopAll();
+        muted = true;
+    };
+
+    Sounds.unmute = function() {
+        muted = false;
+    };
+
     Sounds.has = function(key) {
         return typeof(library[key]) !== "undefined";
     };
 
     Sounds.play = function(key) {
+        if(muted)
+            return;
+
         var idx = prepareToPlay(key);
         if(idx !== null) {  
-            elements[key].audio[idx].currentTime = 0;
-            elements[key].audio[idx].play().catch(function(err) {
-               console.log("Sound error: " + err);
-            });
+            try {
+                elements[key].audio[idx].currentTime = 0;
+            } catch(e) {
+                // needed to be used with firefox
+            }
+            var p = elements[key].audio[idx].play();
+            if(p && typeof(p.catch) == "function" )
+                p.catch(function(err) {
+                    console.log("Sound error: " + err);
+                });
         }
     };
 
     Sounds.resume = function(key) {
+        if(muted)
+            return;
+
         var idx = prepareToPlay(key);
         if(idx !== null) {  
-           elements[key].audio[idx].play().catch(function(err) {
-               console.log("Sound error: " + err);
-            });
+            try {
+                var p = elements[key].audio[idx].play();
+                if(p && typeof(p.catch) == "function")
+                    p.catch(function(err) {
+                        console.log("Sound error: " + err);
+                    });
+            }
+            catch(e){
+                // needed for firefox
+            }
         }
     };
 
     function prepareToPlay(key) {
-        if(typeof(library[key]) !== "undefined") {
+        if(elements !== null && typeof(library[key]) !== "undefined") {
             if(library[key].group)
                 Sounds.stopGroup(library[key].group);
             
@@ -163,8 +193,16 @@
 
 
     Sounds.stop = function(key) {
+        if(elements === null || typeof(elements[key]) === "undefined")
+            return;
+
         for(var i=0;i<elements[key].audio.length;i++)
             elements[key].audio[i].pause();
+    };
+    
+    Sounds.stopAll = function() {
+        for(var k in elements)
+            Sounds.stop(k);
     };
 
     Sounds.stopGroup = function(grp) {
@@ -178,13 +216,13 @@
         if(typeof(library[key].group) !== "undefined" && library[key].group == "bg")
             audio.volume = .5;
         
-        audio.currentTime = 0;
+        //audio.currentTime = 0;
         
         return audio;
     };
 
     Sounds._load = function(key) {
-        if(elements[key].audio.length)
+        if(elements === null || elements[key].audio.length)
             return;
         
         if(typeof(library[key].src) !== "undefined") {

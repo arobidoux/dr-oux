@@ -13,7 +13,7 @@ menu.init = new Promise(function(resolve, reject){
     });
 
     app.factory("pref", function(){
-        return function(scope, name, defaultValue, format) {
+        return function(scope, name, defaultValue, format, onChange) {
             var v = preference(name, defaultValue);
             if(typeof(format) === "function")
                 v = format(v);
@@ -24,6 +24,8 @@ menu.init = new Promise(function(resolve, reject){
                 if(oldValue != newValue) {
                     preference.set(name, newValue);
                 }
+                if(typeof(onChange)==="function")
+                    onChange.apply(this, arguments);
             });
         };
     });
@@ -39,12 +41,39 @@ function MenuController($scope, $timeout, pref, menuInitialized){
     $scope.uuid = null;
 
     pref($scope,"difficulty", 4, parseInt);
-    pref($scope,"sensitivity", 16, parseInt);
-    pref($scope,"controls", "arrows");
-    pref($scope,"soundtrack", "random");
+    pref($scope,"sensitivity", 16, parseInt, function(newValue, oldValue){
+        game.touch_sensitivity = newValue;
+    });
+    pref($scope,"controls", "arrows", null, function(newValue, oldValue){
+        inputs.clearAll();
+        inputs.loadKeyMap($scope.keyMap[newValue].map);
+    });
+    pref($scope,"soundtrack", "random", null, function(newValue, oldValue) {
+        if(newValue != oldValue && newValue != "random" && newValue != "none") {
+            Sounds.play(newValue);
+        }
+    });
     pref($scope,"multi_name", preference("multi-name",""));
+    pref($scope, "enable_sound", "yes", null, function(newValue, oldValue){
+        if(newValue=="yes") {
+            Sounds.unmute();
+            if($scope.room)
+                Sounds.play("wii-select");
+            else
+                Sounds.play("wii-title");
+        }
+        else {
+            Sounds.mute();
+        }
+    });
 
     $scope.players = [];
+    $scope.rooms = [];
+    $scope.invitations = [];
+    $scope.hosting = null;
+    $scope.room = null;
+    $scope.playing = false;
+    $scope.chats = [];
 
     menu.get = function(name) {
         return $scope[name];
@@ -54,6 +83,90 @@ function MenuController($scope, $timeout, pref, menuInitialized){
         $timeout(function(){
             $scope[name] = value;
         });
+    };
+
+    menu.push = function(name, value) {
+        $timeout(function(){
+            $scope[name].push(value);
+        });
+    };
+    
+    menu.splice = function(name, filter, ...replaceWith) {
+        $timeout(function(){
+            if(typeof(filter) === "function") {
+                for(var i=0;i<$scope[name].length;i++) {
+                    if(filter($scope[name][i])) {
+                        $scope[name].splice(i,1, ...replaceWith);
+                    }
+                }
+            }
+            else {
+                throw new Error("Invalid splice filter argument");
+            }
+        });
+    };
+
+    menu.alter = function(name, alter) {
+        $timeout(function(){
+            for(var i=0;i<$scope[name].length;i++) {
+                alter($scope[name][i]);
+            }
+        });
+    };
+
+
+    $scope.invite = function(player) {
+        player.invited=true;
+        multiplayer.invite(player.uuid);
+    };
+
+    $scope.acceptInvitation = function(invitation) {
+        $scope.join(invitation.room);
+        for(var i=0;i<$scope.invitations.length;i++) {
+            if($scope.invitations[i] == invitation)    
+                $scope.invitations.splice(i,1);
+                break;
+        }
+    };
+
+    $scope.host = function() {
+        if($scope.hosting)
+            return;
+        
+        $scope.hosting = true;
+        multiplayer.join($scope.multi_name + "'s Game");
+    };
+
+    $scope.join = function(room) {
+        $scope.hosting = false;
+        $scope.room = null;
+        
+        $scope.is_ready = false;
+        $scope.chats = [];
+
+        multiplayer.join(room.name);
+    };
+
+    $scope.ready = function() {
+        if($scope.is_ready)
+            return;
+
+        game.setSoundTrack(getSoundTrack($scope.soundtrack));
+        multiplayer.readyToStart(parseInt($scope.difficulty));
+        $scope.is_ready = true;
+    };
+
+    $scope.submitChat = function(msg) {
+        if(msg)
+            multiplayer.chat(msg);
+    };
+
+    $scope.startSingle = function() {
+        game.setSoundTrack(getSoundTrack($scope.soundtrack));
+        $timeout(function(){
+            game.startSinglePlayer(parseInt($scope.difficulty));
+            game.run();
+        },0);
     };
 
     $scope.keyMap = {
@@ -86,6 +199,27 @@ function MenuController($scope, $timeout, pref, menuInitialized){
     menuInitialized.resolve();
 }
 
+function getSoundTrack(soundtrack) {
+    if(soundtrack === "random") {
+        var options = document.querySelectorAll("#soundtrack option");
+        var count = options.length-2;
+        var idx = Math.floor(Math.random()*count);
+        for(var i=0;i<options.length;i++) {
+            if(options[i].value == "none" || options[i].value == "random") {
+                continue;
+            }
+            else if(--idx<=0) {
+                return options[i].value;
+            }
+        }
+    }
+    else if(soundtrack === "none") {
+        return null
+    }
+
+    return soundtrack;
+}
+
 global[ns] = menu;
 return;
 
@@ -94,14 +228,7 @@ return;
 function menu(game, multiplayer, inputs) {
     return;
     // initialize the menu
-    menuRootObj = document.getElementById("menu");
-    
-    // add value change listener
-    menuRootObj.addEventListener("input", function(ev) {
-        if(ev.target.name) {
-            updateValueFor(ev.target.name, ev.target.value, false);
-        }
-    });
+
 
     // control change
     current_inputs = inputs;
@@ -112,150 +239,15 @@ function menu(game, multiplayer, inputs) {
     // Handle the start button
     var start_single = document.getElementById("start-single");
     start_single.addEventListener("click", function(){
-        game.setSoundTrack(getSoundTrack());
-        setTimeout(function(){
-            game.startSinglePlayer(parseInt(settings.difficulty));
-            game.run();
-        },0);
+        
         menuRootObj.style.display = "none";
     });
     start_single.focus();
-
-    
-    // create a new room
-    /*
-    document.getElementById("multi-create-room").addEventListener("click", function(){
-        if(typeof(settings["multi-new-room"]) !== "undefined" && settings["multi-new-room"]) {
-            multiplayer.join(settings["multi-new-room"]);
-        }
-    });
-    */
-
-    // join multiplayer room
-    document.getElementById("multi-rooms").addEventListener("click", function(ev) {
-        if(ev.target.tagName == "BUTTON" && /room-join-btn/.test(ev.target.className)) {
-            var tr = parentUntil(ev.target, function(e){return e.tagName=="TR";});
-            var roomName = tr.getAttribute("room-name");
-            multiplayer.join(roomName);
-            ev.target.disabled = true;
-        }
-    });
-
-    // players actions
-    document.getElementById("players").addEventListener("click", function(ev) {
-        if(ev.target.tagName == "BUTTON") {
-            var tr = parentUntil(ev.target, function(e){return e.tagName=="TR";});
-            var playeruuid = tr.getAttribute("player-uuid");
-            // invite
-            if(/player-invite/.test(ev.target.className)) {
-                multiplayer.invite(playeruuid);
-                ev.target.style.display = "none";
-            }
-
-            else if(/player-join/.test(ev.target.className)) {
-                multiplayer.joinPlayer(playeruuid);
-                ev.target.style.display = "none";
-            }
-
-            else if(/player-spectate/.test(ev.target.className)) {
-                multiplayer.spectate(playeruuid);
-                ev.target.style.display = "none";
-            }
-        }
-    });
-
-    function getSoundTrack() {
-        if(settings.soundtrack === "random") {
-            var options = document.querySelectorAll("#soundtrack option");
-            var count = options.length-2;
-            var idx = Math.floor(Math.random()*count);
-            for(var i=0;i<options.length;i++) {
-                if(options[i].value == "none" || options[i].value == "random") {
-                    continue;
-                }
-                else if(--idx<=0) {
-                    return options[i].value;
-                }
-            }
-        }
-        else if(settings.soundtrack === "none") {
-            return null
-        }
-
-        return settings.soundtrack;
-    }
-
-    // start multi player
-    document.getElementById("start-multi").addEventListener("click", function(){
-        game.setSoundTrack(getSoundTrack());
-
-        multiplayer.readyToStart(settings.difficulty).then(function(){
-            menuRootObj.style.display = "none";
-            this.disabled = false;
-        }.bind(this));
-        this.disabled = true;
-    });
 
     
     // register game ending callback
     game.onGameOver(function(win) {
         menuRootObj.style.display = "block";
     });
-
-    // initialize the current option values
-    var menu_inputs = document.querySelectorAll("#menu [name]");
-    for(var i=0;i<menu_inputs.length;i++) {
-        
-        var v = preference(menu_inputs[i].name, null);
-        if(v)
-            menu_inputs[i].value = v;
-        
-        updateValueFor(menu_inputs[i].name, menu_inputs[i].value, true);
-    }
 }
-
-    /**
-     * Update the value on every field marked to update it, and save
-     * it in the internal settings map
-     * 
-     * @param {string} name Name of the setting to be changed
-     * @param {mixed} value New value to change it to
-     */
-    function updateValueFor(name, value, initial) {
-        settings[name] = value;
-        var labels = document.querySelectorAll("#menu [value-of='" + name + "']");
-        for(var i = 0; i<labels.length; i++)
-            labels[i].innerText = value;
-        
-        switch(name) {
-            case "keymap":
-                if(current_inputs) {
-                    current_inputs.clearAll();
-                    current_inputs.loadKeyMap(keyMap[value]);
-                }
-                break;
-            
-            case "sensitivity":
-                game.touch_sensitivity = value;
-                break;
-
-            case "soundtrack":
-                if(value != "random" && value != "none") {
-                    if(!initial)
-                        Sounds.play(value);
-                }
-                break;
-        }
-
-        preference.set(name, value);
-    }
-
-    function parentUntil(elem,test) {
-        while(!test(elem))
-            elem = elem.parentElement;
-        
-        return elem;
-    }
-
-    global[ns] = menu;
 })(this, "menu");

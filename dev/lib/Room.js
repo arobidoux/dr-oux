@@ -13,7 +13,7 @@ class Room {
         this._gameInProgress = false;
         this._uuid = uuidv1();
 
-        this._io.emit("room_created", this.summary());
+        this._io.emit("room_created", this.summary());        
     }
 
     get socRoomName() {
@@ -39,6 +39,7 @@ class Room {
 
         return {
             name: this._name,
+            uuid: this._uuid,
             clientCount: this._clients.length,
             clientReady: clientReady,
             gameInProgress: this._gameInProgress
@@ -47,10 +48,10 @@ class Room {
 
     generateDetails() {
         return new Promise((resolve, reject) => {
-            var details = {
-                clients: [],
-                gameInProgress: this._gameInProgress
-            };
+            var details = this.summary();
+            details.clients = [];
+            details.gameInProgress= this._gameInProgress;
+            details.startingIn = this._countdown;
 
             for(var i=0;i<this._clients.length;i++)
                 details.clients.push(this._clients[i].getDetails());
@@ -76,7 +77,8 @@ class Room {
         if(this._clients.length == 0) {
             this._game.removeRoom(this._name);
             this._io.emit("room_removed", {
-                name: this._name
+                name: this._name,
+                uuid: this._uuid
             });
         }
         else {
@@ -158,10 +160,12 @@ class Room {
 
     countDown(sec) {
         if(sec) {
+            this._countdown = sec;
             this._io.in(this.socRoomName).emit("countdown", {sec:sec});
             setTimeout(this.countDown.bind(this, sec-1), 1000);
         }
         else {
+            this._countdown = 0;
             this.startGame();
         }
     }

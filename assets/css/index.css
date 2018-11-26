@@ -2,8 +2,8 @@ body { background: black; color: white; width: 480px; margin:auto;}
 
 #opponents { position: fixed; right: 5px; top: 5px; }
 
-#my-settings { display: inline-block; margin:5px; width:calc(50% - 10px); }
-#multiplayer { display: inline-block; margin:5px; width:calc(50% - 10px); }
+#my-settings { display: inline-block; margin:5px; width:calc(50% - 12px); }
+#multiplayer { display: inline-block; margin:5px; width:calc(50% - 12px); }
 
 /*
 #multi-rooms-table { border:1px solid white; border-collapse: collapse;}
@@ -11,21 +11,48 @@ body { background: black; color: white; width: 480px; margin:auto;}
 
 #multi-room-template { display: none; }
 
-#multi-rooms .active td { background-color: #4caf50; border-bottom-color:greenyellow;}
 */
+#multiplayer .my-room { /*background-color: #4caf50;*/ border-color:greenyellow;}
 
+
+#menu label { display: block; position:relative; margin-bottom:7px;}
+#menu label input, #menu label select { position:absolute; right:0;}
+
+#menu fieldset { width: calc( 100% - 32px); }
+#menu button { border-radius: 10px; margin-bottom: 7px; padding: 3px 10px; }
+
+#menu .btn-group button { border-radius: 0;  }
+#menu .btn-group button:first-child { border-radius: 10px 0 0 10px;  }
+#menu .btn-group button:last-child { border-radius: 0 10px 10px 0;  }
+
+#menu .btn-group .btn { border: 2px outset buttonface; }
+#menu .btn-group .btn:first-child { border-radius: 10px 0 0 10px; }
+#menu .btn-group .btn:last-child { border-radius: 0 10px 10px 0; }
+
+#menu { position: relative; vertical-align: top; }
+#menu > div { position: absolute; top:0;}
+#menu > div:first-child { left:0; }
+#menu > div:last-child { right:0; }
 
 .room-template .readyness { float: right; }
 
-#players .idle .player-spectate,
-#players .idle .player-join,
+.row { width: 100%; display:inline-block;}
+.col-10 { width:calc( 83.3% - 2px ); display:inline-block; }
+.col-8 { width:calc( 66.6% - 2px ); display:inline-block; }
+.col-6 { width:calc( 50% - 2px ); display:inline-block; }
+.col-2 { width:calc( 16.6% - 2px ); display:inline-block; }
 
-#players .pending .player-invite,
-#players .pending .player-spectate,
+#players button { text-align:left; }
 
-#players .waiting .player-invite,
+#players { list-style-type: none; padding-left:0; }
 
-#players .multi .player-invite,
-#players .multi .player-join
+#multiplayer .room-player-list {
+    padding-left:0;
+    list-style-type: none;
+}
 
-{ display:none; }
+.chat-box { height: 100px; overflow-y:auto; overflow-x:hidden; border: 0px solid gray; border-width:2px 0;}
+.chat-input {width:120px;}
+
+.chat-box p { border: 1px solid blue; background-color:blue; color: white; border-radius: 0 10px 10px 0; padding: 2px 10px 2px 0; margin: 2px 15px 2px 0;}
+.chat-box p.my-chat { border-color: yellowgreen; background-color: hsla(120, 50%, 50%, 1); color: white; border-radius: 10px 0 0 10px; padding: 2px 0 2px 10px; margin: 2px 0 2px 15px; }

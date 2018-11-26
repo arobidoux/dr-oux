@@ -63,7 +63,7 @@
 
     Inputs.prototype.press = function (keyCode) {
         if (typeof (this._mapping[keyCode]) === "undefined") {
-            console.warn("[Inputs] No mapping for " + keyCode);
+            // console.warn("[Inputs] No mapping for " + keyCode);
         }
         else if (typeof (this._actions[this._mapping[keyCode].action]) === "undefined") {
             console.warn("[Inputs] No action mapped on " + this._mapping[keyCode].action + " (keyCode:" + keyCode + ")");

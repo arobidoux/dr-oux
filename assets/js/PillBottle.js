@@ -59,25 +59,25 @@
     };
 
     PillBottle.prototype.initUI = function (root, title) {
-        root.append(
+        root.appendChild(
             this._root = document.createElement("div")
         );
 
         if(title) {
             var titleElem=document.createElement("h3");
-            titleElem.innerText = title;
-            this._root.append(titleElem);
+            titleElem.textContent = title;
+            this._root.appendChild(titleElem);
         }
 
-        this._root.append(
+        this._root.appendChild(
             this._status = document.createElement("div")
         );
 
-        this._root.append(
+        this._root.appendChild(
             this._canvas = document.createElement("canvas")
         );
 
-        this._root.append(
+        this._root.appendChild(
             this._msg = document.createElement("div")
         );
 
@@ -99,22 +99,22 @@
 
     PillBottle.prototype.setMessage = function(msg) {
         if(msg) {
-            this._msg.innerText = msg;
+            this._msg.textContent = msg;
             this._msg.style.display = "block";
         }
         else {
-            this._msg.innerText = "";
+            this._msg.textContent = "";
             this._msg.style.display = "none";
         }
     };
 
     PillBottle.prototype.setStatus = function(status) {
         if(status) {
-            this.status.innerText = status;
+            this.status.textContent = status;
             //this.status.style.display = "block";
         }
         else {
-            this.status.innerText = "";
+            this.status.textContent = "";
             //this.status.style.display = "none";
         }
     };
@@ -146,17 +146,17 @@
         var tick = 0;
         return function (frame) {
             tick++;
-            var stats = this._board.playFrame(frame);
-            if (stats.updated) {
+            var updated = this._board.playFrame(frame);
+            if (updated) {
                 this.render(tick);
                 // look at virus count
-                this.updateVirusCount(stats.virus);
+                this.updateVirusCount(this._board.getVirusCount());
             }
         }.bind(this);
     };
 
     PillBottle.prototype.updateVirusCount = function(count) {
-        this._status.innerText =
+        this._status.textContent =
             "Virus" + (count>1?"es":"") +
             " Remaining: " + count;
     };

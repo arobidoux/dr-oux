@@ -20,10 +20,11 @@ game.registerForTick(multiplayer.tick.bind(multiplayer));
 
 (function(){
     function play(){
-        Sounds.initialize();
-        Sounds.play("wii-title");
         document.removeEventListener("click",play);
         document.removeEventListener("keydown",play);
+
+        Sounds.initialize();
+        Sounds.play("wii-title");        
     }
 
     document.addEventListener("click",play);

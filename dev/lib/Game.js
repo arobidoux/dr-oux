@@ -28,7 +28,7 @@ class Game {
         for(var k in this._rooms)
             rooms.push(this._rooms[k].summary());
 
-        client._soc.emit("rooms_updated",{
+        client._soc.emit("room_list",{
             rooms:rooms
         });
     }
