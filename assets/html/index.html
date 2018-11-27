@@ -92,7 +92,7 @@
                     Join {{invitation.from.name}}
                 </button>
             </fieldset>
-            <fieldset ng-if="room_uuid" ng-repeat="room in rooms | orderBy : orderMyRoomFirst" ng-class="{'my-room':room.uuid==room_uuid}">
+            <fieldset ng-repeat="room in rooms | orderBy : orderMyRoomFirst" ng-class="{'my-room':room.uuid==room_uuid}">
                 <legend>
                     {{ room.name }}
                 </legend>

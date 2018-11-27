@@ -189,7 +189,6 @@ class Room {
                 //"label": "Normal Round Robin",
                 //"description": "Send to each opponent, one at the time"
 
-                // TODO
                 // initialize
                 if(typeof(this._handicap_normal_rr) === "undefined")
                     this._handicap_normal_rr = {};
@@ -199,13 +198,20 @@ class Room {
 
 
                 // process
-                var offset = this._handicap_normal_rr[clients.id]++;
-                var idx=0;
-                for(var pos = offset % this._clients.length-1; pos > 0; idx++)
-                    if(this._clients[idx].id != client.id)
-                        pos--;
+                var idx = 0;
+                for(var i=0; i<this._clients.length; i++) {
+                    if(this._clients[i].id != client.id) {
+                        idx = i;
+                        break;
+                    }
+                }
 
-                this._clients[idx].sendHandicap(frame);
+                var offset = this._handicap_normal_rr[client.id]++;
+                var target = offset % this._clients.length-1;
+                if(target >= idx)
+                    target++;
+                
+                this._clients[target].sendHandicap(frame);
             break;
             
             case "roundrobin":

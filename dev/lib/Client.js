@@ -126,6 +126,8 @@ class Client {
     sendHandicap(frame) {
         if(this._replay)
             this._replay.handicap(frame);
+    
+        this.log("Sending Handicap");
         this._soc.emit("handicap", frame);
     }
 
