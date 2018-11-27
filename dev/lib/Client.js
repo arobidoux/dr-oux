@@ -104,8 +104,9 @@ class Client {
     leave() {
         if (this._room) {
             this._soc.leave(this._room.socRoomName);
-            this.log("Left the room", this._room.name);
+            var name = this._room.name;
             this._room.removeClient(this);
+            this.log("Left the room", name);
             this._room = null;
         }
         else {
@@ -177,6 +178,13 @@ class Client {
             });
     }
 
+    on_set_game_rules(rule) {
+        if(this._room) {
+            this.log("Setting game rules to " + JSON.stringify(rule));
+            this._room.setGameRules(rule);
+        }
+    }
+
     on_invite(data, ack) {
         if(!this._room) {
             this.join(this.name + "'s Game");
@@ -199,6 +207,14 @@ class Client {
         }
     }
 
+    on_kick(data, ack) {
+        var p = this._game.getClient(data);
+        if(p) {
+            this.log("Kicking ",p.name);
+            p.leave();
+            p._soc.emit("kicked");
+        }
+    }
     
     on_joinPlayer(data, ack) {
         var p = this._game.getClient(data);
@@ -252,7 +268,8 @@ class Client {
 
         if( !this._room )
             return this.error("marked as ready but not in a room");
-        this.log("Combos!");
+        
+            this.log("Combos!");
         this._room.processHandicap(this, frame);
     }
 

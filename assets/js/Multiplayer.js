@@ -42,9 +42,20 @@
         alert("Error occured:" + err);
     };
 
+    Multiplayer.prototype.setGameRule = function(rule) {
+        this._socket.emit("set_game_rules", rule);
+    };
 
     Multiplayer.prototype.join = function(room) {
         this._socket.emit("join", {room:room}, function(roomDetails){
+            // apply rules if needed
+            if(menu.get("hosting")) {
+                var game_rules = menu.get("game_rules");
+                if(game_rules) {   
+                    this.setGameRule(game_rules);
+                }
+            }
+
             Sounds.play("wii-select");
             if(roomDetails.error) {
                 return this.error(roomDetails.error);
@@ -122,9 +133,17 @@
             }
         }.bind(this));
     };
-        
+
+    Multiplayer.prototype.kick = function(player_uuid) {
+        this._socket.emit("kick", player_uuid);
+    };
+
     Multiplayer.prototype.on_joined = function(room) {
-        menu.set("room", room);
+        menu.set("room_uuid", room.uuid);
+    };
+
+    Multiplayer.prototype.on_kicked = function() {
+        menu.set("room_uuid", null);
     };
 
     function addOpponent(data) {
@@ -152,13 +171,13 @@
     }
 
     Multiplayer.prototype.on_ready = function(data) {
-        var room = menu.get("room");
+        var room_uuid = menu.get("room_uuid");
         menu.splice("players", function(player){
             if(data.uuid == player.uuid) {
                 player.ready = true;
 
                 // check if we are in the same game
-                if(player.room && room && player.room.uuid==room.uuid)
+                if(player.room && room_uuid && player.room.uuid==room_uuid)
                     addOpponent.call(this,data);
             }
         }.bind(this));

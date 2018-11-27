@@ -12,6 +12,7 @@ class Room {
         this._clients = [];
         this._gameInProgress = false;
         this._uuid = uuidv1();
+        this._game_rules = {};
 
         this._io.emit("room_created", this.summary());        
     }
@@ -42,7 +43,8 @@ class Room {
             uuid: this._uuid,
             clientCount: this._clients.length,
             clientReady: clientReady,
-            gameInProgress: this._gameInProgress
+            gameInProgress: this._gameInProgress,
+            gameRules: this._game_rules
         };
     }
 
@@ -58,6 +60,11 @@ class Room {
 
             resolve(details);
         });
+    }
+
+    setGameRules(rule) {
+        this._game_rules = rule;
+        this._io.emit("room_updated", this.summary());
     }
 
     addClient(client) {
@@ -85,7 +92,8 @@ class Room {
             this._io.emit("room_updated", this.summary());
         }
 
-        this._io.emit("update_one_client",client.getDetails());
+        client._room = null;
+        this._io.emit("update_one_client", client.getDetails());
 
         //console.log("[Room::" + this._name + "] no matching client for id " + client.id);
     }
@@ -173,13 +181,61 @@ class Room {
     startGame() {
         this._io.in(this.socRoomName).emit("start");
     }
-
     
     processHandicap(client, frame) {
         // determine who should get the handicap
-        for(var i=0;i<this._clients.length;i++) {
-            if(this._clients[i].uuid != client.uuid)
-                this._clients[i].sendHandicap(frame);
+        switch(this._game_rules.combos) {
+            case "normal-rr":
+                //"label": "Normal Round Robin",
+                //"description": "Send to each opponent, one at the time"
+
+                // TODO
+                // initialize
+                if(typeof(this._handicap_normal_rr) === "undefined")
+                    this._handicap_normal_rr = {};
+
+                if(typeof(this._handicap_normal_rr[client.id]) === "undefined") 
+                    this._handicap_normal_rr[client.id] = 0;
+
+
+                // process
+                var offset = this._handicap_normal_rr[clients.id]++;
+                var idx=0;
+                for(var pos = offset % this._clients.length-1; pos > 0; idx++)
+                    if(this._clients[idx].id != client.id)
+                        pos--;
+
+                this._clients[idx].sendHandicap(frame);
+            break;
+            
+            case "roundrobin":
+                //"label": "Round Robin",
+                //"description": "Every combos will send to the next player (potentially sending it to the sender)"
+                
+                // initialize
+                if(typeof(this._handicap_rr_idx) === "undefined")
+                    this._handicap_rr_idx=0;
+
+                // process
+                this._clients[this._handicap_rr_idx++%this._clients.length].sendHandicap(frame);
+            break;
+            case "none":
+                //"label": "None",
+                //"description": "Nothing will be sent..."
+            break;
+            case "multiplyer":
+                //"label": "Multiplyer",
+                //"description": "Always send to every opponents"
+                for(var i=0;i<this._clients.length;i++) {
+                    if(this._clients[i].uuid != client.uuid)
+                        this._clients[i].sendHandicap(frame);
+                }
+            break;
+            case "punitive":
+                //"label": "Punitive",
+                //"description": "Return to Sender, always send to the player who played the combo"
+                client.sendHandicap(frame);
+            break;
         }
     }
 

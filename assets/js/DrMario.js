@@ -37,6 +37,15 @@
         this.$touchend = this.touchend.bind(this);
     }
 
+    DrMario.prototype.abort = function() {
+        this.releaseTouch();
+        this.stop();
+        if(this._mainPillBottle) {
+            this._mainPillBottle.destroy();
+            this._mainPillBottle = null;
+        }
+    };
+
     DrMario.prototype.setSoundTrack = function(track) {
         this._soundtrack = track;
     }

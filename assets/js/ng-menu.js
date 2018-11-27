@@ -18,11 +18,19 @@ menu.init = new Promise(function(resolve, reject){
             if(typeof(format) === "function")
                 v = format(v);
             
-            scope[name] = v;
+            var parts = name.split(".");
+            var parent = scope;
+            for(var i=0; i<parts.length-1;i++) {
+                if(typeof(parent[parts[i]]) === "undefined")
+                    parent[parts[i]] = {};
+                parent = parent[parts[i]];
+            }
+
+            parent[parts[parts.length-1]] = v;
             
             scope.$watch(name,function(newValue,oldValue){
                 if(oldValue != newValue) {
-                    preference.set(name, newValue);
+                    preference.set(name, typeof(newValue) === "object" && newValue ? JSON.stringify(newValue): newValue);
                 }
                 if(typeof(onChange)==="function")
                     onChange.apply(this, arguments);
@@ -53,11 +61,18 @@ function MenuController($scope, $timeout, pref, menuInitialized){
             Sounds.play(newValue);
         }
     });
+    pref($scope,"game_rules.combos", "normal-rr", null, function(newValue, oldValue) {
+        if(newValue != oldValue && $scope.hosting) {
+            $timeout(function(){
+                multiplayer.setGameRule($scope.game_rules);
+            },0);
+        }
+    });
     pref($scope,"multi_name", preference("multi-name",""));
     pref($scope, "enable_sound", "yes", null, function(newValue, oldValue){
         if(newValue=="yes") {
             Sounds.unmute();
-            if($scope.room)
+            if($scope.room_uuid)
                 Sounds.play("wii-select");
             else
                 Sounds.play("wii-title");
@@ -71,7 +86,7 @@ function MenuController($scope, $timeout, pref, menuInitialized){
     $scope.rooms = [];
     $scope.invitations = [];
     $scope.hosting = null;
-    $scope.room = null;
+    $scope.room_uuid = null;
     $scope.playing = false;
     $scope.chats = [];
 
@@ -120,6 +135,16 @@ function MenuController($scope, $timeout, pref, menuInitialized){
         multiplayer.invite(player.uuid);
     };
 
+    $scope.kick = function(player) {
+        multiplayer.kick(player.uuid);
+    };
+
+    $scope.backToHome = function() {
+        game.abort();
+        $scope.playing = false;
+        Sounds.play("wii-title");
+    };
+
     $scope.acceptInvitation = function(invitation) {
         $scope.join(invitation.room);
         for(var i=0;i<$scope.invitations.length;i++) {
@@ -139,7 +164,7 @@ function MenuController($scope, $timeout, pref, menuInitialized){
 
     $scope.join = function(room) {
         $scope.hosting = false;
-        $scope.room = null;
+        $scope.room_uuid = null;
         
         $scope.is_ready = false;
         $scope.chats = [];
@@ -169,6 +194,10 @@ function MenuController($scope, $timeout, pref, menuInitialized){
         },0);
     };
 
+    $scope.orderMyRoomFirst = function(item) {
+        return item.uuid == $scope.room_uuid ? "" : item.name;
+    };
+
     $scope.keyMap = {
         arrows: {
             label: "Arrows + X-Z",
@@ -193,6 +222,30 @@ function MenuController($scope, $timeout, pref, menuInitialized){
                 39: "ROTATE_COUNTER_CLOCKWISE",
                 19: "PAUSE",
             }
+        }
+    };
+
+    $scope.gameRules = {
+        "normal-rr": {
+            "label": "Normal Round Robin",
+            "description": "Send to each opponent, one at the time"
+
+        },
+        "roundrobin": {
+            "label": "Round Robin",
+            "description": "Every combos will send to the next player (potentially sending it to the sender)"
+        },
+        "none": {
+            "label": "None",
+            "description": "Nothing will be sent..."
+        },
+        "multiplyer": {
+            "label": "Multiplyer",
+            "description": "Always send to every opponents"
+        },
+        "punitive": {
+            "label": "Punitive",
+            "description": "Return to Sender, always send to the player who played the combo"
         }
     };
 
