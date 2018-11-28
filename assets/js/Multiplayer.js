@@ -269,6 +269,7 @@
 
     Multiplayer.prototype.on_handicap = function(encoded) {
         console.debug("Queueing Handicap");
+        
         this._game._mainPillBottle._board.queueHandicap(...decodeFrame(encoded));
     };
 

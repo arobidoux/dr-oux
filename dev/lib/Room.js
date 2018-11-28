@@ -200,14 +200,14 @@ class Room {
                 // process
                 var idx = 0;
                 for(var i=0; i<this._clients.length; i++) {
-                    if(this._clients[i].id != client.id) {
+                    if(this._clients[i].id == client.id) {
                         idx = i;
                         break;
                     }
                 }
 
                 var offset = this._handicap_normal_rr[client.id]++;
-                var target = offset % this._clients.length-1;
+                var target = offset % (this._clients.length-1);
                 if(target >= idx)
                     target++;
                 
