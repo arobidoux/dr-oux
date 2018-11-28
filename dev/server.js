@@ -19,6 +19,14 @@ app.get("/favicon.ico", (req, res) => {
     res.sendFile(path.resolve("../assets/img/favicon.ico"));
 });
 
+app.get("/assets/manifest/html5.appcache", function(req, res){
+    res.sendFile(path.resolve("../assets/manifest/html5.appcache")/*,{
+        headers:{
+            "Content-Type": "text/cache-manifest"
+        }
+    }*/);
+});
+
 app.use("/assets",express.static(path.resolve("../assets")));
 
 app.use("/assets/uuid/",express.static(path.resolve("node_modules/uuid-browser")));
