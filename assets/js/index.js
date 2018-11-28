@@ -88,7 +88,7 @@ window.addEventListener("load", function(e) {
     var loaded = 0;
     // Fired for each resource listed in the manifest as it is being fetched.
     window.applicationCache.addEventListener("progress", function(ev){
-        game.setStatus("Progress " + (typeof(ev.loaded)==="undefined"? loaded++ : ( ev.loaded + "/" + ev.total)));
+        game.setStatus("Downloading the Game! Progress " + (typeof(ev.loaded)==="undefined"? loaded++ : ( ev.loaded + "/" + ev.total)));
     }, false);
 
     window.applicationCache.addEventListener("updateready", function(e) {
