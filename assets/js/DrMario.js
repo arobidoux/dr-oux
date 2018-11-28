@@ -75,6 +75,8 @@
         this._mainPillBottle.generateForDifficulty(difficulty);
         this._mainPillBottle.record();
 
+        this._mainPillBottle._root.className += " main-pill-bottle";
+
         this._inputs.clearAll();
         this._inputs.register("PAUSE", this.pause.bind(this), null);
         this._mainPillBottle.registerInputs(this._inputs);

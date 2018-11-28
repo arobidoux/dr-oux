@@ -27,7 +27,11 @@ app.get("/assets/manifest/html5.appcache", function(req, res){
     }*/);
 });
 
-app.use("/assets",(req,res,next)=>{console.log(req.originalUrl); next();},express.static(path.resolve("../assets")));
+app.use(
+    "/assets",
+    //(req,res,next)=>{console.log(req.originalUrl); next();},
+    express.static(path.resolve("../assets"))
+);
 
 app.use("/assets/uuid/",express.static(path.resolve("node_modules/uuid-browser")));
 
