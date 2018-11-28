@@ -6,3 +6,5 @@
 
 #opponents .pill-bottle-root .pill-bottle-msg { top:110px; }
 /*.dr-mario .pill-bottle-root canvas.pill-bottle-canvas { border: 1px solid gainsboro; display: inline-block; }*/
+
+.game-status { position: fixed; top:0; background-color: black; color: yellowgreen; padding:15px; }

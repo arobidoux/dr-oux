@@ -19,7 +19,7 @@ body { background: black; color: white; width: 480px; margin:auto;}
 #menu label input, #menu label select { position:absolute; right:0;}
 
 #menu fieldset { width: calc( 100% - 32px); }
-#menu button { border-radius: 10px; margin-bottom: 7px; padding: 3px 10px; }
+#menu button, button { border-radius: 10px; margin-bottom: 7px; padding: 3px 10px; background-color: black; color: white; }
 
 #menu .btn-group button { border-radius: 0;  }
 #menu .btn-group button:first-child { border-radius: 10px 0 0 10px;  }

@@ -15,6 +15,7 @@
             this._status = document.createElement("div")
         );
         this._status.className = "game-status";
+        this._status.style.display = "none";
 
         this._fps = 16;
 
@@ -192,6 +193,12 @@
 
     DrMario.prototype.setStatus = function(status) {
         this._status.textContent = status;
+        this._status.style.display = status ? "block" : "none" ;
+    };
+
+    DrMario.prototype.setStatusHtml = function(html) {
+        this._status.innerHTML  = html;
+        this._status.style.display = html ? "block" : "none" ;
     };
 
     DrMario.prototype.touch_sensitivity = 5;
