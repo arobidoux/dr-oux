@@ -1,20 +1,23 @@
 CACHE MANIFEST
 
-# 2018-11-27:v1.0.13
+# 2018-11-27:v1.0.21
 
 NETWORK:
 /socket.io/
 
 CACHE:
+
+/favicon.ico
 /index.html
 /assets/manifest/android-add-to-home.json
 /assets/css/Controller.css
 /assets/css/DrMario.css
 /assets/css/index.css
+
 /assets/img/icon-192.png
-/favicon.ico
 /assets/img/reduced-sprites.png
 /assets/img/sprites2.png
+
 /socket.io/socket.io.js
 /assets/vendor/js/uuidv1.js
 /assets/js/Debug.js

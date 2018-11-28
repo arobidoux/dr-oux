@@ -35,11 +35,20 @@ game.registerForTick(multiplayer.tick.bind(multiplayer));
 // app cache
 // Check if a new cache is available on page load.
 window.addEventListener("load", function(e) {
-
+    if(!window.applicationCache) {
+        game.setStatus("No cache available. Ready!");
+        setTimeout(function(){
+            game.setStatus("");
+        },1000);
+        return;
+    }
 
     // Fired after the first cache of the manifest.
     window.applicationCache.addEventListener("cached", function(ev){
-        game.setStatus("Application cached!");
+        game.setStatus("Ready!");
+        setTimeout(function(){
+            game.setStatus("");
+        },1000);
     }, false);
 
     // Checking for an update. Always the first event fired in the sequence.
@@ -55,12 +64,19 @@ window.addEventListener("load", function(e) {
     // The manifest returns 404 or 410, the download failed,
     // or the manifest changed while the download was in progress.
     window.applicationCache.addEventListener("error", function(ev){
-        game.setStatus("Error while downloading new version");
+        var err = {};
+        for(var k in ev)
+            err[k] = ev[k];
+        menu.set("error", err);
+        game.setStatus(ev.message);
     }, false);
 
     // Fired after the first download of the manifest.
     window.applicationCache.addEventListener("noupdate", function(ev){
-        game.setStatus("");
+        game.setStatus("Ready!");
+        setTimeout(function(){
+            game.setStatus("");
+        },1000);
     }, false);
 
     // Fired if the manifest file returns a 404 or 410.
@@ -69,9 +85,10 @@ window.addEventListener("load", function(e) {
         game.setStatus("Application version obsolete");
     }, false);
 
+    var loaded = 0;
     // Fired for each resource listed in the manifest as it is being fetched.
     window.applicationCache.addEventListener("progress", function(ev){
-        game.setStatus("Progress " + ev.loaded + "/" + ev.total);
+        game.setStatus("Progress " + (typeof(ev.loaded)==="undefined"? loaded++ : ( ev.loaded + "/" + ev.total)));
     }, false);
 
     window.applicationCache.addEventListener("updateready", function(e) {
@@ -80,7 +97,10 @@ window.addEventListener("load", function(e) {
         game.setStatusHtml("A new fresher version of the game is available and ready to go! click "+'<button onclick="window.location.reload();">here</button>' + " to use it!");
       } else {
         // Manifest didn't changed. Nothing new to server.
-        game.setStatus("");
+        game.setStatus("Ready!");
+        setTimeout(function(){
+            game.setStatus("");
+        },1000);
       }
     }, false);
   
