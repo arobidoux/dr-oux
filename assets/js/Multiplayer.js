@@ -61,6 +61,7 @@
                 return this.error(roomDetails.error);
             }
             if(roomDetails.gameInProgress) {
+                var myFrame = null;
                 // add the pill bottle of the other players and display their current state
                 for(var i=0; i<roomDetails.clients.length; i++ ) {
                     // skip us
@@ -70,14 +71,30 @@
                             opponent.bottle._board.playFrame(decodeFrame(roomDetails.clients[i].board));
                         }
                     }
+                    else {
+                        // set our board to what it was (should happen if we reconnect)
+                        myFrame = decodeFrame(roomDetails.clients[i].board);
+                    }
                 }
 
                 // auto set ready & start my game
-                this.readyToStart(parseInt(menu.get("difficulty", 4)));
-
+                this.readyToStart(parseInt(menu.get("difficulty", 4))).then(function(){
+                    if(myFrame) {
+                        this._game._mainPillBottle._board.playFrame(myFrame);
+                        this._game._mainPillBottle.record();
+                    }
+                    else {
+                        this._game.setForMultiPlayer(this._difficulty);
+                    }
+                    this._game.run();
+                }.bind(this));
+                
                 // auto start it
-                if(roomDetails.startingIn == 0)
-                    this.on_start();
+                if(roomDetails.startingIn == 0) {
+                    menu.set("playing", true);
+                    this._start_resolve && this._start_resolve();
+                    this._game.setStatus("");
+                }
             }
         }.bind(this));
     };
@@ -133,6 +150,8 @@
             }
         }.bind(this));
     };
+
+    Multiplayer.prototype
 
     Multiplayer.prototype.kick = function(player_uuid) {
         this._socket.emit("kick", player_uuid);
@@ -278,6 +297,16 @@
     };
 
     Multiplayer.prototype.on_update_one_client = function(details) {
+        if(!details.room) {
+            for(var i=0; i < this._opponents.length; i++) {
+                if(this._opponents[i].uuid == details.uuid) {
+                    this._opponents[i].bottle.destroy();
+                    this._opponents.splice(i, 1);
+                    break;
+                }
+            }
+        }
+            
         menu.splice("players", function(elem){
             return details.uuid == elem.uuid;
         },details);

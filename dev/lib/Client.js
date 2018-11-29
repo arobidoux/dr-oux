@@ -1,10 +1,5 @@
 const path = require("path");
-const atob = require("atob");
-const btoa = require("btoa");
-
-
 const Replay = require("./Replay");
-const Board = require("../../assets/js/Board");
 
 var nextClientID=1;
 
@@ -19,8 +14,6 @@ class Client {
         this._is_ready = false;
         this._game_status = null;
         this._replay = null;
-
-        this._board = new Board();
 
         this.log("New client connected");
         socket.on("error", (err) => { return this.error(err) });
@@ -44,6 +37,10 @@ class Client {
     
     get id() {
         return this._id;
+    }
+
+    setId(id) {
+        this._id = id;
     }
 
     get status() {
@@ -75,7 +72,6 @@ class Client {
             id: this._id,
             uuid: this._uuid,
             room: this._room && this._room.summary() || null,
-            board: encodeFrame(this._board.getNewFrame(true)),
             status: this.status
         };
     }
@@ -257,11 +253,7 @@ class Client {
         if( !this._room )
             return this.error("received a frame but not in a room");
 
-        // tell everybody else
-        this._soc.to(this._room.socRoomName).emit("frame-"+this._id, frame);
-
-        // update our internal board
-        this._board.playFrame(decodeFrame(frame));
+        this._room.playFrame(this, frame);
     }
 
     on_combos(frame, ack) {
@@ -306,24 +298,5 @@ Client.GAME_STATUS = {
     VICTORY: 2, 
     DEFEAT : 3
 };
-
-
-// look to centralize this
-function encodeFrame(frame) {
-    // encode it
-    var encoded = "";
-    for(var i=0;i<frame.length;i++) 
-    encoded += String.fromCharCode(frame[i]);
-    return btoa(encoded);
-}
-
-function decodeFrame(encoded) {
-    var frame = [];
-    var r = atob(encoded);
-    for(var i=0;i<r.length;i++) 
-        frame.push(r.charCodeAt(i));
-    
-    return frame;
-}
 
 module.exports = Client;

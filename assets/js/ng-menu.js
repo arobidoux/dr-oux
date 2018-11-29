@@ -239,8 +239,8 @@ function MenuController($scope, $timeout, pref, menuInitialized){
             "label": "None",
             "description": "Nothing will be sent..."
         },
-        "multiplyer": {
-            "label": "Multiplyer",
+        "multiplier": {
+            "label": "Multiplier",
             "description": "Always send to every opponents"
         },
         "punitive": {

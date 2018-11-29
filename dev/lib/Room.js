@@ -1,8 +1,12 @@
 const uuidv1 = require("uuid/v1");
 const fs = require("fs");
 const path = require("path");
+const atob = require("atob");
+const btoa = require("btoa");
+
 const File = require("./File");
 const Client = require("./Client");
+const Board = require("../../assets/js/Board");
 
 class Room {
     constructor(name, io, game) {
@@ -10,6 +14,7 @@ class Room {
         this._io = io;
         this._game = game;
         this._clients = [];
+        this._boards = {};
         this._gameInProgress = false;
         this._uuid = uuidv1();
         this._game_rules = {};
@@ -55,8 +60,13 @@ class Room {
             details.gameInProgress= this._gameInProgress;
             details.startingIn = this._countdown;
 
-            for(var i=0;i<this._clients.length;i++)
-                details.clients.push(this._clients[i].getDetails());
+            for(var i=0;i<this._clients.length;i++) {
+                var clientDetails = this._clients[i].getDetails();
+                if(typeof(this._boards[this._clients[i].uuid])!=="undefined")
+                    clientDetails.board = encodeFrame(this._boards[this._clients[i].uuid].board.getNewFrame(true)),
+
+                details.clients.push(clientDetails);
+            }
 
             resolve(details);
         });
@@ -68,6 +78,17 @@ class Room {
     }
 
     addClient(client) {
+        // returning client
+        if(typeof(this._boards[client.uuid]) !== "undefined") {
+            client.setId(this._boards[client.uuid].id);
+        }
+        else if(this._gameInProgress) {
+            this._boards[client.uuid] = {
+                board: new Board(),
+                id: client.id
+            };
+        }
+
         this._clients.push(client);
         this._io.emit("room_updated", this.summary());
         this._io.emit("update_one_client",client.getDetails());
@@ -141,6 +162,14 @@ class Room {
             meta += "\n";
             this._meta.write(meta);
         });
+
+        // make a list of the clients
+        for(var i=0;i<this._clients.length;i++) {
+            this._boards[this._clients[i].uuid] = {
+                board:new Board(),
+                client_id: this._clients[i].id
+            };
+        }
     }
 
     _initReplayFolder() { 
@@ -182,6 +211,10 @@ class Room {
         this._io.in(this.socRoomName).emit("start");
     }
     
+    _sendHandicap(target_idx, frame) {
+        if(typeof(this._clients[target_idx]) !== "undefined")
+            this._clients[target_idx].sendHandicap(frame);
+    }
     processHandicap(client, frame) {
         // determine who should get the handicap
         switch(this._game_rules.combos) {
@@ -211,7 +244,7 @@ class Room {
                 if(target >= idx)
                     target++;
                 
-                this._clients[target].sendHandicap(frame);
+                this._sendHandicap(target,frame);
             break;
             
             case "roundrobin":
@@ -223,14 +256,14 @@ class Room {
                     this._handicap_rr_idx=0;
 
                 // process
-                this._clients[this._handicap_rr_idx++%this._clients.length].sendHandicap(frame);
+                this._sendHandicap(this._handicap_rr_idx++%this._clients.length, frame);
             break;
             case "none":
                 //"label": "None",
                 //"description": "Nothing will be sent..."
             break;
-            case "multiplyer":
-                //"label": "Multiplyer",
+            case "multiplier":
+                //"label": "Multiplier",
                 //"description": "Always send to every opponents"
                 for(var i=0;i<this._clients.length;i++) {
                     if(this._clients[i].uuid != client.uuid)
@@ -259,6 +292,14 @@ class Room {
         this.reset();
     }
 
+    playFrame(client, frame) {
+        // tell everybody else
+        client._soc.to(this.socRoomName).emit("frame-"+client._id, frame);
+
+        // update our internal board
+        this._boards[client.uuid].board.playFrame(decodeFrame(frame));
+    }
+
     announceDefeat(client) {
         // check if only 1 remain
         var pending_idxs = [];
@@ -276,6 +317,25 @@ class Room {
         for(var i=0;i< this._clients.length; i++)
             this._clients[i].reset();
     }
+}
+
+
+// look to centralize this
+function encodeFrame(frame) {
+    // encode it
+    var encoded = "";
+    for(var i=0;i<frame.length;i++) 
+    encoded += String.fromCharCode(frame[i]);
+    return btoa(encoded);
+}
+
+function decodeFrame(encoded) {
+    var frame = [];
+    var r = atob(encoded);
+    for(var i=0;i<r.length;i++) 
+        frame.push(r.charCodeAt(i));
+    
+    return frame;
 }
 
 module.exports = Room;
