@@ -1,6 +1,6 @@
 CACHE MANIFEST
 
-# 2018-11-27:v1.0.35
+# 2018-11-27:v1.0.52
 
 NETWORK:
 /socket.io/
@@ -29,7 +29,6 @@ CACHE:
 /assets/js/Controller.js
 /assets/js/Pill.js
 /assets/js/Board.js
-/assets/js/BoardPreview.js
 /assets/js/PillBottle.js
 /assets/js/DrMario.js
 /assets/js/Multiplayer.js

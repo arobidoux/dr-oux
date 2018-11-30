@@ -816,5 +816,25 @@
         context.drawImage(sprite, ix, iy, 8, 8, x, y, 8, 8);
     };
 
+    Board.renderPreviewSprite = function(context, code, x, y, tick, scale) {
+        if(!code)
+            return;
+
+        var isVirus = code & Board.CODES.forms.mask == Board.CODES.forms.values.virus.code;
+        switch(code & Board.CODES.colors.mask) {
+            case Board.CODES.colors.values.red.code:
+                context.fillStyle = isVirus ? "#a23048" : "#d84060";
+                break;
+            case Board.CODES.colors.values.yellow.code:
+                context.fillStyle = isVirus ? "#ae9c18" : "#e8d020";
+                break;
+            case Board.CODES.colors.values.blue.code:
+                context.fillStyle = isVirus ? "#4878bf" : "#60a0ff";
+                break;
+        }
+
+        context.fillRect(x,y,scale,scale);
+    };
+
     global[ns] = Board;
 }).apply(null,typeof(window) !== "undefined" ? [this, "Board"] : [module,"exports"]);

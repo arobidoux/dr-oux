@@ -16,6 +16,11 @@
         this._name = null;
         this._difficulty = 1;
         this._opponents = [];
+        
+        // estimated sizes
+        var mainBottleWidth = 250;
+        var smallBottleWidth = 120;
+        this._fullSizeSpace = Math.floor((window.innerWidth - mainBottleWidth) / smallBottleWidth);
 
         this._socket.on("error",this.error.bind(this));
 
@@ -74,6 +79,15 @@
                     else {
                         // set our board to what it was (should happen if we reconnect)
                         myFrame = decodeFrame(roomDetails.clients[i].board);
+                        var hasData = false;
+                        for(var i=0;i<myFrame.length;i++) {
+                            if(myFrame[i] != 0x00) {
+                                hasData = true;
+                                break;
+                            }
+                        }
+                        if(!hasData)
+                            myFrame = null;
                     }
                 }
 
@@ -151,7 +165,9 @@
         }.bind(this));
     };
 
-    Multiplayer.prototype
+    Multiplayer.prototype.on_reconnect = function() {
+        authenticate.call(this);
+    };
 
     Multiplayer.prototype.kick = function(player_uuid) {
         this._socket.emit("kick", player_uuid);
@@ -165,6 +181,26 @@
         menu.set("room_uuid", null);
     };
 
+    Multiplayer.prototype.virusCountUpdated = function() {
+        // only if we have more opponent that we can fit
+        if(this._opponents.length > this._fullSizeSpace) {
+            var counts = [];
+            for(var i=0;i<this._opponents.length;i++)
+                counts.push([i,this._opponents[i].virus]);
+            var sorted = counts.sort(function(a,b){ return a[1]-b[1]; });
+            
+            for(var i=1;i<this._fullSizeSpace && i < sorted.length ;i++) {
+                this._opponents[sorted.pop()[0]].bottle.preview(false);
+            }
+            while(sorted.length)
+                this._opponents[sorted.pop()[0]].bottle.preview();
+        }
+        else {
+            for(var i=0;i<this._opponents.length;i++)
+                this._opponents[i].bottle.preview(false);    
+        }
+    };
+
     function addOpponent(data) {
         console.debug(data.name, "is ready to play");
 
@@ -176,15 +212,19 @@
         var opponent = {
             id: data.id,
             uuid: data.uuid,
-            bottle: bottle
+            bottle: bottle,
+            virus: 256
         };
 
         this._opponents.push(opponent);
 
         var handle = bottle.generateStreamHandler();
+        this.virusCountUpdated();
         this._socket.on("frame-"+data.id, function(encoded) {
             handle(decodeFrame(encoded));
-        });
+            opponent.virus = bottle._board.getVirusCount();
+            this.virusCountUpdated();
+        }.bind(this));
 
         return opponent;
     }

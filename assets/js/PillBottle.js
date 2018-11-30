@@ -2,6 +2,7 @@
     var BOTTLE_WIDTH = 8;
     var BOTTLE_HEIGHT = 16;
     var SQUARE_LENGTH = 8;
+    var PREVIEW_SQUARE_LENGTH = 2;
 
     var RECORD_REFERENCE_FRAME_EVERY = 512;
 
@@ -10,6 +11,13 @@
         LEFT: SQUARE_LENGTH * 1,
         RIGHT: SQUARE_LENGTH * 5,
         BOTTOM: SQUARE_LENGTH * 1
+    };
+
+    var PREVIEW_PADDING = {
+        TOP: PREVIEW_SQUARE_LENGTH * 5,
+        LEFT: PREVIEW_SQUARE_LENGTH * 1,
+        RIGHT: PREVIEW_SQUARE_LENGTH * 5,
+        BOTTOM: PREVIEW_SQUARE_LENGTH * 1
     };
 
     var NEXT_PILL_X = SQUARE_LENGTH * (BOTTLE_WIDTH + 2);
@@ -42,6 +50,7 @@
 
         this._recording = false;
         this._stream_to = [];
+        this._preview_only = false;
     }
 
     PillBottle.prototype.destroy = function() {
@@ -96,6 +105,8 @@
         this._context = this._canvas.getContext("2d");
         this.setMessage(null);
     };
+
+
 
     PillBottle.prototype.setMessage = function(msg) {
         if(msg) {
@@ -158,7 +169,8 @@
     PillBottle.prototype.updateVirusCount = function(count) {
         this._status.textContent =
             "Virus" + (count>1?"es":"") +
-            " Remaining: " + count;
+            (this._preview_only ? "" : " Remaining: ")
+            + count;
     };
 
     PillBottle.prototype.tick = function (tick) {
@@ -180,8 +192,27 @@
         return tickStats;
     };
 
+    PillBottle.prototype.preview = function(state) {
+        if(state || typeof(state) === "undefined") {
+            if(!this._preview_only) {
+                this._preview_only = true;
+                this._canvas.width = BOTTLE_WIDTH * PREVIEW_SQUARE_LENGTH + PREVIEW_PADDING.TOP + PREVIEW_PADDING.BOTTOM;
+                this._canvas.height = BOTTLE_HEIGHT * PREVIEW_SQUARE_LENGTH + PREVIEW_PADDING.RIGHT + PREVIEW_PADDING.LEFT;
+            }
+        }
+        else {
+            if(this._preview_only) {
+                this._preview_only = false;
+                this._canvas.width = BOTTLE_WIDTH * SQUARE_LENGTH + PADDING.TOP + PADDING.BOTTOM;
+                this._canvas.height = BOTTLE_HEIGHT * SQUARE_LENGTH + PADDING.RIGHT + PADDING.LEFT;
+            }
+        }
+    };
+
     PillBottle.prototype.render = function (tick) {
         this._context.clearRect(0, 0, this._canvas.width, this._canvas.height);
+
+        var width = this._preview_only ? this._canvas.width - PREVIEW_PADDING.RIGHT + PREVIEW_PADDING.LEFT + 1 :this._canvas.width - PADDING.RIGHT + PADDING.LEFT + 1;
 
         // draw bottle
         this._context.drawImage(
@@ -190,11 +221,16 @@
             sprite2Form.bottle2[1],
             sprite2Form.bottle2[2],
             sprite2Form.bottle2[3],
-            0, 0, this._canvas.width - PADDING.RIGHT + PADDING.LEFT + 1, this._canvas.height + 1);
+            0, 0, width, this._canvas.height + 1);
 
-        this._board.each(function (code, x, y) {
-            Board.renderSprite(this._context, code, x * SQUARE_LENGTH + PADDING.LEFT, y * SQUARE_LENGTH + PADDING.TOP, tick);
-        }.bind(this));
+        this._board.each(function (renderMethod, scale, padding, code, x, y) {
+            Board[renderMethod](this._context, code, x * scale + padding.LEFT, y * scale + padding.TOP, tick, scale);
+        }.bind(
+            this,
+            this._preview_only ? "renderPreviewSprite" : "renderSprite",
+            this._preview_only ? PREVIEW_SQUARE_LENGTH : SQUARE_LENGTH,
+            this._preview_only ? PREVIEW_PADDING : PADDING
+        ));
 
         // TODO move this to not use private attribute
         // make required transformation to draw the next pill
