@@ -15,4 +15,5 @@
 .tap-controller { display:none; user-select: none; -o-user-select:none; -moz-user-select: none; -khtml-user-select: none; -webkit-user-select: none; }
 
 .tap-controller .zone { border: 2px solid limegreen; color: limegreen; position: absolute; display: block; background-color: rgba(55,55,55,.5);}
-.game-in-progress .tap-controller .zone { opacity:.25; }
+
+.game-in-progress .tap-controller .zone { opacity:.25; background-color: transparent; }
