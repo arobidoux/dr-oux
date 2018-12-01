@@ -154,6 +154,10 @@ function MenuController($scope, $timeout, pref, menuInitialized){
         }
     };
 
+    $scope.clearError = function() {
+        $scope.error = "";
+    };
+
     $scope.host = function() {
         if($scope.hosting)
             return;

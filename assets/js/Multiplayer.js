@@ -16,6 +16,9 @@
         this._name = null;
         this._difficulty = 1;
         this._opponents = [];
+        menu.init.then(function(){
+            menu.set("opponents", this._opponents);
+        }.bind(this))
         
         // estimated sizes
         var mainBottleWidth = 250;
@@ -406,6 +409,7 @@
             this._opponents[i].bottle.destroy();
         }
         this._opponents = [];
+        menu.set("opponents", this._opponents);
     };
 
     Multiplayer.prototype.invite = function(player_id) {

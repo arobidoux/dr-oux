@@ -165,7 +165,7 @@
     </div>
 
     <div ng-if="error" style="position:fixed;background-color:darkred">
-        <button ng-click="error=''">Dismiss</button>
+        <button ng-click="clearError()">Dismiss</button>
         <pre> {{error|json}} </pre>
     </div>
 
