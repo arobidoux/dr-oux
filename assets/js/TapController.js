@@ -20,8 +20,8 @@
             elem.className = "zone";
             elem.style.left = this._zones[i].zone[0] + "px";
             elem.style.top = this._zones[i].zone[1] + "px";
-            elem.style.width = elem.style.lineHeight = (this._zones[i].zone[2] - this._zones[i].zone[0]) + "px";
-            elem.style.height = elem.style.lineHeight = (this._zones[i].zone[3] - this._zones[i].zone[1]) + "px";
+            elem.style.width = elem.style.lineHeight = (this._zones[i].zone[2] - this._zones[i].zone[0] -1) + "px";
+            elem.style.height = elem.style.lineHeight = (this._zones[i].zone[3] - this._zones[i].zone[1] -1) + "px";
             elem.style.textAlign = "center";
             elem.textContent = this._zones[i].label;
 
