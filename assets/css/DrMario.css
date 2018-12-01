@@ -2,10 +2,17 @@
 .pill-bottle-root { display: inline-block; position:relative; }
 .pill-bottle-root .pill-bottle-status { font-size: 9px; }
 
-.pill-bottle-root .pill-bottle-msg { position:absolute; top:50px; left:0; bottom:50px; right:32px; background-color:rgba(55,55,55,.5); font-weight: bold; line-height: 78px; text-align:center;}
+.pill-bottle-root .pill-bottle-msg { position:absolute; top: 90px; left: 0; bottom: 16px; right: 64px; background-color:rgba(55,55,55,.5); font-weight: bold; line-height: 78px; text-align:center;}
+
+.pill-bottle-root.pill-bottle-preview > h3 { width: 28px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;  font-size: .75em; }
 
 #opponents .pill-bottle-root .pill-bottle-msg { top:110px; }
 /*.dr-mario .pill-bottle-root canvas.pill-bottle-canvas { border: 1px solid gainsboro; display: inline-block; }*/
 
-.game-status { position: fixed; top:0; background-color: black; color: yellowgreen; padding:15px; }
-.main-pill-bottle { position: fixed; top:15px; left: 15px; }
+/* Tap Controller */
+.game-in-progress .tap-controller,
+.tap-controller.shown { display: block; position: fixed; top:0; left:0; bottom:0; right:0; }
+.tap-controller { display:none; user-select: none; -o-user-select:none; -moz-user-select: none; -khtml-user-select: none; -webkit-user-select: none; }
+
+.tap-controller .zone { border: 2px solid limegreen; color: limegreen; position: absolute; display: block; background-color: rgba(55,55,55,.5);}
+.game-in-progress .tap-controller .zone { opacity:.25; }

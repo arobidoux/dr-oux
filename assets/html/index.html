@@ -1,11 +1,10 @@
 <!doctype html>
-<html  manifest="assets/manifest/html5.appcache">
+<html manifest="assets/manifest/html5.appcache">
 
 <head>
     <title>Dr OUX</title>
     <link rel="manifest" href="assets/manifest/android-add-to-home.json">
     
-    <link rel="stylesheet" href="assets/css/Controller.css">
     <link rel="stylesheet" href="assets/css/DrMario.css">
     <link rel="stylesheet" href="assets/css/index.css">
    
@@ -17,29 +16,63 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" />
 </head>
 
-<body ng-app="app" ng-controller="MenuController">
+<body ng-app="app" ng-controller="MenuController" ng-class="{'game-in-progress':playing}">
+    <div class="cache-status" ng-if="cache_status">
+        <div ng-if="cache_status=='new-available'">
+            A new fresher version of the game is available and ready to go!<br/>
+            Click <button onclick="window.location.reload();">here</button> to use it!
+        </div>
+
+        <div ng-if="cache_status=='ready'">
+            Ready!
+        </div>
+        <div ng-if="cache_status=='progress'">
+            Downloading the Game! Progress {{cache_status_progress.loaded}} / {{cache_status_progress.total}}
+        </div>
+
+        <div ng-if="cache_status=='obselete'">
+            Application version obsolete
+        </div>
+
+        <div ng-if="cache_status=='error'">
+            {{ cache_status_error }}
+        </div>
+
+        <div ng-if="cache_status=='downloading'">
+            Downloading new Version...
+        </div>
+
+        <div ng-if="cache_status=='looking'">
+            Looking for new version...
+        </div>
+
+        <div ng-if="cache_status=='no-cache-ready'">
+            No cache available. Ready!
+        </div>
+    </div>
+    
+    
     <div id="menu" ng-hide="playing">
         <div id="my-settings">
             <label> Name
                 <input type="text" ng-model="multi_name" style="width: 8em;">
             </label>
             
-
             <label> Difficulty
                 <input type="number" min="1" max="20" ng-model="difficulty">
             </label>
-            
-
-            <label> Touch Sensitivity
-                <input type="number" min="1" max="16" ng-model="sensitivity">
-            </label>
-            
 
             <label>
                 Controls
                 <select ng-model="controls" ng-options="key as kmap.label for ( key, kmap ) in keyMap"></select>
             </label>
             
+            <label ng-if="controls == 'swipe'"> Touch Sensitivity
+                <input type="number" min="1" max="16" ng-model="sensitivity">
+            </label>
+
+            <button ng-if="controls=='tap'" ng-click="preview_tap_controls()"> Preview Tap Zones</button>
+
             <label>
                 Soundtrack
                 <select id="soundtrack" ng-model="soundtrack">
@@ -130,20 +163,36 @@
 
         </div>
     </div>
-    <pre ng-if="error" style="position:fixed;background-color:darkred">{{error|json}}</pre>
-    <!--fieldset style="position:absolute; left:0; top:500px;">
-        <legend>players</legend>
-        <pre>{{players|json}}</pre>
-    </fieldset>
-    
-    <fieldset style="position:absolute; left:600px; top:500px;">
-            <legend>rooms</legend>
-            <pre>{{rooms|json}}</pre>
-        </fieldset-->
 
-    <div id="main"></div>
+    <div ng-if="error" style="position:fixed;background-color:darkred">
+        <button ng-click="error=''">Dismiss</button>
+        <pre> {{error|json}} </pre>
+    </div>
 
-    <div id="opponents"></div>
+    <div id="game-grid" ng-show="playing">
+
+        <div id="game-status">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Player</th>
+                        <th>Virus</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr ng-repeat="player in opponents | orderBy : '-virus'">
+                        <td>{{player.name}}</td>
+                        <td>{{player.virus==256?'':player.virus}}</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div id="main"></div>
+
+        <div id="opponents"></div>
+        
+    </div>
 
     <img id="sprite" src="assets/img/reduced-sprites.png" style="display:none;" />
     <img id="sprite2" src="assets/img/sprites2.png" style="display:none;" />
@@ -157,7 +206,7 @@
 
     <script src="assets/js/Sounds.js"></script>
     <script src="assets/js/Inputs.js"></script>
-    <script src="assets/js/Controller.js"></script>
+    <script src="assets/js/TapController.js"></script>
     <script src="assets/js/Pill.js"></script>
     <script src="assets/js/Board.js"></script>
     <script src="assets/js/PillBottle.js"></script>

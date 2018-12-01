@@ -32,6 +32,7 @@
         this._on_game_over_handles = [];
         
         this._soundtrack = null;
+        this._control_used = null;
 
         this.$touchstart = this.touchstart.bind(this);
         this.$touchmove = this.touchmove.bind(this);
@@ -118,17 +119,37 @@
             Sounds.stopGroup("bg");
     
         this.$animate();
-        this.bindTouch();
+        switch(this._control_used = menu.get("controls")) {
+            case "swipe": this.bindTouch(); break;
+            case "tap": this.enableTap(); break;
+            default:;
+        }
     };
 
     DrMario.prototype.stop = function () {
         Sounds.stopGroup("bg");
         this._running = false;
-        this.releaseTouch();
+        switch(this._control_used) {
+            case "swipe": this.releaseTouch(); break;
+            case "tap": this.disableTap(); break;
+            default:;
+        }
+        this._control_used=null;
     };
 
     DrMario.prototype.pause = function () {
-        this[ this._running ? "stop" : "run" ]();
+        if(this._running = !this._running) {
+            if(this._soundtrack)
+                Sounds.resume(this._soundtrack);
+            else
+                Sounds.stopGroup("bg");
+        
+            this.$animate();
+        }
+        else {
+            Sounds.stopGroup("bg");
+            this._running = false;
+        }
     };
 
     DrMario.prototype._animate = function () {
@@ -220,6 +241,18 @@
         document.removeEventListener("touchend", this.$touchend,{passive: false});
     };
 
+    DrMario.prototype.enableTap = function() {
+        this.disableTap();
+        this._tapController = new TapController(document.getElementsByTagName("body")[0], this._inputs);
+        this._tapController.display();
+    };
+
+    DrMario.prototype.disableTap = function() {
+        if(this._tapController) {
+            this._tapController.destroy();
+            this._tapController = null;
+        }
+    };
 
     DrMario.prototype.touchstart = function(ev) {
         this._touches = {};

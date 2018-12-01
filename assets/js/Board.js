@@ -777,13 +777,16 @@
     var sprite = null;
 
     /** Render a cell on the context, based on the code, located at rect */
-    Board.renderSprite = function (context, code, x, y, tick) {
+    Board.renderSprite = function (context, code, tick) {
         if (code == 0x00)
             return;
+
+        var x=0, y=0;
 
         if(sprite === null)
             sprite = document.getElementById("sprite");
 
+        // get the right color offset
         var c = code & Board.CODES.colors.mask;
         var ix = 0, iy = 0;
         for (var k in Board.CODES.colors.values) {
@@ -793,6 +796,7 @@
             }
         }
 
+        // get the right form offset
         var f = code & Board.CODES.forms.mask;
         for (var k in Board.CODES.forms.values) {
             if (f == Board.CODES.forms.values[k].code) {
@@ -801,6 +805,8 @@
             }
         }
 
+        // get the state offset
+        /*
         var s = code & Board.CODES.states.mask;
         for (var k in Board.CODES.states.values) {
             if (s == Board.CODES.states.values[k].code) {
@@ -809,14 +815,17 @@
                 break;
             }
         }
+        */
 
+        // animate if required
         if (iy instanceof Array)
             iy = iy[Math.floor(tick * ANIMATION_TICK_MULTIPLIER) % iy.length];
 
-        context.drawImage(sprite, ix, iy, 8, 8, x, y, 8, 8);
+        // draw it!
+        context.drawImage(sprite, ix, iy, 8, 8, x, y, x+8, y+8);
     };
 
-    Board.renderPreviewSprite = function(context, code, x, y, tick, scale) {
+    Board.renderPreviewSprite = function(context, code, tick) {
         if(!code)
             return;
 
@@ -833,7 +842,7 @@
                 break;
         }
 
-        context.fillRect(x,y,scale,scale);
+        context.fillRect(0,0,2,2);
     };
 
     global[ns] = Board;

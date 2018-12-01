@@ -20,7 +20,8 @@
         // estimated sizes
         var mainBottleWidth = 250;
         var smallBottleWidth = 120;
-        this._fullSizeSpace = Math.floor((window.innerWidth - mainBottleWidth) / smallBottleWidth);
+        var windowWidth = window.innerWidth > 512 ? 512 : window.innerWidth;
+        this._fullSizeSpace = Math.floor((windowWidth - mainBottleWidth) / smallBottleWidth);
 
         this._socket.on("error",this.error.bind(this));
 
@@ -187,11 +188,29 @@
             var counts = [];
             for(var i=0;i<this._opponents.length;i++)
                 counts.push([i,this._opponents[i].virus]);
-            var sorted = counts.sort(function(a,b){ return a[1]-b[1]; });
             
+            var sorted = counts.sort(function(a,b){ return b[1]-a[1]; });
+            var parent = this._opponents[0].bottle._root.parentElement;
+            var elems = [];
             for(var i=1;i<this._fullSizeSpace && i < sorted.length ;i++) {
-                this._opponents[sorted.pop()[0]].bottle.preview(false);
+                var idx = sorted.pop()[0];
+                this._opponents[idx].bottle.preview(false);
+                parent.removeChild(this._opponents[idx].bottle._root);
+                elems.push(idx);
             }
+
+            // re-order
+            while(elems.length) {
+                var idx = elems.pop();
+                if(!parent.firstChild) {
+                    parent.appendChild(this._opponents[idx].bottle._root);
+                }
+                else {
+                    parent.insertBefore(this._opponents[idx].bottle._root, parent.firstChild);
+                }
+            }
+
+            // enable preview on the rest of them
             while(sorted.length)
                 this._opponents[sorted.pop()[0]].bottle.preview();
         }
@@ -211,6 +230,7 @@
 
         var opponent = {
             id: data.id,
+            name: data.name,
             uuid: data.uuid,
             bottle: bottle,
             virus: 256
@@ -222,8 +242,18 @@
         this.virusCountUpdated();
         this._socket.on("frame-"+data.id, function(encoded) {
             handle(decodeFrame(encoded));
-            opponent.virus = bottle._board.getVirusCount();
-            this.virusCountUpdated();
+            var v = bottle._board.getVirusCount();
+            if( opponent.virus != v) {
+                opponent.virus = v;
+                
+                menu.splice("opponents", function(player){
+                    if(opponent.id == player.id) {
+                        player.virus = opponent.virus;
+                    }
+                }.bind(this));
+                
+                this.virusCountUpdated();
+            }
         }.bind(this));
 
         return opponent;

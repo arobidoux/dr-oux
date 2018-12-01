@@ -1,0 +1,22 @@
+.retro-controller { border: 1px solid white; position:fixed; width: 280px; height:100px; bottom: 0; left: 40px; background-color:gray; }
+.retro-controller .retro-controller-btn { position: absolute; border: 1px solid limegreen; }
+
+.retro-controller .retro-controller-arrow { width: 32px; height:32px; background-color: black; }
+.retro-controller .retro-controller-button { width: 32px; height:32px; border-radius:16px; background-color:red; }
+.retro-controller .retro-controller-options { width: 32px; height:10px; border-radius:4px; background-color:black; color: white; transform: rotate(-45deg); top: 50px; }
+
+.retro-controller .retro-controller-up, .retro-controller .retro-controller-down { left:50px }
+.retro-controller .retro-controller-up { top:15px; }
+.retro-controller .retro-controller-down { top:50px; }
+
+.retro-controller .retro-controller-left, .retro-controller .retro-controller-right { top: 32px; }
+.retro-controller .retro-controller-left { left:16px }
+.retro-controller .retro-controller-right { left:85px }
+
+.retro-controller .retro-controller-a { top:45px; left:200px }
+.retro-controller .retro-controller-b { top:45px; left:240px }
+
+.retro-controller .retro-controller-start { left: 160px; }
+.retro-controller .retro-controller-select { left: 120px; }
+
+.retro-controller .retro-controller-active { background-color: yellow;}

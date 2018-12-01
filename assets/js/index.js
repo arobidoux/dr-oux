@@ -36,29 +36,29 @@ game.registerForTick(multiplayer.tick.bind(multiplayer));
 // Check if a new cache is available on page load.
 window.addEventListener("load", function(e) {
     if(!window.applicationCache) {
-        game.setStatus("No cache available. Ready!");
+        menu.set("cache_status","no-cache-ready");
         setTimeout(function(){
-            game.setStatus("");
+            menu.set("cache_status","");
         },1000);
         return;
     }
 
     // Fired after the first cache of the manifest.
     window.applicationCache.addEventListener("cached", function(ev){
-        game.setStatus("Ready!");
+        menu.set("cache_status","ready");
         setTimeout(function(){
-            game.setStatus("");
+            menu.set("cache_status","");
         },1000);
     }, false);
 
     // Checking for an update. Always the first event fired in the sequence.
     window.applicationCache.addEventListener("checking", function(ev){
-        game.setStatus("Looking for new version...");
+        menu.set("cache_status","looking");
     }, false);
 
     // An update was found. The browser is fetching resources.
     window.applicationCache.addEventListener("downloading", function(ev) {
-        game.setStatus("Downloading new Version...");
+        menu.set("cache_status","downloading");
     }, false);
 
     // The manifest returns 404 or 410, the download failed,
@@ -68,38 +68,44 @@ window.addEventListener("load", function(e) {
         for(var k in ev)
             err[k] = ev[k];
         menu.set("error", err);
-        game.setStatus(ev.message);
+        menu.set("cache_status_error",ev.message);
+        menu.set("cache_status","error");
     }, false);
 
     // Fired after the first download of the manifest.
     window.applicationCache.addEventListener("noupdate", function(ev){
-        game.setStatus("Ready!");
+        menu.set("cache_status","ready");
         setTimeout(function(){
-            game.setStatus("");
+            menu.set("cache_status","");
         },1000);
     }, false);
 
     // Fired if the manifest file returns a 404 or 410.
     // This results in the application cache being deleted.
     window.applicationCache.addEventListener("obsolete", function(ev){
-        game.setStatus("Application version obsolete");
+        menu.set("cache_status","obselete");
     }, false);
 
     var loaded = 0;
     // Fired for each resource listed in the manifest as it is being fetched.
     window.applicationCache.addEventListener("progress", function(ev){
-        game.setStatus("Downloading the Game! Progress " + (typeof(ev.loaded)==="undefined"? loaded++ : ( ev.loaded + "/" + ev.total)));
+        menu.set("cache_status","progress");
+        menu.set("cache_status_progress",
+            typeof(ev.loaded)==="undefined" ?
+            { total: "?", loaded: loaded++} :
+            { total: ev.total, loaded: ev.loaded }
+        );
     }, false);
 
     window.applicationCache.addEventListener("updateready", function(e) {
       if (window.applicationCache.status == window.applicationCache.UPDATEREADY) {
         // Browser downloaded a new app cache.
-        game.setStatusHtml("A new fresher version of the game is available and ready to go! click "+'<button onclick="window.location.reload();">here</button>' + " to use it!");
+        menu.set("cache_status","new-available");
       } else {
         // Manifest didn't changed. Nothing new to server.
-        game.setStatus("Ready!");
+        menu.set("cache_status","ready");
         setTimeout(function(){
-            game.setStatus("");
+            menu.set("cache_status","");
         },1000);
       }
     }, false);

@@ -97,9 +97,11 @@
 
         this._canvas.width = BOTTLE_WIDTH * SQUARE_LENGTH + PADDING.TOP + PADDING.BOTTOM;
         this._canvas.height = BOTTLE_HEIGHT * SQUARE_LENGTH + PADDING.RIGHT + PADDING.LEFT;
-        if (this._scale > 1) {
-            this._root.style.transform = "scale(" + this._scale + ")";
-            this._root.style.transformOrigin = "top left";
+        if (this._scale != 1) {
+            this._canvas.height *= this._scale;
+            this._canvas.width *= this._scale;
+            //this._root.style.transform = "scale(" + this._scale + ")";
+            //this._root.style.transformOrigin = "top left";
         }
 
         this._context = this._canvas.getContext("2d");
@@ -196,6 +198,7 @@
         if(state || typeof(state) === "undefined") {
             if(!this._preview_only) {
                 this._preview_only = true;
+                this._root.className = "pill-bottle-root pill-bottle-preview";
                 this._canvas.width = BOTTLE_WIDTH * PREVIEW_SQUARE_LENGTH + PREVIEW_PADDING.TOP + PREVIEW_PADDING.BOTTOM;
                 this._canvas.height = BOTTLE_HEIGHT * PREVIEW_SQUARE_LENGTH + PREVIEW_PADDING.RIGHT + PREVIEW_PADDING.LEFT;
             }
@@ -203,6 +206,7 @@
         else {
             if(this._preview_only) {
                 this._preview_only = false;
+                this._root.className = "pill-bottle-root";
                 this._canvas.width = BOTTLE_WIDTH * SQUARE_LENGTH + PADDING.TOP + PADDING.BOTTOM;
                 this._canvas.height = BOTTLE_HEIGHT * SQUARE_LENGTH + PADDING.RIGHT + PADDING.LEFT;
             }
@@ -212,7 +216,12 @@
     PillBottle.prototype.render = function (tick) {
         this._context.clearRect(0, 0, this._canvas.width, this._canvas.height);
 
-        var width = this._preview_only ? this._canvas.width - PREVIEW_PADDING.RIGHT + PREVIEW_PADDING.LEFT + 1 :this._canvas.width - PADDING.RIGHT + PADDING.LEFT + 1;
+        this._context.save();
+        this._context.scale(this._scale, this._scale);
+
+        var width = this._preview_only ?
+            (this._canvas.width/this._scale) - PREVIEW_PADDING.RIGHT + PREVIEW_PADDING.LEFT + 1 :
+            (this._canvas.width/this._scale) - PADDING.RIGHT + PADDING.LEFT + 1;
 
         // draw bottle
         this._context.drawImage(
@@ -221,10 +230,19 @@
             sprite2Form.bottle2[1],
             sprite2Form.bottle2[2],
             sprite2Form.bottle2[3],
-            0, 0, width, this._canvas.height + 1);
+            0, 0, Math.floor(width), Math.floor(this._canvas.height/this._scale) + 1);
 
-        this._board.each(function (renderMethod, scale, padding, code, x, y) {
-            Board[renderMethod](this._context, code, x * scale + padding.LEFT, y * scale + padding.TOP, tick, scale);
+        // draw pills
+        this._board.each(function (renderMethod, sprite_size, padding, code, x, y) {
+            this._context.save();
+            this._context.translate(
+                x*sprite_size+padding.LEFT,
+                y*sprite_size+padding.TOP
+            );
+
+            Board[renderMethod]( this._context, code, tick );
+
+            this._context.restore();
         }.bind(
             this,
             this._preview_only ? "renderPreviewSprite" : "renderSprite",
@@ -250,11 +268,13 @@
             }
 
             // Draw the next pill
-            Board.renderSprite(this._context, this._board._nextPill.a, 0, 0, tick);
-            Board.renderSprite(this._context, this._board._nextPill.b, SQUARE_LENGTH, 0, tick);
+            Board.renderSprite(this._context, this._board._nextPill.a, tick);
+            this._context.translate(SQUARE_LENGTH, 0);
+            Board.renderSprite(this._context, this._board._nextPill.b, tick);
 
             this._context.restore();
         }
+        this._context.restore();
     };
 
     PillBottle.prototype.getNextPillX = function (sx, dx, time, delay) {

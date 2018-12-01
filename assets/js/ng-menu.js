@@ -187,6 +187,7 @@ function MenuController($scope, $timeout, pref, menuInitialized){
     };
 
     $scope.startSingle = function() {
+        $scope.playing = true;
         game.setSoundTrack(getSoundTrack($scope.soundtrack));
         $timeout(function(){
             game.startSinglePlayer(parseInt($scope.difficulty));
@@ -198,9 +199,42 @@ function MenuController($scope, $timeout, pref, menuInitialized){
         return item.uuid == $scope.room_uuid ? "" : item.name;
     };
 
+
+    $scope.preview_tap_controls = function() {
+        var tap = new TapController(document.getElementsByTagName("body")[0]);
+        tap.display();
+        tap._root.addEventListener("click", function(){
+            tap.destroy();
+        });
+    };
+
     $scope.keyMap = {
         arrows: {
             label: "Arrows + X-Z",
+            map: {
+                40: "DOWN",
+                38: "UP",
+                37: "LEFT",
+                39: "RIGHT",
+                88: "ROTATE_CLOCKWISE",
+                90: "ROTATE_COUNTER_CLOCKWISE",
+                19: "PAUSE",
+            }
+        },
+        swipe: {
+            label: "Swipe",
+            map: {
+                40: "DOWN",
+                38: "UP",
+                37: "LEFT",
+                39: "RIGHT",
+                88: "ROTATE_CLOCKWISE",
+                90: "ROTATE_COUNTER_CLOCKWISE",
+                19: "PAUSE",
+            }
+        },
+        tap: {
+            label: "Tap",
             map: {
                 40: "DOWN",
                 38: "UP",
@@ -276,31 +310,4 @@ function getSoundTrack(soundtrack) {
 global[ns] = menu;
 return;
 
-
-
-function menu(game, multiplayer, inputs) {
-    return;
-    // initialize the menu
-
-
-    // control change
-    current_inputs = inputs;
-    if(inputs && settings.keymap)
-        inputs.loadKeyMap(keyMap[setting.keymap]);
-
-
-    // Handle the start button
-    var start_single = document.getElementById("start-single");
-    start_single.addEventListener("click", function(){
-        
-        menuRootObj.style.display = "none";
-    });
-    start_single.focus();
-
-    
-    // register game ending callback
-    game.onGameOver(function(win) {
-        menuRootObj.style.display = "block";
-    });
-}
 })(this, "menu");

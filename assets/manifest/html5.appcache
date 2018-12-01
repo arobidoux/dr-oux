@@ -1,6 +1,6 @@
 CACHE MANIFEST
 
-# 2018-11-27:v1.0.52
+# 2018-11-27:v1.57
 
 NETWORK:
 /socket.io/
@@ -10,7 +10,6 @@ CACHE:
 /favicon.ico
 /index.html
 /assets/manifest/android-add-to-home.json
-/assets/css/Controller.css
 /assets/css/DrMario.css
 /assets/css/index.css
 
@@ -26,7 +25,7 @@ CACHE:
 /assets/vendor/js/angular.min.js
 /assets/js/Sounds.js
 /assets/js/Inputs.js
-/assets/js/Controller.js
+/assets/js/TapController.js
 /assets/js/Pill.js
 /assets/js/Board.js
 /assets/js/PillBottle.js
