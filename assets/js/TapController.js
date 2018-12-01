@@ -42,6 +42,9 @@
     };
 
     TapController.prototype._touchStart = function(ev) {        
+        if(!this._inputs)
+            return;
+
         for(var i=0; i<ev.changedTouches.length;i++) {
             if(typeof(this._touches[ev.changedTouches[i].identifier]) === "undefined") {
                 for(var j=0;j<this._zones.length; j++ ) {
@@ -61,6 +64,9 @@
     };
 
     TapController.prototype._touchEnd = function(ev) {
+        if(!this._inputs)
+            return;
+
         for(var i=0; i<ev.changedTouches.length;i++) {
             if(typeof(this._touches[ev.changedTouches[i].identifier]) !== "undefined") {
                 this._inputs.release(this._touches[ev.changedTouches[i].identifier]);
