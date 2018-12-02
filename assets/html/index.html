@@ -88,6 +88,11 @@
             </label>
 
             <label>
+                Volume
+                <input type="range" ng-model="volume" min="0" max="100">
+            </label>
+
+            <label>
                 Enable Sound
                 <input type="checkbox" ng-model="enable_sound" ng-true-value="'yes'" ng-false-value="'no'">
             </label>
@@ -106,7 +111,7 @@
                 <legend>
                     Game Rules
                     <select ng-model="game_rules.combos" ng-options="key as value.label for (key,value) in gameRules"></select>
-                    <p>Every combo will send "d'la marde" {{game_rules.combos ? gameRules[game_rules.combos].description : "Please select one"}}</p>
+                    <p>Every combo will send half pills {{game_rules.combos ? gameRules[game_rules.combos].description : "Please select one"}}</p>
                 </legend>
                 <h4>Invite players</h4>
                 <ul id="players">
@@ -130,7 +135,7 @@
                 </legend>
                 <dl class="rules">
                     <dt ng-if="room.gameRules.combos">{{gameRules[room.gameRules.combos].label}}</dt>
-                    <dd ng-if="room.gameRules.combos">Every combo will send "d'la marde" {{gameRules[room.gameRules.combos].description}}</dd>
+                    <dd ng-if="room.gameRules.combos">Every combo will send half pills {{gameRules[room.gameRules.combos].description}}</dd>
                 </dl>
                 <hr/>
                 <ul class="room-player-list">

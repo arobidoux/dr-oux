@@ -61,6 +61,9 @@ function MenuController($scope, $timeout, pref, menuInitialized){
             Sounds.play(newValue);
         }
     });
+    pref($scope,"volume", 1, parseInt, function(newValue, oldValue) {
+        Sounds.setVolume(newValue);
+    });
     pref($scope,"game_rules.combos", "normal-rr", null, function(newValue, oldValue) {
         if(newValue != oldValue && $scope.hosting) {
             $timeout(function(){

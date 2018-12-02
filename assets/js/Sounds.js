@@ -108,6 +108,7 @@
     }
 
     var muted = false;
+    var volume = 1;
 
     Sounds.mute = function() {
         Sounds.stopAll();
@@ -116,6 +117,15 @@
 
     Sounds.unmute = function() {
         muted = false;
+    };
+
+    Sounds.setVolume = function(v) {
+        volume = v < 1 ? v : (v>100 ? 1 : v/100);
+        for(var key in elements) {
+            for(var i=0; i<elements[key].audio.length; i++) {
+                elements[key].audio[i].volume = volume;
+            }
+        }
     };
 
     Sounds.has = function(key) {
@@ -213,9 +223,13 @@
 
     Sounds._generateAudioFor = function(key, src) {
         var audio = new Audio(src);
-        if(typeof(library[key].group) !== "undefined" && library[key].group == "bg")
-            audio.volume = .5;
-        
+        if(typeof(library[key].group) !== "undefined" && library[key].group == "bg") {
+            audio.volume = volume;//*.5;
+        }
+        else {   
+            audio.volume = volume;
+        }
+
         //audio.currentTime = 0;
         
         return audio;
