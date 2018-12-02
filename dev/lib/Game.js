@@ -63,6 +63,10 @@ class Game {
         if (typeof (this._rooms[roomName]) !== "undefined")
             delete (this._rooms[roomName]);
     }
+
+    replaceRoom(room) {
+        this._rooms[room.name] = room;
+    }
 }
 
 module.exports = Game;

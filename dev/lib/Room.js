@@ -5,8 +5,9 @@ const atob = require("atob");
 const btoa = require("btoa");
 
 const File = require("./File");
-const Client = require("./Client");
 const Board = require("../../assets/js/Board");
+
+var nextRoomID=1;
 
 class Room {
     constructor(name, io, game) {
@@ -17,13 +18,18 @@ class Room {
         this._boards = {};
         this._gameInProgress = false;
         this._uuid = uuidv1();
+        this._id = nextRoomID++;
         this._game_rules = {};
 
-        this._io.emit("room_created", this.summary());        
+        this._previous_game_uuid = null;
+        this._quiet_update = false;
+        this._initializing = null;
+
+        this._io.emit("room_created", this.summary());
     }
 
     get socRoomName() {
-        return "room-" + this._name;
+        return "room-" + this._id;
     }
 
     get name() {
@@ -54,22 +60,29 @@ class Room {
     }
 
     generateDetails() {
-        return new Promise((resolve, reject) => {
-            var details = this.summary();
-            details.clients = [];
-            details.gameInProgress= this._gameInProgress;
-            details.startingIn = this._countdown;
+        if(this._initializing) {
+            return this._initializing.then(()=>{return this._generateDetailSync()});
+        }
+        else {
+            return new Promise((resolve, reject) => { resolve(this._generateDetailSync()) });
+        }
+    }
 
-            for(var i=0;i<this._clients.length;i++) {
-                var clientDetails = this._clients[i].getDetails();
-                if(typeof(this._boards[this._clients[i].uuid])!=="undefined")
-                    clientDetails.board = encodeFrame(this._boards[this._clients[i].uuid].board.getNewFrame(true));
+    _generateDetailSync() {
+        var details = this.summary();
+        details.clients = [];
+        details.gameInProgress= this._gameInProgress;
+        details.startingIn = this._countdown;
 
-                details.clients.push(clientDetails);
-            }
+        for(var i=0;i<this._clients.length;i++) {
+            var clientDetails = this._clients[i].getDetails();
+            if(typeof(this._boards[this._clients[i].uuid])!=="undefined")
+                clientDetails.board = encodeFrame(this._boards[this._clients[i].uuid].board.getNewFrame(true));
 
-            resolve(details);
-        });
+            details.clients.push(clientDetails);
+        }
+
+        return details;
     }
 
     setGameRules(rule) {
@@ -87,11 +100,17 @@ class Room {
                 board: new Board(),
                 id: client.id
             };
+
+            // add the late player to the list
+            if(this._meta) {
+                this._meta.write(client.uuid + " " + client.name + "\n");
+            }
         }
 
         this._clients.push(client);
         //this._io.emit("room_updated", this.summary());
-        this._io.emit("update_one_client",client.getDetails());
+        if(!this._quiet_update)
+            this._io.emit("update_one_client",client.getDetails());
     }
     
     removeClient(client) {
@@ -103,20 +122,25 @@ class Room {
         }
 
         if(this._clients.length == 0) {
-            this._game.removeRoom(this._name);
+            if(!this._quiet_update) {
+                this._game.removeRoom(this._name);
+            }
+
             this._io.emit("room_removed", {
                 name: this._name,
                 uuid: this._uuid
             });
         }
-        else {
-            this._io.emit("room_updated", this.summary());
-        }
 
         client._room = null;
-        this._io.emit("update_one_client", client.getDetails());
 
-        //console.log("[Room::" + this._name + "] no matching client for id " + client.id);
+        if(!this._quiet_update) {
+            if(this._clients.length > 0) {
+                this._io.emit("room_updated", this.summary());
+            }
+
+            this._io.emit("update_one_client", client.getDetails());
+        }
     }
 
     oneMoreReady() {
@@ -130,8 +154,6 @@ class Room {
             summary = this.summary();
         }
         this._io.emit("room_updated", summary);
-            return false;
-        
     }
 
     launchGame() {
@@ -154,12 +176,15 @@ class Room {
             
             var meta = "started " + (new Date()).toISOString() + "\n";
 
+            if(this._previous_game_uuid) {
+                meta += "previous-game " + this._previous_game_uuid + "\n";
+            }
+
             meta += "players\n";
             for(var i=0; i<this._clients.length ; i++) {
                 meta += this._clients[i].uuid + " " + this._clients[i].name + "\n";
             }
 
-            meta += "\n";
             this._meta.write(meta);
         });
 
@@ -196,6 +221,7 @@ class Room {
     }
 
     countDown(sec) {
+        console.log("Countdown " + sec);
         if(sec) {
             this._countdown = sec;
             this._io.in(this.socRoomName).emit("countdown", {sec:sec});
@@ -208,6 +234,7 @@ class Room {
     }
 
     startGame() {
+        console.log("Starting");
         this._io.in(this.socRoomName).emit("start");
     }
     
@@ -283,13 +310,14 @@ class Room {
         // write victor in the meta file
         if(this._meta) {
             this._meta.write(
-                "Victory: " + client.uuid + "\n" +
+                "\nVictory: " + client.uuid + "\n" +
                 "end " + (new Date()).toISOString() + "\n"
             );
             this._meta.close();
             this._meta = null;
         }
-        this.reset();
+
+        this.rematch();
     }
 
     playFrame(client, frame) {
@@ -297,19 +325,43 @@ class Room {
         client._soc.to(this.socRoomName).emit("frame-"+client._id, frame);
 
         // update our internal board
-        this._boards[client.uuid].board.playFrame(decodeFrame(frame));
+        if(typeof(this._boards[client.uuid]) !== "undefined")
+            this._boards[client.uuid].board.playFrame(decodeFrame(frame));
     }
 
     announceDefeat(client) {
         // check if only 1 remain
         var pending_idxs = [];
         for(var i=0;i<this._clients.length;i++)
-            if(this._clients[i]._game_status == Client.GAME_STATUS.PENDING)
+            if(this._clients[i].isGamePending())
                 pending_idxs.push(i);
         
         if(pending_idxs.length == 1) {
             this.graspVictory(this._clients[pending_idxs[0]]);
         }
+    }
+
+    rematch() {
+        this._quiet_update = true;
+        this.reset();
+
+        // add a copy of this room
+        var newRoom = new Room(this._name, this._io, this._game);
+        newRoom._previous_game_uuid = this._uuid;
+        newRoom._quiet_update = true;
+        // add the Room to the Game
+        this._game.replaceRoom(newRoom);
+
+        newRoom._initializing = new Promise((resolve, reject)=>{
+            setTimeout(()=>{
+                // transfer the clients
+                while(this._clients.length)
+                this._clients[0].join(newRoom);
+                
+                newRoom._quiet_update = false;
+                resolve();
+            });
+        });
     }
 
     reset() {

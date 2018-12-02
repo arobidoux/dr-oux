@@ -48,7 +48,9 @@ function MenuController($scope, $timeout, pref, menuInitialized){
     $scope.settings = {};
     $scope.uuid = null;
 
-    pref($scope,"difficulty", 4, parseInt);
+    pref($scope,"difficulty", 4, parseInt, function(newValue, oldValue){
+        multiplayer.setDifficulty(newValue)
+    });
     pref($scope,"sensitivity", 16, parseInt, function(newValue, oldValue){
         game.touch_sensitivity = newValue;
     });

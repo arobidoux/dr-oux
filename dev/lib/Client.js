@@ -1,5 +1,6 @@
 const path = require("path");
 const Replay = require("./Replay");
+const Room = require("./Room");
 
 var nextClientID=1;
 
@@ -14,6 +15,7 @@ class Client {
         this._is_ready = false;
         this._game_status = null;
         this._replay = null;
+        this._difficulty = null;
 
         this.log("New client connected");
         socket.on("error", (err) => { return this.error(err) });
@@ -58,6 +60,10 @@ class Client {
         return this._uuid;
     }
 
+    isGamePending() {
+        return this._game_status == Client.GAME_STATUS.PENDING;
+    }
+
     setReplayFolder(folder) {
         this._replay = new Replay(path.join(folder,this._uuid));
         if(this._frame_meta)
@@ -71,6 +77,7 @@ class Client {
             ready: this._is_ready,
             id: this._id,
             uuid: this._uuid,
+            difficulty: this._difficulty,
             room: this._room && this._room.summary() || null,
             status: this.status
         };
@@ -86,15 +93,32 @@ class Client {
         console.error("[" + this._name + "]" + msg.join(" "));
     }
 
-    join(roomName) {
+    join(room) {
         this.leave();
-        this._room = this._game.getRoom(roomName, this);
+        this._is_ready = false;
+        if(room instanceof Room) {
+            this._room = room;
+        }
+        else {
+            this._room = this._game.getRoom(room, this);
+        }
         this._room.addClient(this);
 
         this._soc.join(this._room.socRoomName);
 
-        this.log("Joined room " + roomName);
-        //this._soc.emit("joined", this._room.summary());
+        this.log("Joined room " + this._room.name);
+
+        this._room.generateDetails()
+        .then((details)=>{
+            this._soc.emit("joined", details);
+        }, (err)=>{
+            this._soc.emit("joined",{
+                error: "Failled to retrieve room details",
+                err: {
+                    msg: err.message
+                }
+            });
+        });
     }
 
     leave() {
@@ -117,6 +141,7 @@ class Client {
         }
 
         this._is_ready = false;
+        this._game_status = null;
     }
 
     sendHandicap(frame) {
@@ -162,18 +187,13 @@ class Client {
         }
     }
 
-    on_join(data, ack) {
+    on_join(data) {
         this.join(data.room);
+    }
 
-        this._room.generateDetails()
-            .then(ack, (err)=>{
-                ack({
-                    error: "Failled to retrieve room details",
-                    err: {
-                        msg: err.message
-                    }
-                });
-            });
+    on_set_difficulty(difficulty) {
+        this._difficulty = difficulty;
+        this._game._io.emit("update_one_client",this.getDetails());
     }
 
     on_set_game_rules(rule) {

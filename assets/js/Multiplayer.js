@@ -43,7 +43,7 @@
             else {
                 this._socket.emit("defeat");
             }
-            return false;
+            //return false;
         }.bind(this));
     }
 
@@ -56,81 +56,97 @@
     };
 
     Multiplayer.prototype.join = function(room) {
-        this._socket.emit("join", {room:room}, function(roomDetails){
-            menu.set("room_uuid", roomDetails.uuid);
+        this._socket.emit("join", {room:room});
+    };
 
-            // apply rules if needed
-            if(menu.get("hosting")) {
-                var game_rules = menu.get("game_rules");
-                if(game_rules) {   
-                    this.setGameRule(game_rules);
+    Multiplayer.prototype.on_joined = function(roomDetails){
+        if(roomDetails.error) {
+            return this.error(roomDetails.error);
+        }
+
+        menu.set("room_uuid", roomDetails.uuid);
+
+        // apply rules if needed
+        if(menu.get("hosting")) {
+            var game_rules = menu.get("game_rules");
+            if(game_rules) {
+                this.setGameRule(game_rules);
+            }
+        }
+
+        if(!menu.get("playing"))
+            Sounds.play("wii-select");
+        
+        var myFrame = null;
+        // add the pill bottle of the other players and display their current state
+        for(var i=0; i<roomDetails.clients.length; i++ ) {
+            // skip us
+            if(roomDetails.clients[i].uuid !== uuid) {
+                // update internal state of that player
+                // run with a separate reference to the object
+                (function(client){
+                    menu.splice("players",function(player){
+                        return player.uuid == client.uuid;
+                    }, client);
+                })(roomDetails.clients[i]);
+                
+                // add Opponent
+                var opponent = addOpponent.call(this, roomDetails.clients[i]);
+                if(roomDetails.clients[i].board) {
+                    opponent.bottle._board.playFrame(decodeFrame(roomDetails.clients[i].board));
                 }
             }
+            else {
+                // set ourself not ready?
+                menu.set("is_ready", false);
 
-            Sounds.play("wii-select");
-            if(roomDetails.error) {
-                return this.error(roomDetails.error);
-            }
-            
-            var myFrame = null;
-            // add the pill bottle of the other players and display their current state
-            for(var i=0; i<roomDetails.clients.length; i++ ) {
-                // skip us
-                if(roomDetails.clients[i].uuid !== uuid) {
-                    var opponent = addOpponent.call(this, roomDetails.clients[i]);
-                    if(roomDetails.clients[i].board) {
-                        opponent.bottle._board.playFrame(decodeFrame(roomDetails.clients[i].board));
+                // set our board to what it was (should happen if we reconnect)
+                if(roomDetails.clients[i].board) {
+                    myFrame = decodeFrame(roomDetails.clients[i].board);
+                    var hasData = false;
+                    for(var i=0;i<myFrame.length;i++) {
+                        if(myFrame[i] != 0x00) {
+                            hasData = true;
+                            break;
+                        }
                     }
+                    if(!hasData)
+                        myFrame = null;
+                }
+            }
+        }
+
+        if(roomDetails.gameInProgress) {
+            // auto set ready & start my game
+            this.readyToStart().then(function(){
+                if(myFrame) {
+                    this._game._mainPillBottle._board.playFrame(myFrame);
+                    this._game._mainPillBottle.record();
                 }
                 else {
-                    // set our board to what it was (should happen if we reconnect)
-                    if(roomDetails.clients[i].board) {
-                        myFrame = decodeFrame(roomDetails.clients[i].board);
-                        var hasData = false;
-                        for(var i=0;i<myFrame.length;i++) {
-                            if(myFrame[i] != 0x00) {
-                                hasData = true;
-                                break;
-                            }
-                        }
-                        if(!hasData)
-                           myFrame = null;
-                    }
+                    this._game.setForMultiPlayer(this._difficulty);
                 }
+                this._game.run();
+            }.bind(this));
+            
+            // auto start it
+            if(roomDetails.startingIn == 0) {
+                menu.set("playing", true);
+                this._start_resolve && this._start_resolve();
+                this._game.setStatus("");
             }
+        }
 
-            if(roomDetails.gameInProgress) {
-                // auto set ready & start my game
-                this.readyToStart(parseInt(menu.get("difficulty", 4))).then(function(){
-                    if(myFrame) {
-                        this._game._mainPillBottle._board.playFrame(myFrame);
-                        this._game._mainPillBottle.record();
-                    }
-                    else {
-                        this._game.setForMultiPlayer(this._difficulty);
-                    }
-                    this._game.run();
-                }.bind(this));
-                
-                // auto start it
-                if(roomDetails.startingIn == 0) {
-                    menu.set("playing", true);
-                    this._start_resolve && this._start_resolve();
-                    this._game.setStatus("");
-                }
-            }
-
-            delete roomDetails.clients;
-            var found = false;
-            menu.splice("rooms", function(elem){
-                if(elem.uuid == roomDetails.uuid)
-                    return found = true;
-                return false;
-            },roomDetails).then(function(){
-                if(!found)
-                    menu.push("rooms", roomDetails);
-            });
-        }.bind(this));
+        delete roomDetails.clients;
+        var found = false;
+        menu.splice("rooms", function(elem){
+            if(elem.uuid == roomDetails.uuid)
+                return found = true;
+            return false;
+        },roomDetails).then(function(){
+            if(!found)
+                menu.push("rooms", roomDetails);
+        });
     };
 
     Multiplayer.prototype._prepareStreaming = function() {
@@ -140,12 +156,16 @@
         }.bind(this));
     };
 
-    Multiplayer.prototype.readyToStart = function(difficulty) {
+    Multiplayer.prototype.setDifficulty = function(difficulty) {
+        this._difficulty = parseInt(difficulty);
+        this._socket.emit("set_difficulty", difficulty);
+    };
+
+    Multiplayer.prototype.readyToStart = function() {
         var p = new Promise(function(resolve, reject){
             this._start_resolve = resolve;
             this._start_reject = reject;
 
-            this._difficulty = parseInt(difficulty);
             this._socket.emit("ready");
             
             // prepare game for streaming
@@ -335,7 +355,7 @@
                 this._opponents[i].bottle.setMessage("Winner!");
             }
             else {
-                this._opponents[i].bottle.setMessage("Loser");
+                this._opponents[i].bottle.setMessage(":(");
             }
         }
 
@@ -351,12 +371,19 @@
         var reset = function() {
             this.resetGame();
             menu.set("playing", false);
+            Sounds.play("wii-select");
             document.removeEventListener("click", reset);
         }.bind(this);
 
         setTimeout(function(){
             document.addEventListener("click", reset);
         },1000);
+    };
+
+    Multiplayer.prototype.leave = function() {
+        this._socket.emit("leave", null, function(){
+            menu.set("room_uuid",null);
+        });
     };
 
     Multiplayer.prototype.on_room_created = function(data) {
@@ -399,6 +426,8 @@
                     break;
                 }
             }
+        }
+        else {
             menu.splice("rooms", function(elem) {
                 return elem.uuid == details.room.uuid;
             }, details.room);

@@ -138,15 +138,29 @@
                     <dd ng-if="room.gameRules.combos">Every combo will send half pills {{gameRules[room.gameRules.combos].description}}</dd>
                 </dl>
                 <hr/>
-                <ul class="room-player-list">
-                    <li ng-repeat="player in players | filter: {room: {name:room.name}}">
-                        <span ng-if="hosting && room.uuid == room_uuid && player.uuid != uuid" ng-click="kick(player)"> x </span>
-                        <span class="room-player-ready">
-                            {{((player.uuid==uuid && is_ready) || player.ready) ? '&#10004;' : '-'}}
-                        </span>
-                        {{player.name}}
-                    </li>
-                </ul>
+                <table class="room-player-list">
+                    <thead>
+                        <tr>
+                            <th></th>
+                            <th class="player-name">Name</th>
+                            <th class="lvl">Lvl</th>
+                            <th class="kick" ng-if="hosting">Kick</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr ng-repeat="player in players | filter: {room: {name:room.name}}">
+                            
+                            <td class="room-player-ready">
+                                {{((player.uuid==uuid && is_ready) || player.ready) ? '&#10004;' : '-'}}
+                            </td>
+                            <td class="player-name">
+                                {{player.name}}
+                            </td>
+                            <td class="lvl">{{ player.difficulty }}</td>
+                            <td class="kick" ng-if="hosting && room.uuid == room_uuid && player.uuid != uuid"> <button ng-click="kick(player)"> x </button> </td>
+                        </tr>
+                    </tbody>
+                </table>
 
                 <div ng-if="room.uuid == room_uuid">
 
