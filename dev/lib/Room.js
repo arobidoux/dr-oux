@@ -63,7 +63,7 @@ class Room {
             for(var i=0;i<this._clients.length;i++) {
                 var clientDetails = this._clients[i].getDetails();
                 if(typeof(this._boards[this._clients[i].uuid])!=="undefined")
-                    clientDetails.board = encodeFrame(this._boards[this._clients[i].uuid].board.getNewFrame(true)),
+                    clientDetails.board = encodeFrame(this._boards[this._clients[i].uuid].board.getNewFrame(true));
 
                 details.clients.push(clientDetails);
             }
@@ -90,7 +90,7 @@ class Room {
         }
 
         this._clients.push(client);
-        this._io.emit("room_updated", this.summary());
+        //this._io.emit("room_updated", this.summary());
         this._io.emit("update_one_client",client.getDetails());
     }
     

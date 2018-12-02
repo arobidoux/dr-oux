@@ -57,6 +57,8 @@
 
     Multiplayer.prototype.join = function(room) {
         this._socket.emit("join", {room:room}, function(roomDetails){
+            menu.set("room_uuid", roomDetails.uuid);
+
             // apply rules if needed
             if(menu.get("hosting")) {
                 var game_rules = menu.get("game_rules");
@@ -69,19 +71,20 @@
             if(roomDetails.error) {
                 return this.error(roomDetails.error);
             }
-            if(roomDetails.gameInProgress) {
-                var myFrame = null;
-                // add the pill bottle of the other players and display their current state
-                for(var i=0; i<roomDetails.clients.length; i++ ) {
-                    // skip us
-                    if(roomDetails.clients[i].uuid !== uuid) {
-                        var opponent = addOpponent.call(this, roomDetails.clients[i]);
-                        if(roomDetails.clients[i].board) {
-                            opponent.bottle._board.playFrame(decodeFrame(roomDetails.clients[i].board));
-                        }
+            
+            var myFrame = null;
+            // add the pill bottle of the other players and display their current state
+            for(var i=0; i<roomDetails.clients.length; i++ ) {
+                // skip us
+                if(roomDetails.clients[i].uuid !== uuid) {
+                    var opponent = addOpponent.call(this, roomDetails.clients[i]);
+                    if(roomDetails.clients[i].board) {
+                        opponent.bottle._board.playFrame(decodeFrame(roomDetails.clients[i].board));
                     }
-                    else {
-                        // set our board to what it was (should happen if we reconnect)
+                }
+                else {
+                    // set our board to what it was (should happen if we reconnect)
+                    if(roomDetails.clients[i].board) {
                         myFrame = decodeFrame(roomDetails.clients[i].board);
                         var hasData = false;
                         for(var i=0;i<myFrame.length;i++) {
@@ -91,10 +94,12 @@
                             }
                         }
                         if(!hasData)
-                            myFrame = null;
+                           myFrame = null;
                     }
                 }
+            }
 
+            if(roomDetails.gameInProgress) {
                 // auto set ready & start my game
                 this.readyToStart(parseInt(menu.get("difficulty", 4))).then(function(){
                     if(myFrame) {
@@ -114,6 +119,17 @@
                     this._game.setStatus("");
                 }
             }
+
+            delete roomDetails.clients;
+            var found = false;
+            menu.splice("rooms", function(elem){
+                if(elem.uuid == roomDetails.uuid)
+                    return found = true;
+                return false;
+            },roomDetails).then(function(){
+                if(!found)
+                    menu.push("rooms", roomDetails);
+            });
         }.bind(this));
     };
 
@@ -177,10 +193,6 @@
         this._socket.emit("kick", player_uuid);
     };
 
-    Multiplayer.prototype.on_joined = function(room) {
-        menu.set("room_uuid", room.uuid);
-    };
-
     Multiplayer.prototype.on_kicked = function() {
         menu.set("room_uuid", null);
     };
@@ -224,6 +236,13 @@
     };
 
     function addOpponent(data) {
+        for(var i=0;i<this._opponents.length;i++) {
+            if(this._opponents[i].id == data.id) {
+                console.warn("Ignoring duplicate opponent " + data.name);
+                return;
+            }
+        }
+
         console.debug(data.name, "is ready to play");
 
         var bottle = new PillBottle({
@@ -309,7 +328,6 @@
     };
 
     Multiplayer.prototype.on_gameover = function(data) {
-        menu.set("playing", false);
         this._game.stop();
 
         for(var i = 0;i<this._opponents.length;i++) {
@@ -332,10 +350,13 @@
 
         var reset = function() {
             this.resetGame();
+            menu.set("playing", false);
             document.removeEventListener("click", reset);
         }.bind(this);
 
-        document.addEventListener("click", reset);
+        setTimeout(function(){
+            document.addEventListener("click", reset);
+        },1000);
     };
 
     Multiplayer.prototype.on_room_created = function(data) {
@@ -378,11 +399,14 @@
                     break;
                 }
             }
+            menu.splice("rooms", function(elem) {
+                return elem.uuid == details.room.uuid;
+            }, details.room);
         }
             
         menu.splice("players", function(elem){
             return details.uuid == elem.uuid;
-        },details);
+        }, details);
     };
 
     Multiplayer.prototype.on_invited = function(data) {
@@ -419,10 +443,11 @@
     };
 
     
+    /*
     Multiplayer.prototype.joinPlayer = function(player_id) {
         this._socket.emit("joinPlayer", player_id);
     };
-
+    */
     /*
     Multiplayer.prototype.spectate = function(player_id) {
         this._socket.emit("spectate", player_id);

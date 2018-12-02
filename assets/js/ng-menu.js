@@ -95,37 +95,49 @@ function MenuController($scope, $timeout, pref, menuInitialized){
     };
 
     menu.set = function(name,value) {
-        $timeout(function(){
-            $scope[name] = value;
+        return new Promise(function(resolve, reject){
+            $timeout(function(){
+                $scope[name] = value;
+                resolve();
+            });
         });
     };
 
     menu.push = function(name, value) {
-        $timeout(function(){
-            $scope[name].push(value);
+        return new Promise(function(resolve, reject){
+            $timeout(function(){
+                $scope[name].push(value);
+                resolve();
+            });
         });
     };
     
     menu.splice = function(name, filter, ...replaceWith) {
-        $timeout(function(){
-            if(typeof(filter) === "function") {
-                for(var i=0;i<$scope[name].length;i++) {
-                    if(filter($scope[name][i])) {
-                        $scope[name].splice(i,1, ...replaceWith);
+        return new Promise(function(resolve, reject){
+            $timeout(function(){
+                if(typeof(filter) === "function") {
+                    for(var i=0;i<$scope[name].length;i++) {
+                        if(filter($scope[name][i])) {
+                            $scope[name].splice(i,1, ...replaceWith);
+                        }
                     }
+                    resolve();
                 }
-            }
-            else {
-                throw new Error("Invalid splice filter argument");
-            }
-        });
+                else {
+                    reject(new Error("Invalid splice filter argument"));
+                }
+            });
+        })
     };
 
     menu.alter = function(name, alter) {
-        $timeout(function(){
-            for(var i=0;i<$scope[name].length;i++) {
-                alter($scope[name][i]);
-            }
+        return new Promise(function(resolve, reject){
+            $timeout(function(){
+                for(var i=0;i<$scope[name].length;i++) {
+                    alter($scope[name][i]);
+                }
+                resolve();
+            });
         });
     };
 
@@ -266,24 +278,23 @@ function MenuController($scope, $timeout, pref, menuInitialized){
     $scope.gameRules = {
         "normal-rr": {
             "label": "Normal Round Robin",
-            "description": "Send to each opponent, one at the time"
-
+            "description": "to each opponent, one at a time"
         },
         "roundrobin": {
             "label": "Round Robin",
-            "description": "Every combos will send to the next player (potentially sending it to the sender)"
+            "description": "to each player, one at a time (potentially sending it to the sender)"
         },
         "none": {
             "label": "None",
-            "description": "Nothing will be sent..."
+            "description": "to nobody"
         },
         "multiplier": {
             "label": "Multiplier",
-            "description": "Always send to every opponents"
+            "description": "to all opponents, at the same time"
         },
         "punitive": {
             "label": "Punitive",
-            "description": "Return to Sender, always send to the player who played the combo"
+            "description": "back to the sender"
         }
     };
 

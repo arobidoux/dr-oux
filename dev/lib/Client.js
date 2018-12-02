@@ -68,7 +68,7 @@ class Client {
     getDetails() {
         return {
             name: this._name,
-            ready: this._ready,
+            ready: this._is_ready,
             id: this._id,
             uuid: this._uuid,
             room: this._room && this._room.summary() || null,
@@ -94,7 +94,7 @@ class Client {
         this._soc.join(this._room.socRoomName);
 
         this.log("Joined room " + roomName);
-        this._soc.emit("joined", this._room.summary());
+        //this._soc.emit("joined", this._room.summary());
     }
 
     leave() {
@@ -213,7 +213,7 @@ class Client {
             p._soc.emit("kicked");
         }
     }
-    
+    /*
     on_joinPlayer(data, ack) {
         var p = this._game.getClient(data);
         if(p) {
@@ -223,7 +223,7 @@ class Client {
             this.error("Cannot join, invalid player id",data);
         }
     }
-
+    */
     on_leave(data, ack) {
         this.leave();
         ack("left");
