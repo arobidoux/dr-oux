@@ -288,6 +288,10 @@
             if( opponent.virus != v) {
                 opponent.virus = v;
                 
+                if(v == 3) {
+                    Sounds.play("almost_done");
+                }
+
                 menu.splice("opponents", function(player){
                     if(opponent.id == player.id) {
                         player.virus = opponent.virus;

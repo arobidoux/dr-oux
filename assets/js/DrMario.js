@@ -113,8 +113,9 @@
 
     DrMario.prototype.run = function () {
         this._running = true;
+        this._lastVirusCount = null;
         if(this._soundtrack)
-            Sounds.resume(this._soundtrack);
+            Sounds.play(this._soundtrack);
         else
             Sounds.stopGroup("bg");
     
@@ -361,6 +362,11 @@
             this.defeat();
         }
         else {
+            if(this._game_stats.virus == 3 && this._lastVirusCount != 3) {
+                Sounds.play("almost_done");
+            }
+
+            this._lastVirusCount = this._game_stats.virus;
             if(this._game_stats.virus == 0 && this._game_stats.explosions == 0) {
                 // render 1 last time to play the destroying animation
                 this.victory();

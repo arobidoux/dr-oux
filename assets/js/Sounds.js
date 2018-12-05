@@ -18,6 +18,12 @@
                 [.5,"/assets/sounds/effects/pill-destroy-2.wav"]
             ]
         },
+        "almost_done" : {
+            src: "/assets/sounds/effects/almost_done.wav"
+        },
+        "warning" : {
+            src: "/assets/sounds/effects/warning.mp3"
+        },
         "fall": {
             src: "/assets/sounds/effects/pill-fall.wav",
         },

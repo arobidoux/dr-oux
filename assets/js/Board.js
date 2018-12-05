@@ -44,6 +44,7 @@
         this._nextPill = null;
         this._generateNextOwnPillOn = 0;
         this._handicaps = [];
+        this._warned = false;
         this._stats = {
             virus: 0,
             explosions: 0,
@@ -183,6 +184,37 @@
         return changed.length > 0;
     };
 
+    Board.prototype.releaseOwnedPill = function() {
+        this._ownedPill._move({
+            a: (this._ownedPill.a & (0xff ^ Board.CODES.states.mask)) | Board.CODES.states.values.dead.code,
+            b: (this._ownedPill.b & (0xff ^ Board.CODES.states.mask)) | Board.CODES.states.values.dead.code,
+        });
+
+        var bPos = this._ownedPill.getBPos();
+        if(this._ownedPill.y <= 2 || bPos.y <= 2) {
+            // look if this pill is the only one above the line #3
+            var found = false;
+            for(var y=0;y<3;y++) {
+                for(var x=0; x<this._width; x++) {
+                    if((x == bPos.x && y == bPos.y) || (x == this._ownedPill.x && y==this._ownedPill.y) ) {
+                        continue;
+                    }
+                    else if(this._data[y*this._width+x] !== 0x00) {
+                        found = true;
+                        break;
+                    }
+                }
+            }
+            
+            if(!found) {
+                // play the warning sound
+                Sounds.play("warning")
+            }
+        }
+
+        this._ownedPill = null;
+    };
+
     Board.prototype.tick = function (tick) {
         // reset some stats
         this._stats.combos = [];
@@ -207,13 +239,7 @@
 
         if (this._ownedPill) {
             if (this._ownedPill.tick(tick) == Pill.TICK.STUCK) {
-
-                this._ownedPill._move({
-                    a: (this._ownedPill.a & (0xff ^ Board.CODES.states.mask)) | Board.CODES.states.values.dead.code,
-                    b: (this._ownedPill.b & (0xff ^ Board.CODES.states.mask)) | Board.CODES.states.values.dead.code,
-                });
-
-                this._ownedPill = null;
+                this.releaseOwnedPill();
             }
         }
 
@@ -325,8 +351,9 @@
         }
 
         this._ownedPill[method]();
-        if (method == "sink")
-            this._ownedPill = null;
+        if (method == "sink") {
+            this.releaseOwnedPill();
+        }
     };
 
     Board.prototype.queueNextPill = function () {
