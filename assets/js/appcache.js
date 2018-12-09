@@ -33,6 +33,9 @@ window.addEventListener("load", function(e) {
         if(/manifest\/html5.appcache/.test(ev.url)) {
             // failed to load manifest, do not show that error
             menu.set("cache_status","ready");
+            setTimeout(function(){
+                menu.set("cache_status","");
+            },1000);
             return;
         }
 
