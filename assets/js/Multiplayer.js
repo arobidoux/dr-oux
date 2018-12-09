@@ -22,7 +22,7 @@
         
         // estimated sizes
         var mainBottleWidth = 250;
-        var smallBottleWidth = 120;
+        var smallBottleWidth = 80;
         var windowWidth = window.innerWidth > 512 ? 512 : window.innerWidth;
         this._fullSizeSpace = Math.floor((windowWidth - mainBottleWidth) / smallBottleWidth);
 
@@ -267,7 +267,8 @@
 
         var bottle = new PillBottle({
             root:document.getElementById("opponents"),
-            title: data.name
+            title: data.name,
+            bottleonly: true
         });
 
         var opponent = {
@@ -364,11 +365,11 @@
         }
 
         if(uuid != data.winner.uuid) {
-            Sounds.play("nes-game-lost");
+            //Sounds.play("nes-game-lost");
             this._game._mainPillBottle.setMessage("You Lost");
         }
         else {
-            Sounds.play("nes-vs-game-over");
+            //Sounds.play("nes-vs-game-over");
             this._game._mainPillBottle.setMessage("You won!");
         }
 

@@ -55,7 +55,7 @@
                         ev.changedTouches[i].clientY < this._zones[j].zone[3]
                     ) {
                         this._touches[ev.changedTouches[i].identifier] = this._zones[j].keyCode;
-                        console.log("[TAP] pressing "+this._zones[j].keyCode);
+                        //console.log("[TAP] pressing "+this._zones[j].keyCode);
                         this._inputs.press(this._zones[j].keyCode);
                         break;
                     }
@@ -71,7 +71,7 @@
         for(var i=0; i<ev.changedTouches.length;i++) {
             if(typeof(this._touches[ev.changedTouches[i].identifier]) !== "undefined") {
                 this._inputs.release(this._touches[ev.changedTouches[i].identifier]);
-                console.log("[TAP] releasing "+this._touches[ev.changedTouches[i].identifier]);
+                //console.log("[TAP] releasing "+this._touches[ev.changedTouches[i].identifier]);
                 delete this._touches[ev.changedTouches[i].identifier];
             }
         }

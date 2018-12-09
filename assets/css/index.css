@@ -9,12 +9,13 @@ body { background: black; color: white; }
 
 @media only screen and (min-width: 512px) {
     body { padding: 15px; margin: 8px; width: 512px; margin: auto; height: calc( 100% - 30px );}
+    #opponents { width: 25%;}
 }
 
 #game-grid { width: 100%; height:100%; position: relative; touch-action: manipulation; }
 #game-status { display: inline-block; width: 25%; position:absolute; top:15px; }
 #main { display: inline-block; width: 50%; margin-left: 25%; position:absolute; }
-#opponents { position:absolute; right:0; top:15px; width: 25%;}
+#opponents { position:absolute; right:0; top:15px; width: 80px;}
 #opponents .pill-bottle-root > h3 { margin:0; }
 
 .cache-status { position: fixed; top:0; background-color: black; color: yellowgreen; padding:15px; z-index:2; }
@@ -36,7 +37,7 @@ body { background: black; color: white; }
 #menu label input, #menu label select { position:absolute; right:0;}
 
 #menu fieldset { width: calc( 100% - 32px); }
-#menu button, button { border-radius: 10px; margin-bottom: 7px; padding: 3px 10px; background-color: black; color: white; }
+#menu button, button { border-radius: 10px; margin-bottom: 7px; padding: 8px 10px; background-color: black; color: white; }
 
 #menu .btn-group button { border-radius: 0;  }
 #menu .btn-group button:first-child { border-radius: 10px 0 0 10px;  }

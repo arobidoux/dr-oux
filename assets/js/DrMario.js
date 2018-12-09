@@ -226,7 +226,8 @@
                     Sounds.play("wii-clear");
             }
             else {
-                Sounds.play("nes-game-lost");
+                Sounds.play("wii-clear");
+                //Sounds.play("nes-game-lost");
             }
         }
 

@@ -19,4 +19,8 @@ game.registerForTick(multiplayer.tick.bind(multiplayer));
 //menu.init(game, multiplayer, inputs);
 
 Sounds.initialize();
-Sounds.play("wii-title");
+menu.init.then(function(){
+    if(menu.get("enable_audio") === "yes")
+        Sounds.play("wii-title");
+});
+

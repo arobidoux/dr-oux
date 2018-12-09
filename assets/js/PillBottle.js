@@ -13,6 +13,13 @@
         BOTTOM: SQUARE_LENGTH * 1
     };
 
+    var PADDING_BOTTLE_ONLY = {
+        TOP: SQUARE_LENGTH * 5,
+        LEFT: SQUARE_LENGTH * 1,
+        RIGHT: SQUARE_LENGTH * 1,
+        BOTTOM: SQUARE_LENGTH * 1
+    };
+
     var PREVIEW_PADDING = {
         TOP: PREVIEW_SQUARE_LENGTH * 5,
         LEFT: PREVIEW_SQUARE_LENGTH * 1,
@@ -40,8 +47,12 @@
      */
     function PillBottle(options) {
         this._scale = options && options.scale || 1;
+        this._bottleonly = options && options.bottleonly || false;
 
-        this.initUI(options && options.root || document.getElementsByTagName("body")[0], options && options.title || null);
+        this.initUI(
+            options && options.root || document.getElementsByTagName("body")[0],
+            options && options.title || null
+        );
 
         this._board = new Board({
             width: BOTTLE_WIDTH,
@@ -95,14 +106,8 @@
         this._canvas.className = "pill-bottle-canvas";
         this._msg.className = "pill-bottle-msg";
 
-        this._canvas.width = BOTTLE_WIDTH * SQUARE_LENGTH + PADDING.TOP + PADDING.BOTTOM;
-        this._canvas.height = BOTTLE_HEIGHT * SQUARE_LENGTH + PADDING.RIGHT + PADDING.LEFT;
-        if (this._scale != 1) {
-            this._canvas.height *= this._scale;
-            this._canvas.width *= this._scale;
-            //this._root.style.transform = "scale(" + this._scale + ")";
-            //this._root.style.transformOrigin = "top left";
-        }
+        this._preview_only=true;
+        this.preview(false);
 
         this._context = this._canvas.getContext("2d");
         this.setMessage(null);
@@ -137,6 +142,8 @@
     };
 
     PillBottle.prototype.generateForDifficulty = function (difficulty) {
+        if(isNaN(difficulty) || difficulty > 20)
+            difficulty = 10;
         this._board.fillInVirus(difficulty);
     };
 
@@ -171,7 +178,7 @@
     PillBottle.prototype.updateVirusCount = function(count) {
         this._status.textContent =
             "Virus" + (count>1?"es":"") +
-            (this._preview_only ? "" : " Remaining: ")
+            (this._preview_only || this._bottleonly ? "" : " Remaining: ")
             + count;
     };
 
@@ -199,16 +206,27 @@
             if(!this._preview_only) {
                 this._preview_only = true;
                 this._root.className = "pill-bottle-root pill-bottle-preview";
-                this._canvas.width = BOTTLE_WIDTH * PREVIEW_SQUARE_LENGTH + PREVIEW_PADDING.TOP + PREVIEW_PADDING.BOTTOM;
-                this._canvas.height = BOTTLE_HEIGHT * PREVIEW_SQUARE_LENGTH + PREVIEW_PADDING.RIGHT + PREVIEW_PADDING.LEFT;
+                this._canvas.width = BOTTLE_WIDTH * PREVIEW_SQUARE_LENGTH + PREVIEW_PADDING.RIGHT + PREVIEW_PADDING.LEFT;
+                this._canvas.height = BOTTLE_HEIGHT * PREVIEW_SQUARE_LENGTH + PREVIEW_PADDING.TOP + PREVIEW_PADDING.BOTTOM;
             }
         }
         else {
             if(this._preview_only) {
                 this._preview_only = false;
                 this._root.className = "pill-bottle-root";
-                this._canvas.width = BOTTLE_WIDTH * SQUARE_LENGTH + PADDING.TOP + PADDING.BOTTOM;
-                this._canvas.height = BOTTLE_HEIGHT * SQUARE_LENGTH + PADDING.RIGHT + PADDING.LEFT;
+                
+                if(this._bottleonly) {
+                    this._canvas.width = BOTTLE_WIDTH * SQUARE_LENGTH + PADDING_BOTTLE_ONLY.RIGHT + PADDING_BOTTLE_ONLY.LEFT;
+                    this._canvas.height = BOTTLE_HEIGHT * SQUARE_LENGTH + PADDING_BOTTLE_ONLY.TOP + PADDING_BOTTLE_ONLY.BOTTOM;
+                }
+                else {
+                    this._canvas.width = BOTTLE_WIDTH * SQUARE_LENGTH + PADDING.RIGHT + PADDING.LEFT;
+                    this._canvas.height = BOTTLE_HEIGHT * SQUARE_LENGTH + PADDING.TOP + PADDING.BOTTOM;
+                }
+                if (this._scale != 1) {
+                    this._canvas.height *= this._scale;
+                    this._canvas.width *= this._scale;
+                }
             }
         }
     };
@@ -221,7 +239,12 @@
 
         var width = this._preview_only ?
             (this._canvas.width/this._scale) - PREVIEW_PADDING.RIGHT + PREVIEW_PADDING.LEFT + 1 :
-            (this._canvas.width/this._scale) - PADDING.RIGHT + PADDING.LEFT + 1;
+            (
+                this._bottleonly ?
+                (this._canvas.width/this._scale) - PADDING_BOTTLE_ONLY.RIGHT + PADDING_BOTTLE_ONLY.LEFT + 1 :
+                (this._canvas.width/this._scale) - PADDING.RIGHT + PADDING.LEFT + 1
+            );
+
 
         // draw bottle
         this._context.drawImage(

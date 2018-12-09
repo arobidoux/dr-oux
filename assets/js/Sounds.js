@@ -19,7 +19,7 @@
             },
             "destroy-combo": { start:11.1, end:11.71 },
             "almost_done" : { start:15, end:16.7 },
-            "warning" : { start: 169, end: 18.4 },
+            "warning" : { start: 16.9, end: 18.4 },
             "dududididu": { start:3, end: 3.8 },
         },
         "sfx-m": {
@@ -148,7 +148,7 @@
             return;
 
         var track = getTrackInfo(key);
-        if(track !== null) {
+        if(track !== null && typeof(elements[track.group]) !== "undefined") {
             elements[track.group].playSprite(track.intro, track.end, track.group.substr(0,2) == "bg", track.start);
         }
     };
