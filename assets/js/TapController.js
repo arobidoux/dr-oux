@@ -55,6 +55,7 @@
                         ev.changedTouches[i].clientY < this._zones[j].zone[3]
                     ) {
                         this._touches[ev.changedTouches[i].identifier] = this._zones[j].keyCode;
+                        console.log("[TAP] pressing "+this._zones[j].keyCode);
                         this._inputs.press(this._zones[j].keyCode);
                         break;
                     }
@@ -70,6 +71,7 @@
         for(var i=0; i<ev.changedTouches.length;i++) {
             if(typeof(this._touches[ev.changedTouches[i].identifier]) !== "undefined") {
                 this._inputs.release(this._touches[ev.changedTouches[i].identifier]);
+                console.log("[TAP] releasing "+this._touches[ev.changedTouches[i].identifier]);
                 delete this._touches[ev.changedTouches[i].identifier];
             }
         }
@@ -78,19 +80,22 @@
     TapController.defaultZones = function() {
         /*
         ---------------------------
-        |           UP            |
+        |          ESC            |
+        ---------------------------
+        |         PAUSE           |
         |-------------------------|
         |      |    A     |       |
         | LEFT |----------| RIGHT |
         |      |    B     |       |
         |-------------------------|
-        |          DOWN           |
+        |    DOWN   |     SINK    |
         ---------------------------
         */
         
        var h = window.innerHeight;
        var w = window.innerWidth;
 
+       var h05 = Math.floor(h * .05);
        var h25 = Math.floor(h * .25);
        var h50 = Math.floor(h * .5);
        var h75 = Math.floor(h * .75);
@@ -105,8 +110,8 @@
            {keyCode:39, label:"RIGHT", zone:[w75, h25,   w, h75]},
            {keyCode:88, label:"A",     zone:[w25, h25, w75, h50]},
            {keyCode:90, label:"B",     zone:[w25, h50, w75, h75]},
-           {keyCode:19, label:"PAUSE", zone:[  0,   0,   w, h25]}
-           //{keyCode:27, label:"SELECT", zone:[]},
+           {keyCode:19, label:"PAUSE", zone:[  0, h05,   w, h25]},
+           {keyCode:27, label:"ESC",   zone:[  0,   0,   w, h05]}
        ];
     };
         

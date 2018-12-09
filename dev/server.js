@@ -12,6 +12,10 @@ const port = 8080;
 app.get("/", (req, res) => {
     res.sendFile(path.resolve("../assets/html/index.html"));
 });
+
+app.get("/sw.js", (req, res) => {
+    res.sendFile(path.resolve("../assets/manifest/service-worker.js"));
+});
 app.get("/index.html", (req, res) => {
     res.sendFile(path.resolve("../assets/html/index.html"));
 });

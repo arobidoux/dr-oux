@@ -74,10 +74,11 @@
 
             var action = this._actions[this._mapping[keyCode].action];
             if(action.tickless) {
-                //console.debug("Running tickless action " + this._mapping[keyCode].action);
+                console.debug("Running tickless action " + this._mapping[keyCode].action);
                 action.handle();
             }
             else {
+                console.debug("Pressing key " + keyCode);
                 this._mapping[keyCode].state = true;
             }
         }
@@ -97,14 +98,14 @@
                     this._mapping[keyCode].elapsed == 0 ||
                     (action.repeat && this._mapping[keyCode].elapsed % action.repeat == 0)
                 ) {
-                    //console.debug("Running ticked action " + this._mapping[keyCode].action);
+                    console.debug("Running ticked action " + this._mapping[keyCode].action);
                     action.handle(tick);
                 }
 
                 this._mapping[keyCode].elapsed++;
 
                 if(this._mapping[keyCode].released) {
-                    //console.debug("Releasing key " + keyCode);
+                    console.debug("Releasing key " + keyCode);
                     this._mapping[keyCode].state = false;
                 }
             } 

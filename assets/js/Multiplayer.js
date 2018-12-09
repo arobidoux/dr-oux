@@ -376,11 +376,11 @@
             this.resetGame();
             menu.set("playing", false);
             Sounds.play("wii-select");
-            document.removeEventListener("click", reset);
+            document.getElementById("game-grid").removeEventListener("click", reset);
         }.bind(this);
 
         setTimeout(function(){
-            document.addEventListener("click", reset);
+            document.getElementById("game-grid").addEventListener("click", reset);
         },1000);
     };
 

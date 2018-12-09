@@ -26,11 +26,11 @@
     var NEW_PILL_X = (BOTTLE_WIDTH + PADDING.LEFT + PADDING.RIGHT / 2) - 1;
     var NEW_PILL_Y = PADDING.TOP;
 
-    var sprite2Form = {
-        bottle2: [98, 187, 178 - 98, 363 - 187]
+    var spriteForm = {
+        bottle: [24, 0, 178 - 98, 363 - 187]
     };
 
-    var sprite2 = document.getElementById("sprite2");
+    var sprite = document.getElementById("sprite");
 
     /**
      * Represent a play area - either controlled by the player or over network
@@ -225,11 +225,11 @@
 
         // draw bottle
         this._context.drawImage(
-            sprite2,
-            sprite2Form.bottle2[0],
-            sprite2Form.bottle2[1],
-            sprite2Form.bottle2[2],
-            sprite2Form.bottle2[3],
+            sprite,
+            spriteForm.bottle[0],
+            spriteForm.bottle[1],
+            spriteForm.bottle[2],
+            spriteForm.bottle[3],
             0, 0, Math.floor(width), Math.floor(this._canvas.height/this._scale) + 1);
 
         // draw pills

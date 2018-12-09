@@ -1,6 +1,6 @@
 CACHE MANIFEST
 
-# 2018-11-27:v1.1.17.6
+# 2018-11-27:v1.1.17.40
 
 NETWORK:
 /socket.io/
@@ -10,12 +10,10 @@ CACHE:
 /favicon.ico
 /index.html
 /assets/manifest/android-add-to-home.json
-/assets/css/DrMario.css?v1.1.2
 /assets/css/index.css?v1.1.2
 
 /assets/img/icon-192.png
-/assets/img/reduced-sprites.png
-/assets/img/sprites2.png
+/assets/img/the-one-sprite.png
 
 /socket.io/socket.io.js?v1.1.2
 /assets/vendor/js/uuidv1.js?v1.1.2
@@ -32,31 +30,8 @@ CACHE:
 /assets/js/DrMario.js?v1.1.2
 /assets/js/Multiplayer.js?v1.1.2
 /assets/js/ng-menu.js?v1.1.2
+/assets/js/appcache.js?v1.1.2
 /assets/js/index.js?v1.1.2
 
-/assets/sounds/effects/combo-1.wav
-/assets/sounds/effects/combo-2.wav
-/assets/sounds/effects/pause.wav
-/assets/sounds/effects/pill-destroy-1.wav
-/assets/sounds/effects/pill-destroy-2.wav
-/assets/sounds/effects/pill-fall.wav
-/assets/sounds/effects/pill-move.wav
-/assets/sounds/effects/pill-rotate.wav
-/assets/sounds/effects/almost_done.wav
-/assets/sounds/effects/warning.mp3
-
-/assets/sounds/01_Title_Theme.mp3
-/assets/sounds/02_Select.mp3
-/assets/sounds/03_Fever.mp3
-/assets/sounds/04_Fever_Clear.mp3
-/assets/sounds/05_Chill.mp3
-/assets/sounds/06_Chill_Clear.mp3
-/assets/sounds/08_VS_Game_Over.mp3
-/assets/sounds/07_-_Dr._Mario_-_NES_-_Game_Over.ogg
-/assets/sounds/wii-02_Title.mp3
-/assets/sounds/wii-03_Select.mp3
-/assets/sounds/wii-04_Fever.mp3
-/assets/sounds/wii-05_Chill.mp3
-/assets/sounds/wii-06_Cough.mp3
-/assets/sounds/wii-07_Sneeze.mp3
-/assets/sounds/wii-clear.mp3
+/assets/sounds/bg-wii.mp3
+/assets/sounds/sfx.mp3

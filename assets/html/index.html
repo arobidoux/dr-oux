@@ -1,11 +1,10 @@
 <!doctype html>
-<html manifest="assets/manifest/html5.appcache?v1.1.2">
+<html manifest="assets/manifest/html5.appcache?v1.1.3">
 
 <head>
     <title>Dr OUX</title>
     <link rel="manifest" href="assets/manifest/android-add-to-home.json">
     
-    <link rel="stylesheet" href="assets/css/DrMario.css?v1.1.2">
     <link rel="stylesheet" href="assets/css/index.css?v1.1.2">
    
     <meta name="theme-color" content="#000000">
@@ -14,6 +13,7 @@
     <!-- reuse same icon for Safari -->
     <link rel="apple-touch-icon" href="assets/img/icon-192.png">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" />
+    <!--meta name="apple-mobile-web-app-capable" content="yes"-->
 </head>
 
 <body ng-app="app" ng-controller="MenuController" ng-class="{'game-in-progress':playing}">
@@ -78,8 +78,8 @@
                 <select id="soundtrack" ng-model="soundtrack">
                     <option value="none">None</option>
                     <option value="random">Random</option>
-                    <option value="nes-fever">NES Fever</option>
-                    <option value="nes-chill">NES Chill</option>
+                    <!--option value="nes-fever">NES Fever</option>
+                    <option value="nes-chill">NES Chill</option-->
                     <option value="wii-fever">Wii Fever</option>
                     <option value="wii-chill">Wii Chill</option>
                     <option value="wii-cough">Wii Cough</option>
@@ -96,6 +96,10 @@
                 Enable Sound
                 <input type="checkbox" ng-model="enable_sound" ng-true-value="'yes'" ng-false-value="'no'">
             </label>
+
+            <button ng-if="enable_sound!='no' && require_click_to_play" ng-click="tryAudio()" style="padding:25px;">
+                Please tap here to allow audio
+            </button>
             
 
             <button id="start-single" class="row" ng-click="startSingle()"> Start Single Player </button>
@@ -213,8 +217,13 @@
         
     </div>
 
-    <img id="sprite" src="assets/img/reduced-sprites.png" style="display:none;" />
-    <img id="sprite2" src="assets/img/sprites2.png" style="display:none;" />
+    <img id="sprite" src="assets/img/the-one-sprite.png" style="display:none;" />
+
+    <audio src="/assets/sounds/sfx.mp3" id="audio-sfx-1"></audio>
+    <audio src="/assets/sounds/sfx.mp3" id="audio-sfx-2"></audio>
+    <audio src="/assets/sounds/sfx.mp3" id="audio-sfx-m-1"></audio>
+    <audio src="/assets/sounds/sfx.mp3" id="audio-sfx-m-2"></audio>
+    <audio src="/assets/sounds/bg-wii.mp3" id="audio-bg-wii"></audio>
 
     <script src="/socket.io/socket.io.js?v1.1.2"></script>
     <script src="assets/vendor/js/uuidv1.js?v1.1.2"></script>
@@ -232,25 +241,18 @@
     <script src="assets/js/DrMario.js?v1.1.2"></script>
     <script src="assets/js/Multiplayer.js?v1.1.2"></script>
     <script src="assets/js/ng-menu.js?v1.1.2"></script>
+    <script src="assets/js/appcache.js?v1.1.2"></script>
     <script src="assets/js/index.js?v1.1.2"></script>
 
-    <!--pre id="dump"></pre>
-    <script>
-        
-        document.addEventListener("keydown",function(ev){
-            var r = "";
-            for(var k in ev)
-                r += k+":" + ev[k]+"\n";
-
-            document.getElementById("dump").innerText = r;
-        });
-
-        document.addEventListener("click",function(ev){
-            document.getElementById("dump").innerText = "";
-        });
-        
-
-    </script-->
+    <!--script>
+        // Service Worker
+        // To be used when app cache doesn't work anymore
+        if('serviceWorker' in navigator) {
+          navigator.serviceWorker
+                   .register('/sw.js')
+                   .then(function() { console.log("Service Worker Registered"); });
+        }
+        </script-->
 </body>
 
 </html>

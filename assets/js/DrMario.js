@@ -37,6 +37,7 @@
         this.$touchstart = this.touchstart.bind(this);
         this.$touchmove = this.touchmove.bind(this);
         this.$touchend = this.touchend.bind(this);
+        this.$notouchscroll = this.notouchscroll.bind(this);
     }
 
     DrMario.prototype.abort = function() {
@@ -80,15 +81,8 @@
 
         this._inputs.clearAll();
         this._inputs.register("PAUSE", this.pause.bind(this), null);
+        this._inputs.register("ESC", function(){ window.location.reload(); }, null);
         this._mainPillBottle.registerInputs(this._inputs);
-
-
-        if(this._soundtrack) {
-            if(Sounds.has(this._soundtrack + "-clear"))
-               Sounds._load(this._soundtrack + "-clear");
-            else
-                Sounds._load("wii-clear");
-        }
     };
 
     DrMario.prototype.prepareMultiPlayer = function() {
@@ -99,6 +93,7 @@
 
         this._inputs.clearAll();
         this._inputs.register("PAUSE", this.pause.bind(this), null);
+        this._inputs.register("ESC", function(){ window.location.reload(); }, null);
         this._mainPillBottle.registerInputs(this._inputs);
     };
 
@@ -120,6 +115,8 @@
             Sounds.stopGroup("bg");
     
         this.$animate();
+        this.preventScrolling();
+
         switch(this._control_used = menu.get("controls")) {
             case "swipe": this.bindTouch(); break;
             case "tap": this.enableTap(); break;
@@ -129,6 +126,7 @@
 
     DrMario.prototype.stop = function () {
         Sounds.stopGroup("bg");
+        this.allowScrolling();
         this._running = false;
         switch(this._control_used) {
             case "swipe": this.releaseTouch(); break;
@@ -153,6 +151,35 @@
         }
     };
 
+    DrMario.prototype.preventScrolling = function() {
+        var id = "style-prevent-scrolling";
+        var elem = document.getElementById(id);
+        if(elem === null) {
+            var css = 'html, body { position: fixed; overflow: hidden; }';
+            elem = document.createElement("style");
+            
+            elem.setAttribute("type","text/css");
+            elem.setAttribute("id", id);
+            if (elem.styleSheet){
+                // This is required for IE8 and below.
+                elem.styleSheet.cssText = css;
+            } else {
+                elem.appendChild(document.createTextNode(css));
+            }
+        }
+
+        if(!elem.parentElement)
+            document.getElementsByTagName('head')[0].appendChild(elem);
+    };
+
+    DrMario.prototype.allowScrolling = function() {
+        var id = "style-prevent-scrolling";
+        var elem = document.getElementById(id);
+        if(elem && elem.parentElement) {
+            elem.parentElement.removeChild(elem);
+        }
+    };
+
     DrMario.prototype._animate = function () {
         if (!this._running)
             return;
@@ -167,8 +194,17 @@
             this._fps_then = now - (elapsed % this._fps_interval);
 
             this._tick(++this._tick_counter);
+            /* single comment this line to show fps counter
+            var doneAt = Date.now();
+            var frameTime = doneAt-now;
+            window.debug.set("F", round(frameTime)+"/"+round(this._fps_interval));
+            //*/
         }
     };
+
+    function round(n) {
+        return Math.floor(n*100)/100;
+    }
 
     DrMario.prototype.defeat = function (tick) {
         if(!this.gameOver(false))
@@ -273,8 +309,14 @@
         ev.stopImmediatePropagation();
     };
 
+    DrMario.prototype.notouchscroll = function(ev) {
+        ev.preventDefault();
+    };
+
     DrMario.prototype.touchmove = function(ev) {
         //multiplayer._socket.emit("log", "touchmove");
+
+        ev.preventDefault();
 
         for(var i=0; i<ev.changedTouches.length;i++) {
             var id = ev.changedTouches[i].identifier;

@@ -11,7 +11,7 @@ body { background: black; color: white; }
     body { padding: 15px; margin: 8px; width: 512px; margin: auto; height: calc( 100% - 30px );}
 }
 
-#game-grid { width: 100%; height:100%; position: relative;}
+#game-grid { width: 100%; height:100%; position: relative; touch-action: manipulation; }
 #game-status { display: inline-block; width: 25%; position:absolute; top:15px; }
 #main { display: inline-block; width: 50%; margin-left: 25%; position:absolute; }
 #opponents { position:absolute; right:0; top:15px; width: 25%;}
@@ -77,3 +77,27 @@ body { background: black; color: white; }
 
 .chat-box p { border: 1px solid blue; background-color:blue; color: white; border-radius: 0 10px 10px 0; padding: 2px 10px 2px 0; margin: 2px 15px 2px 0;}
 .chat-box p.my-chat { border-color: yellowgreen; background-color: hsla(120, 50%, 50%, 1); color: white; border-radius: 10px 0 0 10px; padding: 2px 0 2px 10px; margin: 2px 0 2px 15px; }
+
+
+
+
+/** Dr Mario **/
+
+.pill-bottle-root { display: inline-block; position:relative; }
+.pill-bottle-root .pill-bottle-status { font-size: 9px; }
+
+.pill-bottle-root .pill-bottle-msg { position:absolute; top: 90px; left: 0; bottom: 16px; right: 64px; background-color:rgba(55,55,55,.5); font-weight: bold; line-height: 78px; text-align:center;}
+
+.pill-bottle-root.pill-bottle-preview > h3 { width: 28px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;  font-size: .75em; }
+
+#opponents .pill-bottle-root .pill-bottle-msg { top:110px; }
+/*.dr-mario .pill-bottle-root canvas.pill-bottle-canvas { border: 1px solid gainsboro; display: inline-block; }*/
+
+/* Tap Controller */
+.game-in-progress .tap-controller,
+.tap-controller.shown { display: block; position: fixed; top:0; left:0; bottom:0; right:0; }
+.tap-controller { display:none; user-select: none; -o-user-select:none; -moz-user-select: none; -khtml-user-select: none; -webkit-user-select: none; touch-action: manipulation; }
+
+.tap-controller .zone { border: 2px solid limegreen; color: limegreen; position: absolute; display: block; background-color: rgba(55,55,55,.5); touch-action: manipulation;}
+
+.game-in-progress .tap-controller .zone { opacity:.25; background-color: transparent; }

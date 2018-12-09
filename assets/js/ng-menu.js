@@ -156,6 +156,14 @@ function MenuController($scope, $timeout, pref, menuInitialized){
         multiplayer.kick(player.uuid);
     };
 
+    $scope.tryAudio = function() {
+        $scope.require_click_to_play = false;
+        Sounds.play("wii-title");
+        
+        Sounds.warmup("dududididu");
+        Sounds.warmup("move");
+    };
+
     $scope.backToHome = function() {
         game.abort();
         $scope.playing = false;
@@ -240,6 +248,7 @@ function MenuController($scope, $timeout, pref, menuInitialized){
                 88: "ROTATE_CLOCKWISE",
                 90: "ROTATE_COUNTER_CLOCKWISE",
                 19: "PAUSE",
+                27: "ESC"
             }
         },
         swipe: {
@@ -252,6 +261,7 @@ function MenuController($scope, $timeout, pref, menuInitialized){
                 88: "ROTATE_CLOCKWISE",
                 90: "ROTATE_COUNTER_CLOCKWISE",
                 19: "PAUSE",
+                27: "ESC"
             }
         },
         tap: {
@@ -264,6 +274,7 @@ function MenuController($scope, $timeout, pref, menuInitialized){
                 88: "ROTATE_CLOCKWISE",
                 90: "ROTATE_COUNTER_CLOCKWISE",
                 19: "PAUSE",
+                27: "ESC"
             }
         },
         wasd: {
@@ -276,6 +287,7 @@ function MenuController($scope, $timeout, pref, menuInitialized){
                 37: "ROTATE_CLOCKWISE",
                 39: "ROTATE_COUNTER_CLOCKWISE",
                 19: "PAUSE",
+                27: "ESC"
             }
         }
     };
