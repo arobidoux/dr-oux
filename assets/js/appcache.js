@@ -30,6 +30,12 @@ window.addEventListener("load", function(e) {
     // The manifest returns 404 or 410, the download failed,
     // or the manifest changed while the download was in progress.
     window.applicationCache.addEventListener("error", function(ev){
+        if(/manifest\/html5.appcache/.test(ev.url)) {
+            // failed to load manifest, do not show that error
+            menu.set("cache_status","ready");
+            return;
+        }
+
         var err = {};
         for(var k in ev)
             err[k] = ev[k];
