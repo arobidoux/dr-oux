@@ -418,4 +418,4 @@
     };
 
     global[ns] = DrMario;
-})(this, "DrMario")
+})(this, "DrMario");
