@@ -150,7 +150,7 @@
         },
         "bg-wii": {
             "wii-title":{ start: 0, end: 108 },
-            "wii-select":{ start: 109.90, end: 129.55 },
+            "wii-select":{ start: 109.95, end: 129.63 },
             "wii-fever":{ intro:130.35, start: 134.8, end: 201 },
             "wii-chill":{ start: 202.3, end: 326.33 },
             "wii-cough":{ start: 343.85, end: 445.4 },
@@ -860,6 +860,7 @@
         this._previousFrame = null;
         this._film = [];
         this._filmWeight = 0;
+        this._last_released = null;
 
         /** Full representation of the board on 1 string
          * Rows are represented from top to bottom, left to right
@@ -1030,27 +1031,10 @@
             b: (this._ownedPill.b & (0xff ^ Board.CODES.states.mask)) | Board.CODES.states.values.dead.code,
         });
 
-        var bPos = this._ownedPill.getBPos();
-        if(this._ownedPill.y <= 2 || bPos.y <= 2) {
-            // look if this pill is the only one above the line #3
-            var found = false;
-            for(var y=0;y<3;y++) {
-                for(var x=0; x<this._width; x++) {
-                    if((x == bPos.x && y == bPos.y) || (x == this._ownedPill.x && y==this._ownedPill.y) ) {
-                        continue;
-                    }
-                    else if(this._data[y*this._width+x] !== 0x00) {
-                        found = true;
-                        break;
-                    }
-                }
-            }
-            
-            if(!found) {
-                // play the warning sound
-                Sounds.play("warning")
-            }
-        }
+        this._last_released = {
+            a:{x:this._ownedPill.x,y:this._ownedPill.y},
+            b:this._ownedPill.getBPos()
+        };
 
         this._ownedPill = null;
     };
@@ -1131,6 +1115,42 @@
                 }
 
                 if (!this._stats.explosions) {
+                    // play warnings
+                    if(this._last_released) {
+                        if(this._last_released.a.y <= 2 || this._last_released.b.y <= 2) {
+                            // look if this pill is the only one above the line #3
+                            var found = false;
+                            var aStillThere = false;
+                            var bStillThere = false;
+                            for(var y=0;y<3;y++) {
+                                for(var x=0; x<this._width; x++) {
+                                    if(this._data[y*this._width+x] === 0x00)
+                                        continue;
+
+                                    if(x == this._last_released.b.x && y == this._last_released.b.y) {
+                                        bStillThere = true;
+                                        continue;
+                                    }
+  
+                                    if(x == this._last_released.a.x && y==this._last_released.a.y) {
+                                        aStillThere = true;
+                                        continue;
+                                    }
+                                    
+                                    found = true;
+                                    break;
+                                }
+                            }
+                            
+                            if(!found && (aStillThere || bStillThere)) {
+                                // play the warning sound
+                                Sounds.play("warning")
+                            }
+                        }
+                        
+                        this._last_released = null;
+                    }
+                        
                     // process combos
                     if(this._stats.counting_combos.length) {
                         console.debug("Assigning Combos");
@@ -2049,24 +2069,19 @@
      * @param {object} options 
      */
     function DrMario(options) {
-        this._root = options && options.root || null;
-        if (!this._root) {
-            document.getElementsByTagName("body")[0]
-                .appendChild(this._root = document.createElement("div"));
+        if(options && typeof(options.root) !== "undefined") {
+            if(options.root instanceof Promise) {
+                options.root.then(this.initUI.bind(this));
+            }
+            else {
+                this.initUI(options.root);
+            }
         }
-
-        this._root.appendChild(
-            this._status = document.createElement("div")
-        );
-        this._status.className = "game-status";
-        this._status.style.display = "none";
 
         this._fps = 16;
 
         this._fps_interval = 1000 / this._fps;
         this._fps_then = 0;
-
-        this._root.className = (this._root.className ? this._root.className + " " : "") + "dr-mario";
 
         this.$animate = this._animate.bind(this);
         this._running = false;
@@ -2083,6 +2098,17 @@
         this.$touchend = this.touchend.bind(this);
         this.$notouchscroll = this.notouchscroll.bind(this);
     }
+
+    DrMario.prototype.initUI = function(root) {
+        this._root = root;
+        this._root.appendChild(
+            this._status = document.createElement("div")
+        );
+        this._root.className = (this._root.className ? this._root.className + " " : "") + "dr-mario";
+
+        this._status.className = "game-status";
+        this._status.style.display = "none";
+    };
 
     DrMario.prototype.abort = function() {
         this.releaseTouch();
@@ -2843,9 +2869,11 @@
             menu.set("playing", false);
             Sounds.play("wii-select");
             document.getElementById("game-grid").removeEventListener("click", reset);
+            menu.set("info","");
         }.bind(this);
 
         setTimeout(function(){
+            menu.set("info","Tap to continue");
             document.getElementById("game-grid").addEventListener("click", reset);
         },1000);
     };
@@ -3065,6 +3093,15 @@
 var menu = {};
 var app = angular.module("app",[]);
 
+menu.contentloaded = new Promise(function(resolve, reject){
+    app.factory("contentLoaded",function(){
+        return {
+            resolve: resolve,
+            reject: reject
+        };
+    });
+});
+
 menu.init = new Promise(function(resolve, reject){
     app.factory("menuInitialized",function(){
         return {
@@ -3099,14 +3136,12 @@ menu.init = new Promise(function(resolve, reject){
         };
     });
 
-    app.controller("MenuController",["$scope", "$timeout", "pref", "menuInitialized", MenuController]);
+    app.controller("MenuController",["$scope", "$timeout", "pref", "menuInitialized", "contentLoaded", MenuController]);
 });
 
 
 
-function MenuController($scope, $timeout, pref, menuInitialized){
-
-    $scope.settings = {};
+function MenuController($scope, $timeout, pref, menuInitialized, contentLoaded){
     $scope.uuid = null;
 
     pref($scope,"difficulty", 4, parseInt, function(newValue, oldValue){
@@ -3135,7 +3170,7 @@ function MenuController($scope, $timeout, pref, menuInitialized){
         }
     });
     pref($scope,"multi_name", preference("multi-name",""));
-    pref($scope, "enable_sound", "yes", null, function(newValue, oldValue){
+    pref($scope,"enable_sound", "yes", null, function(newValue, oldValue){
         if(newValue=="yes") {
             Sounds.unmute();
             if($scope.room_uuid)
@@ -3207,6 +3242,10 @@ function MenuController($scope, $timeout, pref, menuInitialized){
         });
     };
 
+
+    $scope.contentLoaded = function() {
+        contentLoaded.resolve();
+    };
 
     $scope.invite = function(player) {
         player.invited=true;
@@ -3436,7 +3475,7 @@ window.addEventListener("load", function(e) {
     // The manifest returns 404 or 410, the download failed,
     // or the manifest changed while the download was in progress.
     window.applicationCache.addEventListener("error", function(ev){
-        if(/manifest\/html5.appcache/.test(ev.url)) {
+        if(/manifest\/(html5|prod).appcache/.test(ev.url)) {
             // failed to load manifest, do not show that error
             menu.set("cache_status","ready");
             setTimeout(function(){
@@ -3494,27 +3533,24 @@ window.addEventListener("load", function(e) {
 }, false);
 "use strict";
 
-// var ws = new WebSocket(window.location.origin.replace(/^http/,"ws") + "/ws");
-window.debug = new Debug(document.getElementById("main"));
-
+Sounds.initialize();
 var inputs = new Inputs().bindKeys();
-
-var game = new DrMario({ root: document.getElementById("main") });
+var game = new DrMario();
 var multiplayer = new Multiplayer(game);
 
 game.registerInputs(inputs);
 game.registerForTick(inputs.tick.bind(inputs));
-game.registerForTick(debug.tick.bind(debug));
 game.registerForTick(multiplayer.tick.bind(multiplayer));
+    
+menu.contentloaded.then(function(){
+    game.initUI(document.getElementById("main"));
 
-// onscreen controller
-//Controller(document.getElementById("main"), inputs);
+    // var ws = new WebSocket(window.location.origin.replace(/^http/,"ws") + "/ws");
+    var debug = window.debug = new Debug(document.getElementById("main"));
+    game.registerForTick(debug.tick.bind(debug));
 
-//menu.init(game, multiplayer, inputs);
-
-Sounds.initialize();
-menu.init.then(function(){
+    
     if(menu.get("enable_audio") === "yes")
-        Sounds.play("wii-title");
+        Sounds.play("wii-title"); 
 });
-
+    
