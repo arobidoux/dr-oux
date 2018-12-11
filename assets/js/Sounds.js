@@ -39,7 +39,7 @@
         },
         "bg-wii": {
             "wii-title":{ start: 0, end: 108 },
-            "wii-select":{ start: 109.90, end: 129.55 },
+            "wii-select":{ start: 109.95, end: 129.63 },
             "wii-fever":{ intro:130.35, start: 134.8, end: 201 },
             "wii-chill":{ start: 202.3, end: 326.33 },
             "wii-cough":{ start: 343.85, end: 445.4 },

@@ -20,6 +20,7 @@
         this._previousFrame = null;
         this._film = [];
         this._filmWeight = 0;
+        this._last_released = null;
 
         /** Full representation of the board on 1 string
          * Rows are represented from top to bottom, left to right
@@ -190,27 +191,10 @@
             b: (this._ownedPill.b & (0xff ^ Board.CODES.states.mask)) | Board.CODES.states.values.dead.code,
         });
 
-        var bPos = this._ownedPill.getBPos();
-        if(this._ownedPill.y <= 2 || bPos.y <= 2) {
-            // look if this pill is the only one above the line #3
-            var found = false;
-            for(var y=0;y<3;y++) {
-                for(var x=0; x<this._width; x++) {
-                    if((x == bPos.x && y == bPos.y) || (x == this._ownedPill.x && y==this._ownedPill.y) ) {
-                        continue;
-                    }
-                    else if(this._data[y*this._width+x] !== 0x00) {
-                        found = true;
-                        break;
-                    }
-                }
-            }
-            
-            if(!found) {
-                // play the warning sound
-                Sounds.play("warning")
-            }
-        }
+        this._last_released = {
+            a:{x:this._ownedPill.x,y:this._ownedPill.y},
+            b:this._ownedPill.getBPos()
+        };
 
         this._ownedPill = null;
     };
@@ -291,6 +275,42 @@
                 }
 
                 if (!this._stats.explosions) {
+                    // play warnings
+                    if(this._last_released) {
+                        if(this._last_released.a.y <= 2 || this._last_released.b.y <= 2) {
+                            // look if this pill is the only one above the line #3
+                            var found = false;
+                            var aStillThere = false;
+                            var bStillThere = false;
+                            for(var y=0;y<3;y++) {
+                                for(var x=0; x<this._width; x++) {
+                                    if(this._data[y*this._width+x] === 0x00)
+                                        continue;
+
+                                    if(x == this._last_released.b.x && y == this._last_released.b.y) {
+                                        bStillThere = true;
+                                        continue;
+                                    }
+  
+                                    if(x == this._last_released.a.x && y==this._last_released.a.y) {
+                                        aStillThere = true;
+                                        continue;
+                                    }
+                                    
+                                    found = true;
+                                    break;
+                                }
+                            }
+                            
+                            if(!found && (aStillThere || bStillThere)) {
+                                // play the warning sound
+                                Sounds.play("warning")
+                            }
+                        }
+                        
+                        this._last_released = null;
+                    }
+                        
                     // process combos
                     if(this._stats.counting_combos.length) {
                         console.debug("Assigning Combos");

@@ -1,6 +1,6 @@
 CACHE MANIFEST
 
-# 2018-11-27:v1.1.18.16
+# 2018-11-27:v1.1.19.11
 
 NETWORK:
 /socket.io/
@@ -10,28 +10,29 @@ CACHE:
 /favicon.ico
 /index.html
 /assets/manifest/android-add-to-home.json
-/assets/css/index.css?v1.1.2
+/assets/css/index.css
+/assets/html/app.html
 
 /assets/img/icon-192.png
 /assets/img/the-one-sprite.png
 
-/socket.io/socket.io.js?v1.1.2
-/assets/vendor/js/uuidv1.js?v1.1.2
-/assets/js/Debug.js?v1.1.2
-/assets/js/jsonp.js?v1.1.2
-/assets/js/preference.js?v1.1.2
-/assets/vendor/js/angular.min.js?v1.1.2
-/assets/js/Sounds.js?v1.1.2
-/assets/js/Inputs.js?v1.1.2
-/assets/js/TapController.js?v1.1.2
-/assets/js/Pill.js?v1.1.2
-/assets/js/Board.js?v1.1.2
-/assets/js/PillBottle.js?v1.1.2
-/assets/js/DrMario.js?v1.1.2
-/assets/js/Multiplayer.js?v1.1.2
-/assets/js/ng-menu.js?v1.1.2
-/assets/js/appcache.js?v1.1.2
-/assets/js/index.js?v1.1.2
+/socket.io/socket.io.js
+/assets/vendor/js/uuidv1.js
+/assets/js/Debug.js
+/assets/js/jsonp.js
+/assets/js/preference.js
+/assets/vendor/js/angular.min.js
+/assets/js/Sounds.js
+/assets/js/Inputs.js
+/assets/js/TapController.js
+/assets/js/Pill.js
+/assets/js/Board.js
+/assets/js/PillBottle.js
+/assets/js/DrMario.js
+/assets/js/Multiplayer.js
+/assets/js/ng-menu.js
+/assets/js/appcache.js
+/assets/js/index.js
 
 /assets/sounds/bg-wii.mp3
 /assets/sounds/sfx.mp3

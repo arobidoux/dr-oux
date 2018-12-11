@@ -5,24 +5,19 @@
      * @param {object} options 
      */
     function DrMario(options) {
-        this._root = options && options.root || null;
-        if (!this._root) {
-            document.getElementsByTagName("body")[0]
-                .appendChild(this._root = document.createElement("div"));
+        if(options && typeof(options.root) !== "undefined") {
+            if(options.root instanceof Promise) {
+                options.root.then(this.initUI.bind(this));
+            }
+            else {
+                this.initUI(options.root);
+            }
         }
-
-        this._root.appendChild(
-            this._status = document.createElement("div")
-        );
-        this._status.className = "game-status";
-        this._status.style.display = "none";
 
         this._fps = 16;
 
         this._fps_interval = 1000 / this._fps;
         this._fps_then = 0;
-
-        this._root.className = (this._root.className ? this._root.className + " " : "") + "dr-mario";
 
         this.$animate = this._animate.bind(this);
         this._running = false;
@@ -39,6 +34,17 @@
         this.$touchend = this.touchend.bind(this);
         this.$notouchscroll = this.notouchscroll.bind(this);
     }
+
+    DrMario.prototype.initUI = function(root) {
+        this._root = root;
+        this._root.appendChild(
+            this._status = document.createElement("div")
+        );
+        this._root.className = (this._root.className ? this._root.className + " " : "") + "dr-mario";
+
+        this._status.className = "game-status";
+        this._status.style.display = "none";
+    };
 
     DrMario.prototype.abort = function() {
         this.releaseTouch();

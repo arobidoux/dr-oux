@@ -1,26 +1,23 @@
 "use strict";
 
-// var ws = new WebSocket(window.location.origin.replace(/^http/,"ws") + "/ws");
-window.debug = new Debug(document.getElementById("main"));
-
+Sounds.initialize();
 var inputs = new Inputs().bindKeys();
-
-var game = new DrMario({ root: document.getElementById("main") });
+var game = new DrMario();
 var multiplayer = new Multiplayer(game);
 
 game.registerInputs(inputs);
 game.registerForTick(inputs.tick.bind(inputs));
-game.registerForTick(debug.tick.bind(debug));
 game.registerForTick(multiplayer.tick.bind(multiplayer));
+    
+menu.contentloaded.then(function(){
+    game.initUI(document.getElementById("main"));
 
-// onscreen controller
-//Controller(document.getElementById("main"), inputs);
+    // var ws = new WebSocket(window.location.origin.replace(/^http/,"ws") + "/ws");
+    var debug = window.debug = new Debug(document.getElementById("main"));
+    game.registerForTick(debug.tick.bind(debug));
 
-//menu.init(game, multiplayer, inputs);
-
-Sounds.initialize();
-menu.init.then(function(){
+    
     if(menu.get("enable_audio") === "yes")
-        Sounds.play("wii-title");
+        Sounds.play("wii-title"); 
 });
-
+    

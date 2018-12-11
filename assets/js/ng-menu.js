@@ -4,6 +4,15 @@
 var menu = {};
 var app = angular.module("app",[]);
 
+menu.contentloaded = new Promise(function(resolve, reject){
+    app.factory("contentLoaded",function(){
+        return {
+            resolve: resolve,
+            reject: reject
+        };
+    });
+});
+
 menu.init = new Promise(function(resolve, reject){
     app.factory("menuInitialized",function(){
         return {
@@ -38,14 +47,12 @@ menu.init = new Promise(function(resolve, reject){
         };
     });
 
-    app.controller("MenuController",["$scope", "$timeout", "pref", "menuInitialized", MenuController]);
+    app.controller("MenuController",["$scope", "$timeout", "pref", "menuInitialized", "contentLoaded", MenuController]);
 });
 
 
 
-function MenuController($scope, $timeout, pref, menuInitialized){
-
-    $scope.settings = {};
+function MenuController($scope, $timeout, pref, menuInitialized, contentLoaded){
     $scope.uuid = null;
 
     pref($scope,"difficulty", 4, parseInt, function(newValue, oldValue){
@@ -74,7 +81,7 @@ function MenuController($scope, $timeout, pref, menuInitialized){
         }
     });
     pref($scope,"multi_name", preference("multi-name",""));
-    pref($scope, "enable_sound", "yes", null, function(newValue, oldValue){
+    pref($scope,"enable_sound", "yes", null, function(newValue, oldValue){
         if(newValue=="yes") {
             Sounds.unmute();
             if($scope.room_uuid)
@@ -146,6 +153,10 @@ function MenuController($scope, $timeout, pref, menuInitialized){
         });
     };
 
+
+    $scope.contentLoaded = function() {
+        contentLoaded.resolve();
+    };
 
     $scope.invite = function(player) {
         player.invited=true;

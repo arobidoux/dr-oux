@@ -40,6 +40,10 @@ class Room {
         return this._gameInProgress;
     }
 
+    get uuid() {
+        return this._uuid;
+    }
+
     /**
      * return a summary to the client
      */
@@ -307,17 +311,23 @@ class Room {
 
     graspVictory(client) {
         this._io.in(this.socRoomName).emit("gameover", {winner:client.getDetails()});
+
         // write victor in the meta file
         if(this._meta) {
             this._meta.write(
                 "\nVictory: " + client.uuid + "\n" +
                 "end " + (new Date()).toISOString() + "\n"
             );
+        }
+
+        // prepare next game
+        var nextUuid = this.rematch();
+
+        if(this._meta) {
+            this._meta.write("\nnext-game " + nextUuid + "\n");
             this._meta.close();
             this._meta = null;
         }
-
-        this.rematch();
     }
 
     playFrame(client, frame) {
@@ -362,6 +372,8 @@ class Room {
                 resolve();
             });
         });
+
+        return newRoom.uuid;
     }
 
     reset() {

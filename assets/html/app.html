@@ -1,0 +1,203 @@
+<div class="cache-status" ng-if="cache_status">
+    <div ng-if="cache_status=='new-available'">
+        A new fresher version of the game is available and ready to go!<br/>
+        Click <button onclick="window.location.reload();">here</button> to use it!
+    </div>
+
+    <div ng-if="cache_status=='ready'">
+        Ready!
+    </div>
+    <div ng-if="cache_status=='progress'">
+        Downloading the Game! Progress {{cache_status_progress.loaded}} / {{cache_status_progress.total}}
+    </div>
+
+    <div ng-if="cache_status=='obselete'">
+        Application version obsolete
+    </div>
+
+    <div ng-if="cache_status=='error'">
+        {{ cache_status_error }}
+    </div>
+
+    <div ng-if="cache_status=='downloading'">
+        Downloading new Version...
+    </div>
+
+    <div ng-if="cache_status=='looking'">
+        Looking for new version...
+    </div>
+
+    <div ng-if="cache_status=='no-cache-ready'">
+        No cache available. Ready!
+    </div>
+</div>
+
+
+<div id="menu" ng-hide="playing">
+    <div id="my-settings">
+        <label> Name
+            <input type="text" ng-model="$parent.multi_name" style="width: 8em;">
+        </label>
+        
+        <label> Difficulty
+            <input type="number" min="1" max="20" ng-model="$parent.difficulty">
+        </label>
+
+        <label>
+            Controls
+            <select ng-model="$parent.controls" ng-options="key as kmap.label for ( key, kmap ) in keyMap"></select>
+        </label>
+        
+        <label ng-if="controls == 'swipe'"> Touch Sensitivity
+            <input type="number" min="1" max="16" ng-model="$parent.sensitivity">
+        </label>
+
+        <button ng-if="controls=='tap'" ng-click="preview_tap_controls()"> Preview Tap Zones</button>
+
+        <label>
+            Soundtrack
+            <select id="soundtrack" ng-model="$parent.soundtrack">
+                <option value="none">None</option>
+                <option value="random">Random</option>
+                <!--option value="nes-fever">NES Fever</option>
+                <option value="nes-chill">NES Chill</option-->
+                <option value="wii-fever">Wii Fever</option>
+                <option value="wii-chill">Wii Chill</option>
+                <option value="wii-cough">Wii Cough</option>
+                <option value="wii-sneeze">Wii Sneeze</option>
+            </select>
+        </label>
+
+        <label>
+            Volume
+            <input type="range" ng-model="$parent.volume" min="0" max="100">
+        </label>
+
+        <label>
+            Enable Sound
+            <input type="checkbox" ng-model="$parent.enable_sound" ng-true-value="'yes'" ng-false-value="'no'">
+        </label>
+
+        <button ng-if="enable_sound!='no' && require_click_to_play" ng-click="tryAudio()" style="padding:25px;">
+            Please tap here to allow audio
+        </button>
+        
+
+        <button id="start-single" class="row" ng-click="startSingle()"> Start Single Player </button>
+        
+        <button ng-if="!hosting" ng-click="host()" class="row"> New MultiPlayer Game </button>
+        
+        <p ng-if="hosting && !room_uuid">
+            Creating game...
+        </p>
+
+        <fieldset ng-if="hosting && room_uuid">
+            <legend>Multiplayer</legend>
+            <legend>
+                Game Rules
+                <select ng-model="$parent.game_rules.combos" ng-options="key as value.label for (key,value) in gameRules"></select>
+                <p>Every combo will send half pills {{game_rules.combos ? gameRules[game_rules.combos].description : "Please select one"}}</p>
+            </legend>
+            <h4>Invite players</h4>
+            <ul id="players">
+                <li ng-repeat="player in players | filter:{uuid: '!'+uuid} " ng-if="player.room==null">
+                    <button class="row" ng-click="invite(player)" ng-disabled="player.invited">{{player.name}}</button>
+                </li>
+            </ul>
+        </fieldset>
+    </div>
+
+    <div id="multiplayer">
+        <fieldset ng-if="invitations.length>0">
+            <legend>Invitation{{invitations.length.length > 1 ? 's' :''}}</legend>
+            <button class="row" ng-repeat="invitation in invitations" ng-click="acceptInvitation(invitation)">
+                Join {{invitation.from.name}}
+            </button>
+        </fieldset>
+        <fieldset ng-repeat="room in rooms | orderBy : orderMyRoomFirst" ng-class="{'my-room':room.uuid==room_uuid}">
+            <legend>
+                {{ room.name }}
+            </legend>
+            <dl class="rules">
+                <dt ng-if="room.gameRules.combos">{{gameRules[room.gameRules.combos].label}}</dt>
+                <dd ng-if="room.gameRules.combos">Every combo will send half pills {{gameRules[room.gameRules.combos].description}}</dd>
+            </dl>
+            <hr/>
+            <table class="room-player-list">
+                <thead>
+                    <tr>
+                        <th></th>
+                        <th class="player-name">Name</th>
+                        <th class="lvl">Lvl</th>
+                        <th class="kick" ng-if="hosting">Kick</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr ng-repeat="player in players | filter: {room: {name:room.name}}">
+                        
+                        <td class="room-player-ready">
+                            {{((player.uuid==uuid && is_ready) || player.ready) ? '&#10004;' : '-'}}
+                        </td>
+                        <td class="player-name">
+                            {{player.name}}
+                        </td>
+                        <td class="lvl">{{ player.difficulty }}</td>
+                        <td class="kick" ng-if="hosting && room.uuid == room_uuid && player.uuid != uuid"> <button ng-click="kick(player)"> x </button> </td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div ng-if="room.uuid == room_uuid">
+
+                <div class="chat-box">
+                    <p ng-repeat="chat in chats" ng-class="{'my-chat':chat.from.uuid==uuid}">
+                        <span ng-if="chat.from.uuid!=uuid"> {{chat.from.name}}: </span>
+                        {{chat.msg}}
+                    </p>
+                </div>
+                <form ng-submit="submitChat(chat_input); chat_input=''">
+                    <input type="text" ng-model="chat_input" placeholder="Chat - enter to send" class="chat-input">
+                    <button>Send</button>
+                </form>
+            </div>
+            
+            <button ng-if="room.uuid != room_uuid" class="row" ng-click="join(room)">Join</button>
+            <button ng-if="room.uuid == room_uuid" ng-disabled="is_ready" class="row" ng-click="ready()"> Ready! </button>
+        </fieldset>
+
+    </div>
+</div>
+
+<div id="overlay" ng-if="info">
+    <p>{{info}}</p>
+</div>
+
+<div ng-if="error" style="position:fixed;background-color:darkred">
+    <button ng-click="clearError()">Dismiss</button>
+    <pre> {{error|json}} </pre>
+</div>
+
+<div id="game-grid" ng-show="playing">
+
+    <div id="game-status">
+        <table>
+            <thead>
+                <tr>
+                    <th>Player</th>
+                    <th>Virus</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr ng-repeat="player in opponents | orderBy : '-virus'">
+                    <td>{{player.name}}</td>
+                    <td>{{player.virus==256?'':player.virus}}</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div id="main"></div>
+
+    <div id="opponents"></div>
+    
+</div>
