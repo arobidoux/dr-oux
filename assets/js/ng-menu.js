@@ -169,10 +169,8 @@ function MenuController($scope, $timeout, pref, menuInitialized, contentLoaded){
 
     $scope.tryAudio = function() {
         $scope.require_click_to_play = false;
+        Sounds.warmup();
         Sounds.play("wii-title");
-        
-        Sounds.warmup("dududididu");
-        Sounds.warmup("move");
     };
 
     $scope.backToHome = function() {

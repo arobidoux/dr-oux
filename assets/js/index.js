@@ -18,6 +18,6 @@ menu.contentloaded.then(function(){
 
     
     if(menu.get("enable_audio") === "yes")
-        Sounds.play("wii-title"); 
+        Sounds.play("wii-title");
 });
     

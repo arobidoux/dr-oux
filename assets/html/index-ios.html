@@ -1,5 +1,5 @@
 <!doctype html>
-<html manifest="/assets/manifest/prod.appcache">
+<html manifest="/assets/manifest/ios.appcache">
 
 <head>
     <title>Dr OUX</title>
@@ -12,7 +12,7 @@
     <link rel="icon" sizes="192x192" href="/assets/img/icon-192.png">
     <!-- reuse same icon for Safari -->
     <link rel="apple-touch-icon" href="/assets/img/icon-192.png">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <!--meta name="apple-mobile-web-app-capable" content="yes"-->
 </head>
 
@@ -21,9 +21,15 @@
 
     <img id="sprite" src="/assets/img/the-one-sprite.png" style="display:none;" />
 
+    <audio src="/assets/sounds/sfx.mp3" id="audio-sfx-1"></audio>
+    <audio src="/assets/sounds/sfx.mp3" id="audio-sfx-2"></audio>
+    <audio src="/assets/sounds/sfx.mp3" id="audio-sfx-m-1"></audio>
+    <audio src="/assets/sounds/sfx.mp3" id="audio-sfx-m-2"></audio>
+    <audio src="/assets/sounds/bg-wii.mp3" id="audio-bg-wii"></audio>
+
     <script src="/socket.io/socket.io.js"></script>
     <script src="/assets/vendor/js/angular.min.js"></script>
-    <script src="/assets/dist.js"></script>
+    <script src="/assets/dist-ios.js"></script>
 </body>
 
 </html>

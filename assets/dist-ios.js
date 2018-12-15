@@ -112,114 +112,83 @@
 (function (global, ns){
     "use strict";
 
+    var muted = false;
+    var volume = 1;
     var elements = null;
     var library = {
-        "combo1": {
-            src: "/assets/sounds/sfx/combo-1.wav"
+        "sfx": {
+            "combo1": { start: 0, end: 1 },
+            "combo2": { start: 2, end: 2.5 },
+            "nes-combo-1": { start: 4, end: 5 },
+            "nes-combo-2": { start: 6, end: 8 },
+            "pause": { start:8, end:8.5 },
+            "destroy": {
+                "tracks": [
+                    {odd:.5,start:9,end:9.53},
+                    {odd:.5,start:10,end:10.51}
+                ]
+            },
+            "destroy-combo": { start:11.1, end:11.71 },
+            "almost_done" : { start:15, end:16.7 },
+            "warning" : { start: 16.9, end: 18.4 },
+            "dududididu": { start:3, end: 3.8 },
         },
-        "combo2": {
-            src: "/assets/sounds/sfx/combo-2.wav"
+        "sfx-m": {
+            "fall": { start: 12, end: 12.16 },
+            "move": { start: 13, end: 13.15 },
+            "rotate": { start:14, end:14.25 },
         },
-        "pause": {
-            src: "/assets/sounds/sfx/pause.wav"
+        "bg-nes": {
+            "nes-title":{ start: 0, end: 126 },
+            "nes-select":{ start: 129, end: 177 },
+            "nes-fever":{ start: 180, end: 322 },
+            "nes-fever-clear":{ start: 325, end: 348, },
+            "nes-chill":{ start: 352, end: 594 },
+            "nes-chill-clear":{ start: 597, end: 619 },
+            "nes-vs-game-over":{ start: 646, end: 761 },
+            "nes-game-lost":{ start: 622, end: 645 }
         },
-        "destroy": {
-            srcs: [
-                [.5,"/assets/sounds/sfx/pill-destroy-1.wav"],
-                [.5,"/assets/sounds/sfx/pill-destroy-2.wav"]
-            ]
-        },
-        "almost_done" : {
-            src: "/assets/sounds/sfx/almost_done.wav"
-        },
-        "warning" : {
-            src: "/assets/sounds/sfx/warning.mp3"
-        },
-        "fall": {
-            src: "/assets/sounds/sfx/pill-fall.wav",
-        },
-        "move": {
-            src: "/assets/sounds/sfx/pill-move.wav",
-        },
-        "rotate": {
-            src: "/assets/sounds/sfx/pill-rotate.wav",
-        },
-        /*
-        "nes-title":{
-            src: "/assets/sounds/01_Title_Theme.mp3",
-            async: true,
-            group: "bg"
-        },
-        "nes-select":{
-            src: "/assets/sounds/02_Select.mp3",
-            async: true,
-            group: "bg"
-        },
-        "nes-fever":{
-            src: "/assets/sounds/03_Fever.mp3",
-            async: true,
-            group: "bg"
-        },
-        "nes-fever-clear":{
-            src: "/assets/sounds/04_Fever_Clear.mp3",
-            async: true,
-            group: "bg"
-        },
-        "nes-chill":{
-            src: "/assets/sounds/05_Chill.mp3",
-            async: true,
-            group: "bg"
-        },
-        "nes-chill-clear":{
-            src: "/assets/sounds/06_Chill_Clear.mp3",
-            async: true,
-            group: "bg"
-        },
-        "nes-vs-game-over":{
-            src: "/assets/sounds/08_VS_Game_Over.mp3",
-            group: "bg"
-        },
-        "nes-game-lost":{
-            src:"/assets/sounds/07_-_Dr._Mario_-_NES_-_Game_Over.ogg",
-            group:"bg"
-        },
-        */
-        "wii-title":{
-            src: "/assets/sounds/bg/wii-02_Title.mp3",
-            group: "bg"
-        },
-        "wii-select":{
-            src: "/assets/sounds/bg/wii-03_Select.mp3",
-            group: "bg"
-        },
-        "wii-fever":{
-            src: "/assets/sounds/bg/wii-04_Fever.mp3",
-            group: "bg"
-        },
-        "wii-chill":{
-            src: "/assets/sounds/bg/wii-05_Chill.mp3",
-            group: "bg"
-        },
-        "wii-cough":{
-            src: "/assets/sounds/bg/wii-06_Cough.mp3",
-            group: "bg"
-        },
-        "wii-sneeze":{
-            src: "/assets/sounds/bg/wii-07_Sneeze.mp3",
-            group: "bg"
-        },
-        "wii-clear": {
-            src: "/assets/sounds/bg/wii-clear.mp3",
-            group: "bg"
+        "bg-wii": {
+            "wii-title":{ start: 0, end: 108 },
+            "wii-select":{ start: 109.95, end: 129.63 },
+            "wii-fever":{ intro:130.35, start: 134.8, end: 201 },
+            "wii-chill":{ start: 202.3, end: 326.33 },
+            "wii-cough":{ start: 343.85, end: 445.4 },
+            "wii-sneeze":{ start: 462.1, end: 569 },
+            "wii-clear": { intro: 587.75, start: 590.2, end: 649.5 }
         }
     };
+
+    Sounds.library = library;
 
     function Sounds(key) {
         Sounds.play(key);
     }
 
-    var muted = false;
-    var volume = 1;
+    Sounds.initialize = function() {
+        if(elements !== null)
+            return;
+        
+        elements = {};
+
+        for(var group in library) {
+            var elems = [];
+            var elem = document.getElementById("audio-" + group);
+            if(elem)
+                elems.push(elem);
+            for(var i=1;i<10;i++) {
+                elem = document.getElementById("audio-" + group + "-" + i );
+                if(elem)
+                    elems.push(elem);
+            }
+            if(elems.length>0)
+                elements[group] = new AudioElement(elems);
+        }
+    };
+
+    Sounds.initialized = function() {
+        return elements !== null;
+    };
 
     Sounds.mute = function() {
         Sounds.stopAll();
@@ -232,174 +201,195 @@
 
     Sounds.setVolume = function(v) {
         volume = v < 1 ? v : (v>100 ? 1 : v/100);
-        for(var key in elements) {
-            for(var i=0; i<elements[key].audio.length; i++) {
-                elements[key].audio[i].volume = volume;
+        for(var g in elements)
+            elements[g].setVolume(volume);
+    };
+
+    function getGroupFor(key) {
+        for(var group in library)
+            if(typeof(library[group][key]) !== "undefined")
+                return group;
+
+        return null;
+    }
+
+    function getTrackInfo(key) {
+        var group = getGroupFor(key);
+        if(group === null)
+            return null;
+
+        var track = null;
+        if( typeof(library[group][key].tracks) !== "undefined" ) {
+            var rnd = Math.random();
+            for(var i=0;i<library[group][key].tracks.length; i++) {
+                if(rnd < library[group][key].tracks[i].odd) {
+                    track = library[group][key].tracks[i];
+                    break;
+                }
+                else {
+                    rnd -= library[group][key].tracks[i].odd;
+                }
             }
         }
-    };
+        else {
+            track = library[group][key];
+        }
+
+        return {
+            group: group,
+            intro: typeof(track.intro) === "undefined" ? track.start : track.intro,
+            start: track.start,
+            end: track.end,
+        };
+    }
 
     Sounds.has = function(key) {
-        return typeof(library[key]) !== "undefined";
+        return getGroupFor(key) !== null;
     };
 
-    function warmup_callback() {
-        if(this.CurrentTime > 0) {
-            this.removeEventListener("timeupdate", warmup_callback);
-            this.pause();
-            this.CurrentTime = 0;
-            this.volume = volume;
+    function doWarmUp(key) {
+        var track = getTrackInfo(key);
+        if(track !== null) {
+            elements[track.group].warmup(track.intro, track.end);
         }
     }
 
     Sounds.warmup = function() {
-        for(var k in elements) {
-            for(var i=0;i<elements[k].audio.length; i++) {
-                elements[k].audio[i].addEventListener(
-                    "timeupdate", warmup_callback
-                );
-                elements[k].audio[i].volume = 0.01; 
-                elements[k].audio[i].play().catch(function(err){
-                    console.error(err);
-                });
-            }
-        }
+        doWarmUp("dududididu")
+        doWarmUp("move")
     };
 
     Sounds.play = function(key) {
-        if(muted)
+        if(muted || elements === null)
             return;
 
-        var idx = prepareToPlay(key);
-        if(idx !== null) {  
-            try {
-                elements[key].audio[idx].currentTime = 0;
-            } catch(e) {
-                // needed to be used with firefox
-            }
-            try {
-                elements[key].audio[idx].play().catch(function(err){
-                    if(menu)
-                    menu.init.then(function(){
-                        menu.set("require_click_to_play", true);
-                    });
-                });
-            } catch(e) {}
+        var track = getTrackInfo(key);
+        if(track !== null && typeof(elements[track.group]) !== "undefined") {
+            elements[track.group].playSprite(track.intro, track.end, track.group.substr(0,2) == "bg", track.start);
         }
     };
 
     Sounds.resume = function(key) {
-        if(muted)
+        if(muted || elements === null)
             return;
 
-        var idx = prepareToPlay(key);
-        if(idx !== null) {  
-            try {
-                elements[key].audio[idx].play().catch(function(err){
-                    if(menu)
+        var group = getGroupFor(key);
+        if(elements === null || typeof(elements[group]) === "undefined")
+            return;
+
+        elements[group].resume();
+    };
+
+    Sounds.stop = function(key) {
+        var group = getGroupFor(key);
+        if(elements === null || typeof(elements[group]) === "undefined")
+            return;
+
+        elements[group].pause();
+    };
+
+    Sounds.stopAll = function() {
+        if(elements) {
+            for(var g in elements) {
+                elements[g].pause();
+            }
+        }
+    };
+
+    Sounds.stopGroup = function(group) {
+        if(elements) {
+            for(var g in elements) {
+                if(g.indexOf(group) === 0) {
+                    elements[g].pause();
+                }
+            }
+        }
+    };
+
+    function AudioElement(elems){
+        this._elems = elems;
+        this._next_id = 0;
+        this._contexts = [];
+
+        for(var i=0;i<this._elems.length;i++) {
+            var ctx = {
+                restartAt: null,
+                stopAt: null,
+                loop: false,
+                _warmingUp: false
+            };
+            
+            this._elems[i].addEventListener("timeupdate", this._timeupdate.bind(this, i));
+            this._contexts.push(ctx);
+            this._elems[i].volume = volume;
+        }
+    }
+
+    AudioElement.prototype._get_next_idx = function() {
+        return this._elems.length === 1 ? 0 : this._next_id++ % this._elems.length;
+    };
+
+    AudioElement.prototype._timeupdate = function(i, ev) {
+        if(this._contexts[i].warmingUp === true) {
+            this._contexts[i].warmingUp = false;
+            this._elems[i].pause();
+        }
+
+        if(this._contexts[i].stopAt !== null && this._contexts[i].stopAt <= this._elems[i].currentTime) {
+            if(this._contexts[i].loop && this._contexts[i].restartAt !== null) {
+                this._elems[i].currentTime = this._contexts[i].restartAt;
+            }
+            else {
+                this._elems[i].pause();
+                this._contexts[i].stopAt = null;
+            }
+        }
+    };
+
+    AudioElement.prototype.setVolume = function(v) {
+        for(var i=0; i<this._elems.length;i++)
+            this._elems[i].volume = v;
+    };
+
+    AudioElement.prototype.playSprite = function(start, end, loop, restartAt) {
+        var i = this._get_next_idx();
+        this._elems[i].currentTime = start;
+        this._contexts[i].restartAt = restartAt;
+        this._contexts[i].stopAt = end;
+        this._contexts[i].loop = typeof(loop) === "undefined" ? false : loop;
+        this.resume(i);
+    };
+
+    AudioElement.prototype.warmup = function(start, end) {
+        for(var i=0;i<this._elems.length;i++) {
+            this._contexts[i].warmingUp = true;
+            
+            this._elems[i].currentTime = start;
+            this._contexts[i].stopAt = end;
+            this._contexts[i].restartAt = null;
+            this._contexts[i].loop = false;
+            
+            this.resume(i);
+        }
+    };
+
+    AudioElement.prototype.pause = function() {
+        for(var i=0;i<this._elems.length; i++)
+            this._elems[i].pause();
+    };
+
+    AudioElement.prototype.resume = function(i) {
+        if(typeof(i)==="undefined")
+            i=0;
+        try {
+            this._elems[i].play().catch(function(err) {
+                if(menu)
                     menu.init.then(function(){
                         menu.set("require_click_to_play", true);
                     });
-                });
-            }
-            catch(e){
-                // needed for firefox
-            }
-        }
-    };
-
-    function prepareToPlay(key) {
-        if(elements !== null && typeof(library[key]) !== "undefined") {
-            if(library[key].group)
-                Sounds.stopGroup(library[key].group);
-            
-            //if(library[key].async)
-            //    Sounds._load(key);
-
-            return get_idx_for(key);
-        }
-        return null;
-    }
-
-    function get_idx_for(key) {
-        if(typeof(library[key].srcs) !== "undefined") {
-            var rnd = Math.random();
-            for(var i=0;i<library[key].srcs.length; i++) {
-                if(rnd < library[key].srcs[i][0]) {
-                    return i;
-                }
-                else {
-                    rnd -= library[key].srcs[i][0];
-                }
-            }
-            return 0;
-        }
-        else {
-            return 0;
-        }
-    }
-
-
-    Sounds.stop = function(key) {
-        if(elements === null || typeof(elements[key]) === "undefined")
-            return;
-
-        for(var i=0;i<elements[key].audio.length;i++)
-            elements[key].audio[i].pause();
-    };
-    
-    Sounds.stopAll = function() {
-        for(var k in elements)
-            Sounds.stop(k);
-    };
-
-    Sounds.stopGroup = function(grp) {
-        for( var k in library )
-            if(typeof(library[k].group) !== "undefined" && library[k].group == grp)
-                Sounds.stop(k);
-    };
-
-    Sounds._generateAudioFor = function(key, src) {
-        var audio = new Audio(src);
-        if(typeof(library[key].group) !== "undefined" && library[key].group == "bg") {
-            audio.volume = volume;//*.5;
-        }
-        else {   
-            audio.volume = volume;
-        }
-
-        //audio.currentTime = 0;
-        
-        return audio;
-    };
-
-    Sounds._load = function(key) {
-        if(elements === null || elements[key].audio.length)
-            return;
-        
-        if(typeof(library[key].src) !== "undefined") {
-            elements[key].audio.push(Sounds._generateAudioFor(key,library[key].src));
-        }
-        else if(typeof(library[key].srcs) !== "undefined") {
-            for(var j=0;j<library[key].srcs.length;j++) {
-                elements[key].audio.push(Sounds._generateAudioFor(key, library[key].srcs[j][1]));
-            }
-        }
-    };
-
-    Sounds.initialize = function() {
-        
-        if(elements !== null)
-            return;
-        
-        elements = {};
-        for(var k in library) {
-            elements[k] = {
-                audio: []
-            };
-
-            //if(typeof(library[k].async) === "undefined" || !library[k].async)
-            Sounds._load(k);
+            });
+        } catch(e) {
+            // shhh
         }
     };
 

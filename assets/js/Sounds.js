@@ -136,11 +136,16 @@
         return getGroupFor(key) !== null;
     };
 
-    Sounds.warmup = function(key) {
+    function doWarmUp(key) {
         var track = getTrackInfo(key);
         if(track !== null) {
             elements[track.group].warmup(track.intro, track.end);
         }
+    }
+
+    Sounds.warmup = function() {
+        doWarmUp("dududididu")
+        doWarmUp("move")
     };
 
     Sounds.play = function(key) {

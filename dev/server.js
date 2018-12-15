@@ -8,27 +8,27 @@ const Game = require("./lib/Game");
 
 const port = 8080;
 
+function serveIndex(req, res) {
+    var isIos = /Mac OS X/.test(req.headers['user-agent']);
+    if(isIos) {
+        return res.sendFile(path.resolve("../assets/html/index-ios.html"));
+    }
+    else {
+        return res.sendFile(path.resolve("../assets/html/index.html"));
+    }
+}
 
-app.get("/", (req, res) => {
-    res.sendFile(path.resolve("../assets/html/index.html"));
-});
+app.get("/", serveIndex);
+app.get("/index.html", serveIndex);
+app.get("/index-ios.html", serveIndex);
+
 
 app.get("/sw.js", (req, res) => {
     res.sendFile(path.resolve("../assets/manifest/service-worker.js"));
 });
-app.get("/index.html", (req, res) => {
-    res.sendFile(path.resolve("../assets/html/index.html"));
-});
+
 app.get("/favicon.ico", (req, res) => {
     res.sendFile(path.resolve("../assets/img/favicon.ico"));
-});
-
-app.get("/assets/manifest/html5.appcache", function(req, res){
-    res.sendFile(path.resolve("../assets/manifest/html5.appcache")/*,{
-        headers:{
-            "Content-Type": "text/cache-manifest"
-        }
-    }*/);
 });
 
 app.use(

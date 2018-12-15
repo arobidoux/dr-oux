@@ -261,7 +261,7 @@
 
                     var explosionCount = this._checkPillDestruction(c.x, c.y);
                     if(explosionCount) {
-                        console.debug("Pushing Combos");
+                        //console.debug("Pushing Combos");
                         Sounds.play("destroy");
                         this._stats.counting_combos.push(this._data[i] & Board.CODES.colors.mask);
                     }
@@ -313,7 +313,7 @@
                         
                     // process combos
                     if(this._stats.counting_combos.length) {
-                        console.debug("Assigning Combos");
+                        //console.debug("Assigning Combos");
                         if(this._stats.counting_combos.length>1) {
                             Sounds.play("combo1");
                         }

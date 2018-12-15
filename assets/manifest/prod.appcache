@@ -1,6 +1,6 @@
 CACHE MANIFEST
 
-# 2018-11-27:v1.2.2
+# 2018-11-27:v1.3.7
 
 NETWORK:
 /socket.io/
@@ -20,5 +20,20 @@ CACHE:
 /assets/vendor/js/angular.min.js
 /assets/dist.js
 
-/assets/sounds/bg-wii.mp3
-/assets/sounds/sfx.mp3
+/assets/sounds/sfx/combo-1.wav
+/assets/sounds/sfx/combo-2.wav
+/assets/sounds/sfx/pause.wav
+/assets/sounds/sfx/pill-destroy-1.wav
+/assets/sounds/sfx/pill-destroy-2.wav
+/assets/sounds/sfx/almost_done.wav
+/assets/sounds/sfx/warning.mp3
+/assets/sounds/sfx/pill-fall.wav
+/assets/sounds/sfx/pill-move.wav
+/assets/sounds/sfx/pill-rotate.wav
+/assets/sounds/bg/wii-02_Title.mp3
+/assets/sounds/bg/wii-03_Select.mp3
+/assets/sounds/bg/wii-04_Fever.mp3
+/assets/sounds/bg/wii-05_Chill.mp3
+/assets/sounds/bg/wii-06_Cough.mp3
+/assets/sounds/bg/wii-07_Sneeze.mp3
+/assets/sounds/bg/wii-clear.mp3
