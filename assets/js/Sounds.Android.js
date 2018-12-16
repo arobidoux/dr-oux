@@ -133,7 +133,7 @@
     };
 
     function warmup_callback() {
-        if(this.elem.currentTime > 1) {
+        if(this.elem.currentTime > 0) {
             this.elem.removeEventListener("timeupdate", this.cb);
             this.elem.pause();
             this.elem.currentTime = 0;

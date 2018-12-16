@@ -244,7 +244,7 @@
     };
 
     function warmup_callback() {
-        if(this.elem.currentTime > 1) {
+        if(this.elem.currentTime > 0) {
             this.elem.removeEventListener("timeupdate", this.cb);
             this.elem.pause();
             this.elem.currentTime = 0;
@@ -609,6 +609,8 @@
         if(!this._inputs)
             return;
 
+        console.log("[TOUCH] start");
+
         for(var i=0; i<ev.changedTouches.length;i++) {
             if(typeof(this._touches[ev.changedTouches[i].identifier]) === "undefined") {
                 for(var j=0;j<this._zones.length; j++ ) {
@@ -619,26 +621,32 @@
                         ev.changedTouches[i].clientY < this._zones[j].zone[3]
                     ) {
                         this._touches[ev.changedTouches[i].identifier] = this._zones[j].keyCode;
-                        //console.log("[TAP] pressing "+this._zones[j].keyCode);
+                        console.log("[TAP] pressing "+this._zones[j].keyCode);
                         this._inputs.press(this._zones[j].keyCode);
                         break;
                     }
                 }
             }
         }
+
+        ev.preventDefault();
     };
 
     TapController.prototype._touchEnd = function(ev) {
         if(!this._inputs)
             return;
 
+        console.log("[TOUCH] end");
+
         for(var i=0; i<ev.changedTouches.length;i++) {
             if(typeof(this._touches[ev.changedTouches[i].identifier]) !== "undefined") {
                 this._inputs.release(this._touches[ev.changedTouches[i].identifier]);
-                //console.log("[TAP] releasing "+this._touches[ev.changedTouches[i].identifier]);
+                console.log("[TAP] releasing "+this._touches[ev.changedTouches[i].identifier]);
                 delete this._touches[ev.changedTouches[i].identifier];
             }
         }
+
+        ev.preventDefault();
     };
 
     TapController.defaultZones = function() {
