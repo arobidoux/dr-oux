@@ -244,26 +244,36 @@
     };
 
     function warmup_callback() {
-        if(this.CurrentTime > 0) {
-            this.removeEventListener("timeupdate", warmup_callback);
-            this.pause();
-            this.CurrentTime = 0;
-            this.volume = volume;
+        if(this.elem.currentTime > 1) {
+            this.elem.removeEventListener("timeupdate", this.cb);
+            this.elem.pause();
+            this.elem.currentTime = 0;
+            this.elem.volume = volume;
+            this.resolve();
         }
     }
 
     Sounds.warmup = function() {
+        var promises = [];
         for(var k in elements) {
             for(var i=0;i<elements[k].audio.length; i++) {
-                elements[k].audio[i].addEventListener(
-                    "timeupdate", warmup_callback
-                );
-                elements[k].audio[i].volume = 0.01; 
-                elements[k].audio[i].play().catch(function(err){
-                    console.error(err);
-                });
+                promises.push(new Promise(function(elem, resolve, reject){
+                    var ctx = {
+                        elem: elem,
+                        resolve: resolve,
+                        reject: reject,
+                        cb: null
+                    };
+                    ctx.cb = warmup_callback.bind(ctx);
+                    elem.addEventListener("timeupdate", ctx.cb);
+                    elem.volume = 0.01; 
+                    elem.play().catch(function(k,i,err){
+                        console.error(err);
+                    }.bind(elem,k,i));
+                }.bind(null, elements[k].audio[i])));
             }
         }
+        return Promise.all(promises);
     };
 
     Sounds.play = function(key) {
@@ -272,13 +282,14 @@
 
         var idx = prepareToPlay(key);
         if(idx !== null) {  
+            var elementKey = Sounds._getElementKey(key);
             try {
-                elements[key].audio[idx].currentTime = 0;
+                elements[elementKey].audio[idx].currentTime = 0;
             } catch(e) {
                 // needed to be used with firefox
             }
             try {
-                elements[key].audio[idx].play().catch(function(err){
+                elements[elementKey].audio[idx].play().catch(function(err){
                     if(menu)
                     menu.init.then(function(){
                         menu.set("require_click_to_play", true);
@@ -310,13 +321,17 @@
 
     function prepareToPlay(key) {
         if(elements !== null && typeof(library[key]) !== "undefined") {
-            if(library[key].group)
-                Sounds.stopGroup(library[key].group);
-            
-            //if(library[key].async)
-            //    Sounds._load(key);
-
-            return get_idx_for(key);
+            if(library[key].group) {
+                var elementKey = Sounds._parseElementGroupName(library[key].group);
+                elements[elementKey].audio[0].src = library[key].src;
+                return 0;
+            }
+            else {   
+                //if(library[key].async)
+                //    Sounds._load(key);
+                
+                return get_idx_for(key);
+            }
         }
         return null;
     }
@@ -341,8 +356,19 @@
 
 
     Sounds.stop = function(key) {
-        if(elements === null || typeof(elements[key]) === "undefined")
+        if(elements === null)
             return;
+        if(typeof(elements[key]) === "undefined") {
+            if(typeof(library[key]) !== "undefined" && typeof(library[key].group) !== "undefined") {
+                key = Sounds._parseElementGroupName(library[key].group);
+                if(typeof(elements[key]) === "undefined") {
+                    return;
+                }
+            }
+            else {
+                return;
+            }
+        }
 
         for(var i=0;i<elements[key].audio.length;i++)
             elements[key].audio[i].pause();
@@ -354,9 +380,8 @@
     };
 
     Sounds.stopGroup = function(grp) {
-        for( var k in library )
-            if(typeof(library[k].group) !== "undefined" && library[k].group == grp)
-                Sounds.stop(k);
+        Sounds._parseElementGroupName(grp);
+        Sounds.stop(Sounds._parseElementGroupName(grp));
     };
 
     Sounds._generateAudioFor = function(key, src) {
@@ -373,16 +398,29 @@
         return audio;
     };
 
+    Sounds._getElementKey = function(key) {
+        if(typeof(library[key].group) === "undefined")
+            return key;
+        else
+            return Sounds._parseElementGroupName(library[key].group);
+    };
+
+    Sounds._parseElementGroupName = function(group) {
+        return "--group--" + group;
+    };
+
     Sounds._load = function(key) {
-        if(elements === null || elements[key].audio.length)
+        var elementKey = Sounds._getElementKey(key);
+
+        if(elements === null || elements[elementKey].audio.length)
             return;
         
         if(typeof(library[key].src) !== "undefined") {
-            elements[key].audio.push(Sounds._generateAudioFor(key,library[key].src));
+            elements[elementKey].audio.push(Sounds._generateAudioFor(key, library[key].src));
         }
         else if(typeof(library[key].srcs) !== "undefined") {
             for(var j=0;j<library[key].srcs.length;j++) {
-                elements[key].audio.push(Sounds._generateAudioFor(key, library[key].srcs[j][1]));
+                elements[elementKey].audio.push(Sounds._generateAudioFor(key, library[key].srcs[j][1]));
             }
         }
     };
@@ -392,11 +430,13 @@
         if(elements !== null)
             return;
         
-        elements = {};
+        elements = Sounds.elements = {};
         for(var k in library) {
-            elements[k] = {
-                audio: []
-            };
+            var elementKey = Sounds._getElementKey(k);
+            if(typeof(elements[elementKey]) === "undefined")
+                elements[elementKey] = {
+                    audio: []
+                };
 
             //if(typeof(library[k].async) === "undefined" || !library[k].async)
             Sounds._load(k);
@@ -3273,8 +3313,9 @@ function MenuController($scope, $timeout, pref, menuInitialized, contentLoaded){
 
     $scope.tryAudio = function() {
         $scope.require_click_to_play = false;
-        Sounds.warmup();
-        Sounds.play("wii-title");
+        Sounds.warmup().then(function(){
+            Sounds.play("wii-title");
+        });
     };
 
     $scope.backToHome = function() {

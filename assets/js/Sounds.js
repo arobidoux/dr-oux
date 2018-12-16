@@ -144,8 +144,11 @@
     }
 
     Sounds.warmup = function() {
-        doWarmUp("dududididu")
-        doWarmUp("move")
+        doWarmUp("dududididu");
+        doWarmUp("move");
+        return new Promise(function(resolve, reject){
+            resolve();
+        });
     };
 
     Sounds.play = function(key) {

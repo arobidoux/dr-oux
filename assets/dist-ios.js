@@ -255,8 +255,11 @@
     }
 
     Sounds.warmup = function() {
-        doWarmUp("dududididu")
-        doWarmUp("move")
+        doWarmUp("dududididu");
+        doWarmUp("move");
+        return new Promise(function(resolve, reject){
+            resolve();
+        });
     };
 
     Sounds.play = function(key) {
@@ -3263,8 +3266,9 @@ function MenuController($scope, $timeout, pref, menuInitialized, contentLoaded){
 
     $scope.tryAudio = function() {
         $scope.require_click_to_play = false;
-        Sounds.warmup();
-        Sounds.play("wii-title");
+        Sounds.warmup().then(function(){
+            Sounds.play("wii-title");
+        });
     };
 
     $scope.backToHome = function() {
