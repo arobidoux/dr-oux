@@ -6,7 +6,7 @@ var io = require("socket.io")(http);
 
 const Game = require("./lib/Game");
 
-const port = 8080;
+const port = process.env.PORT || 8080;
 
 function serveIndex(req, res) {
     var isIos = /Mac OS X/.test(req.headers['user-agent']);
