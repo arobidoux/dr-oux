@@ -5,7 +5,7 @@
     </div>
 
     <div ng-if="cache_status=='ready'">
-        Ready!
+        Ready! {{cache_status_info}}
     </div>
     <div ng-if="cache_status=='progress'">
         Downloading the Game! Progress {{cache_status_progress.loaded}} / {{cache_status_progress.total}}

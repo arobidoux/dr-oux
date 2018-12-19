@@ -27,6 +27,10 @@ app.get("/sw.js", (req, res) => {
     res.sendFile(path.resolve("../assets/manifest/service-worker.js"));
 });
 
+app.get("/sw-ios.js", (req, res) => {
+    res.sendFile(path.resolve("../assets/manifest/service-worker-ios.js"));
+});
+
 app.get("/favicon.ico", (req, res) => {
     res.sendFile(path.resolve("../assets/img/favicon.ico"));
 });
