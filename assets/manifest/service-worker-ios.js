@@ -1,4 +1,4 @@
-var CACHE_NAME = "dr-oux-v1.0";
+var CACHE_NAME = "dr-oux-v1.0.1";
 var urlsToCache = [
     '/favicon.ico',
     '/index.html',
@@ -14,15 +14,57 @@ var urlsToCache = [
     '/assets/sounds/sfx.mp3'
 ];
 
-self.addEventListener("install", function(event) {    
-  // Perform install steps
-  event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then(function(cache) {
-        console.log("Opened cache");
-        return cache.addAll(urlsToCache);
+function postMessage(msg) {
+  self.clients.matchAll().then(function (clients){
+    clients.forEach(function(client){
+      client.postMessage(msg);
+    });
+  });
+}
+
+
+function cleanCache() {
+  return caches.keys().then(function(cacheNames) {
+    return Promise.all(
+      cacheNames.map(function(cacheName) {
+        if (cacheName != CACHE_NAME) {
+          console.log('Deleting out of date cache:', cacheName);
+          return caches.delete(cacheName);
+        }
+        return Promise.resolve();
       })
-  );
+    );
+  });
+}
+
+function updateCache(cache) {
+  var done = 0;
+  var total = urlsToCache.length;
+  return caches.open(CACHE_NAME).then(function(cache){
+    return Promise.all(urlsToCache.map(function(url){
+      return cache.add(url)
+      .then(function(){
+        postMessage({event:"update_progress",data:{
+          total:total,
+          done:done++
+        }});
+      });
+    }));
+  })
+}
+
+self.addEventListener("install", function(event) {
+  // Perform install steps
+  if(!caches.has(CACHE_NAME)) {
+    event.waitUntil(
+      cleanCache().then(updateCache)
+    );
+  }
+  else {
+    event.waitUntil(
+      cleanCache()
+    );
+  }
 });
 
 self.addEventListener("fetch", function(event) {
@@ -33,7 +75,6 @@ self.addEventListener("fetch", function(event) {
         if (response) {
           return response;
         }
-
         return fetch(event.request);
       }
     )

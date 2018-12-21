@@ -1,4 +1,4 @@
-var CACHE_NAME = "dr-oux-v1.0";
+var CACHE_NAME = "dr-oux-v1.0.1";
 
 var urlsToCache = [
   "/favicon.ico",
@@ -38,6 +38,21 @@ function postMessage(msg) {
   });
 }
 
+
+function cleanCache() {
+  return caches.keys().then(function(cacheNames) {
+    return Promise.all(
+      cacheNames.map(function(cacheName) {
+        if (cacheName != CACHE_NAME) {
+          console.log('Deleting out of date cache:', cacheName);
+          return caches.delete(cacheName);
+        }
+        return Promise.resolve();
+      })
+    );
+  });
+}
+
 function updateCache(cache) {
   var done = 0;
   var total = urlsToCache.length;
@@ -58,21 +73,12 @@ self.addEventListener("install", function(event) {
   // Perform install steps
   if(!caches.has(CACHE_NAME)) {
     event.waitUntil(
-      caches.keys().then(function(cacheNames) {
-        return Promise.all(
-          cacheNames.map(function(cacheName) {
-            if (cacheName != CACHE_NAME) {
-              console.log('Deleting out of date cache:', cacheName);
-              return caches.delete(cacheName);
-            }
-          })
-        );
-      }).then(updateCache)
+      cleanCache().then(updateCache)
     );
   }
   else {
     event.waitUntil(
-      updateCache()
+      cleanCache()
     );
   }
 });
