@@ -2933,6 +2933,19 @@
             Sounds.play("wii-select");
             document.getElementById("game-grid").removeEventListener("click", reset);
             menu.set("info","");
+
+            // re add player that are already ready
+            var room_uuid = menu.get("room_uuid");
+            var my_uuid = menu.get("uuid");
+            if(room_uuid) {
+                var players = menu.get("players");
+                for(var i=0; i<players.length; i++) {
+                    
+                    // check if we are in the same game
+                    if(players[i].uuid != uuid && players[i].ready && players[i].room && players[i].room.uuid==room_uuid)
+                        addOpponent.call(this, players[i]);
+                }
+            }
         }.bind(this);
 
         setTimeout(function(){
@@ -3032,18 +3045,6 @@
         });
     };
 
-    
-    /*
-    Multiplayer.prototype.joinPlayer = function(player_id) {
-        this._socket.emit("joinPlayer", player_id);
-    };
-    */
-    /*
-    Multiplayer.prototype.spectate = function(player_id) {
-        this._socket.emit("spectate", player_id);
-    };
-    */
-
     Multiplayer.prototype.tick = function(tick) {
         if(this._game._game_stats && this._game._game_stats.combos && this._game._game_stats.combos.length > 1) {
             this._socket.emit("combos", encodeFrame(this._game._game_stats.combos));
@@ -3059,86 +3060,7 @@
             }))
         });
     }
-/*
-    var upsertRoom = generateUpsertElem(
-        document.getElementById("multi-room-template"),
-        generateRoomID,
-        ".room-value-%name%",
-        function(elem, obj) {
-            elem.setAttribute("room-name", obj.name);
-        }
-    );
 
-    var upsertPlayer = generateUpsertElem(
-        document.getElementById("player-template"),
-        generatePlayerID,
-        ".player-value-%name%",
-        function(elem, obj) {
-            if(obj.uuid == uuid) {
-                // prevent us from being added
-                elem.parentElement.removeChild(elem);
-            }
-            elem.setAttribute("player-uuid", obj.uuid);
-        },
-        function(elem, obj){
-            elem.className = obj.status;
-        }
-    );
-    
-    function generateUpsertElem(template, generateId, field_value_selector, postCreate, postUpdate) {
-        var root = template.parentElement;
-        root.removeChild(template);
-
-        var fn = function(obj) {
-            var id = generateId(obj);
-            var elem = document.getElementById(id);
-            if(!elem) {
-                var elem = template.cloneNode(true);
-                elem.setAttribute("id", id);
-                root.appendChild(elem);
-                if(typeof(postCreate) === "function")
-                    postCreate(elem, obj);
-            }
-
-            for(var k in obj) {
-                var e = document.querySelector("#"+id+" " + field_value_selector.replace("%name%",k));
-                if(e)
-                    e.innerText = obj[k];
-            }
-
-            if(typeof(postUpdate) === "function")
-                postUpdate(elem, obj);
-
-            return elem;
-        };
-
-        fn.clear = function() {
-            while(root.lastChid)
-                root.removeChild(root.lastChid);
-        };
-
-        fn.removeNotIn = function(list) {
-            var nextElem, elem = root.firstChild;
-            while(elem) {
-                nextElem = elem.nextElementSibling;
-                if(list.indexOf(elem) == -1) {
-                    root.removeChild(elem);
-                }
-                elem = nextElem;
-            }
-        };
-
-        return fn;
-    }
-
-    function generateRoomID(room) {
-        return "room-row-" + btoa(room.name).replace(/[=+/]/g, "_");
-    };
-
-    function generatePlayerID(client) {
-        return "player-row-" + client.uuid;
-    };
-    */
     function pickRandomName() {
         return jsonp("https://randomuser.me/api/?inc=name&noinfo&callback=", 5)
         .then(function(res){
@@ -3530,16 +3452,6 @@ return;
         navigator.serviceWorker.addEventListener("message", function(ev){
             if(typeof(ev.data) == "object" && typeof(ev.data.event) !== "undefined") {
                 switch(ev.data.event) {
-                    case "validate_cached_version":
-                        window.postMessage()
-                        sendToSW({
-                            event: "installed_version",
-                            data:localStorage.getItem("cached_version")
-                        });
-                        break;
-                    case "update_cached_version":
-                        localStorage.setItem("cached_version", ev.data.data);
-                        break;
                     case "updating":
                         menu.set("cache_status","updating");
                         break;
