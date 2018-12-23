@@ -34,13 +34,16 @@
 
 
 <div id="menu" ng-hide="playing">
-    <div id="my-settings">
+    <div ng-if="room_uuid" style="padding:5px;">
+        <button ng-click="leaveRoom()" style="width:100%">Leave Multiplayer</button>
+    </div>
+    <div id="my-settings" ng-if="!room_uuid">
         <label> Name
             <input type="text" ng-model="$parent.multi_name" style="width: 8em;">
         </label>
         
         <label> Difficulty
-            <input type="number" min="1" max="20" ng-model="$parent.difficulty">
+            <input type="number" min="1" max="20" ng-model="my_settings.difficulty">
         </label>
 
         <label>
@@ -70,7 +73,7 @@
 
         <label ng-if="platform!='ios'">
             Volume
-            <input type="range" ng-model="$parent.$parent.volume" min="0" max="100">
+            <input type="range" ng-model="my_settings.volume" min="0" max="100">
         </label>
 
         <label>
@@ -78,7 +81,7 @@
             <input type="checkbox" ng-model="$parent.enable_sound" ng-true-value="'yes'" ng-false-value="'no'">
         </label>
 
-        <button ng-if="enable_sound!='no' && require_click_to_play" ng-click="tryAudio()" style="padding:25px;">
+        <button class="row" ng-if="enable_sound!='no' && require_click_to_play" ng-click="tryAudio()" style="padding:25px; margin:25px 0;">
             Please tap here to allow audio
         </button>
         
@@ -90,44 +93,37 @@
         <p ng-if="hosting && !room_uuid">
             Creating game...
         </p>
-
-        <fieldset ng-if="hosting && room_uuid">
-            <legend>Multiplayer</legend>
-            <legend>
-                Game Rules
-                <select ng-model="$parent.game_rules.combos" ng-options="key as value.label for (key,value) in gameRules"></select>
-                <p>Every combo will send half pills {{game_rules.combos ? gameRules[game_rules.combos].description : "Please select one"}}</p>
-            </legend>
-            <h4>Invite players</h4>
-            <ul id="players">
-                <li ng-repeat="player in players | filter:{uuid: '!'+uuid} " ng-if="player.room==null">
-                    <button class="row" ng-click="invite(player)" ng-disabled="player.invited">{{player.name}}</button>
-                </li>
-            </ul>
-        </fieldset>
     </div>
 
     <div id="multiplayer">
-        <fieldset ng-if="invitations.length>0">
-            <legend>Invitation{{invitations.length.length > 1 ? 's' :''}}</legend>
-            <button class="row" ng-repeat="invitation in invitations" ng-click="acceptInvitation(invitation)">
-                Join {{invitation.from.name}}
-            </button>
-        </fieldset>
-        <fieldset ng-repeat="room in rooms | orderBy : orderMyRoomFirst" ng-class="{'my-room':room.uuid==room_uuid}">
+        <h3 ng-if="!room_uuid"> Join a Game </h3>
+        <p ng-if="!rooms || rooms.length==0">
+            No game currently in progress..
+            <button ng-if="!hosting" ng-click="host()" class="row"> Create one </button>
+        </p>
+        <fieldset style="margin-top:10px" ng-repeat="room in rooms | orderBy : orderMyRoomFirst" ng-class="{'my-room':room.uuid==room_uuid}">
             <legend>
-                {{ room.name }}
+                <button ng-if="room.uuid != room_uuid" ng-click="join(room)">
+                    Join {{ room.name }}
+                </button>
+                <span ng-if="room.uuid == room_uuid">
+                    {{ room.name }}
+                </span>
             </legend>
-            <dl class="rules">
-                <dt ng-if="room.gameRules.combos">{{gameRules[room.gameRules.combos].label}}</dt>
-                <dd ng-if="room.gameRules.combos">Every combo will send half pills {{gameRules[room.gameRules.combos].description}}</dd>
-            </dl>
-            <hr/>
+            <div ng-if="room_uuid==room.uuid">
+                <dl class="rules">
+                    <dt>
+                        <select ng-if="hosting && room_uuid==room.uuid" ng-model="$parent.game_rules.combos" ng-options="key as value.label for (key,value) in gameRules"></select>
+                        <span ng-if="!hosting || room_uuid!=room.uuid">{{gameRules[room.gameRules.combos].label}}</span>
+                    </dt>
+                    <dd ng-if="room.gameRules.combos">Every combo will send half pills {{gameRules[room.gameRules.combos].description}}</dd>
+                </dl>
+            </div>
             <table class="room-player-list">
-                <thead>
+                <thead ng-if="room_uuid==room.uuid">
                     <tr>
                         <th></th>
-                        <th class="player-name">Name</th>
+                        <th class="player-name">Players</th>
                         <th class="lvl">Lvl</th>
                         <th class="kick" ng-if="hosting">Kick</th>
                     </tr>
@@ -141,27 +137,29 @@
                         <td class="player-name">
                             {{player.name}}
                         </td>
-                        <td class="lvl">{{ player.difficulty }}</td>
+                        <td class="lvl">
+                            <button ng-if="player.uuid==uuid" ng-click="my_settings.difficulty=my_settings.difficulty-1">-</button>
+                            {{ player.difficulty }}
+                            <button ng-if="player.uuid==uuid" ng-click="my_settings.difficulty=my_settings.difficulty+1">+</button>
+                        </td>
                         <td class="kick" ng-if="hosting && room.uuid == room_uuid && player.uuid != uuid"> <button ng-click="kick(player)"> x </button> </td>
                     </tr>
                 </tbody>
             </table>
 
             <div ng-if="room.uuid == room_uuid">
-
                 <div class="chat-box">
                     <p ng-repeat="chat in chats" ng-class="{'my-chat':chat.from.uuid==uuid}">
                         <span ng-if="chat.from.uuid!=uuid"> {{chat.from.name}}: </span>
                         {{chat.msg}}
                     </p>
                 </div>
-                <form ng-submit="submitChat(chat_input); chat_input=''">
+                <form class="chat-form" ng-submit="submitChat(chat_input); chat_input=''">
                     <input type="text" ng-model="chat_input" placeholder="Chat - enter to send" class="chat-input">
-                    <button>Send</button>
+                    <button class="chat-submit">Send</button>
                 </form>
             </div>
             
-            <button ng-if="room.uuid != room_uuid" class="row" ng-click="join(room)">Join</button>
             <button ng-if="room.uuid == room_uuid" ng-disabled="is_ready" class="row" ng-click="ready()"> Ready! </button>
         </fieldset>
 

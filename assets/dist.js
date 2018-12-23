@@ -2957,6 +2957,7 @@
     Multiplayer.prototype.leave = function() {
         this._socket.emit("leave", null, function(){
             menu.set("room_uuid",null);
+            Sounds.play("wii-title");
         });
     };
 
@@ -3078,6 +3079,32 @@
 var menu = {};
 var app = angular.module("app",[]);
 
+/**
+ * Determine the mobile operating system.
+ * This function returns one of 'iOS', 'Android', 'Windows Phone', or 'unknown'.
+ *
+ * @returns {String}
+ */
+function getMobileOperatingSystem() {
+    var userAgent = navigator.userAgent || navigator.vendor || window.opera;
+  
+        // Windows Phone must come first because its UA also contains "Android"
+      if (/windows phone/i.test(userAgent)) {
+          return "Windows Phone";
+      }
+  
+      if (/android/i.test(userAgent)) {
+          return "Android";
+      }
+  
+      // iOS detection from: http://stackoverflow.com/a/9039885/177710
+      if (/iPad|iPhone|iPod/.test(userAgent) && !window.MSStream) {
+          return "iOS";
+      }
+  
+      return "unknown";
+  }
+
 menu.contentloaded = new Promise(function(resolve, reject){
     app.factory("contentLoaded",function(){
         return {
@@ -3097,11 +3124,14 @@ menu.init = new Promise(function(resolve, reject){
 
     app.factory("pref", function(){
         return function(scope, name, defaultValue, format, onChange) {
-            var v = preference(name, defaultValue);
+            var scope_name = typeof(name) === "string" ? name : name[0];
+            var pref_key = typeof(name) === "string" ? name : name[1];
+
+            var v = preference(pref_key, defaultValue);
             if(typeof(format) === "function")
                 v = format(v);
             
-            var parts = name.split(".");
+            var parts = scope_name.split(".");
             var parent = scope;
             for(var i=0; i<parts.length-1;i++) {
                 if(typeof(parent[parts[i]]) === "undefined")
@@ -3111,9 +3141,9 @@ menu.init = new Promise(function(resolve, reject){
 
             parent[parts[parts.length-1]] = v;
             
-            scope.$watch(name,function(newValue,oldValue){
+            scope.$watch(scope_name,function(newValue,oldValue){
                 if(oldValue != newValue) {
-                    preference.set(name, typeof(newValue) === "object" && newValue ? JSON.stringify(newValue): newValue);
+                    preference.set(pref_key, typeof(newValue) === "object" && newValue ? JSON.stringify(newValue): newValue);
                 }
                 if(typeof(onChange)==="function")
                     onChange.apply(this, arguments);
@@ -3128,14 +3158,23 @@ menu.init = new Promise(function(resolve, reject){
 
 function MenuController($scope, $timeout, pref, menuInitialized, contentLoaded){
     $scope.uuid = null;
+    $scope.my_settings = {};
 
-    pref($scope,"difficulty", 4, parseInt, function(newValue, oldValue){
+    pref($scope,["my_settings.difficulty","difficulty"], 4, parseInt, function(newValue, oldValue){
         multiplayer.setDifficulty(newValue)
     });
     pref($scope,"sensitivity", 16, parseInt, function(newValue, oldValue){
         game.touch_sensitivity = newValue;
     });
-    pref($scope,"controls", "arrows", null, function(newValue, oldValue){
+    
+    var defaultControl = "arrows";
+    switch(getMobileOperatingSystem()) {
+        case "Android": case "iOS":
+            defaultControl = "tap";
+            break;
+    }
+
+    pref($scope,"controls", defaultControl, null, function(newValue, oldValue){
         inputs.clearAll();
         inputs.loadKeyMap($scope.keyMap[newValue].map);
     });
@@ -3144,7 +3183,7 @@ function MenuController($scope, $timeout, pref, menuInitialized, contentLoaded){
             Sounds.play(newValue);
         }
     });
-    pref($scope,"volume", 1, parseInt, function(newValue, oldValue) {
+    pref($scope,["my_settings.volume", "volume"], 1, parseInt, function(newValue, oldValue) {
         Sounds.setVolume(newValue);
     });
     pref($scope,"game_rules.combos", "normal-rr", null, function(newValue, oldValue) {
@@ -3290,7 +3329,7 @@ function MenuController($scope, $timeout, pref, menuInitialized, contentLoaded){
             return;
 
         game.setSoundTrack(getSoundTrack($scope.soundtrack));
-        multiplayer.readyToStart(parseInt($scope.difficulty));
+        multiplayer.readyToStart(parseInt($scope.my_settings.difficulty));
         $scope.is_ready = true;
     };
 
@@ -3303,7 +3342,7 @@ function MenuController($scope, $timeout, pref, menuInitialized, contentLoaded){
         $scope.playing = true;
         game.setSoundTrack(getSoundTrack($scope.soundtrack));
         $timeout(function(){
-            game.startSinglePlayer(parseInt($scope.difficulty));
+            game.startSinglePlayer(parseInt($scope.my_settings.difficulty));
             game.run();
         },0);
     };
@@ -3312,6 +3351,10 @@ function MenuController($scope, $timeout, pref, menuInitialized, contentLoaded){
         return item.uuid == $scope.room_uuid ? "" : item.name;
     };
 
+    $scope.leaveRoom = function() {
+        multiplayer.leave();
+        $scope.hosting = false;
+    };
 
     $scope.preview_tap_controls = function() {
         var tap = new TapController(document.getElementsByTagName("body")[0]);
@@ -3433,7 +3476,7 @@ return;
         navigator.serviceWorker.controller.postMessage(data);
     }
 
-    if("serviceWorker" in navigator) {
+    if("serviceWorker" in navigator && typeof(serviceWorkerUrl) !== "undefined" && serviceWorkerUrl) {
         window.addEventListener("load", function() {
             navigator.serviceWorker.register(serviceWorkerUrl)
             .then(function(registration) {

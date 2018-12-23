@@ -20,8 +20,8 @@ body { background: black; color: white; }
 
 .cache-status { position: fixed; top:0; background-color: black; color: yellowgreen; padding:15px; z-index:2; }
 
-#my-settings { display: inline-block; margin:5px; width:calc(50% - 12px); }
-#multiplayer { display: inline-block; margin:5px; width:calc(50% - 12px); }
+#my-settings { display: inline-block; padding:5px; width:calc(100% - 10px); }
+#multiplayer { display: inline-block; padding:5px; width:calc(100% - 10px); }
 
 /*
 #multi-rooms-table { border:1px solid white; border-collapse: collapse;}
@@ -48,9 +48,6 @@ body { background: black; color: white; }
 #menu .btn-group .btn:last-child { border-radius: 0 10px 10px 0; }
 
 #menu { position: relative; vertical-align: top; }
-#menu > div { position: absolute; top:0;}
-#menu > div:first-child { left:0; }
-#menu > div:last-child { right:0; }
 
 .room-template .readyness { float: right; }
 
@@ -69,12 +66,14 @@ body { background: black; color: white; }
     list-style-type: none;
     width:100%;
 }
-#multiplayer .room-player-list .lvl { width: 2em; text-align:center; }
+#multiplayer .room-player-list .lvl { width: 6em; text-align:center; }
 #multiplayer .room-player-list .kick { text-align: center; }
 #multiplayer .room-player-list .player-name { text-align: left; }
 
 .chat-box { height: 100px; overflow-y:auto; overflow-x:hidden; border: 0px solid gray; border-width:2px 0;}
-.chat-input {width:120px;}
+.chat-form { position: relative; padding: 6px 0; }
+.chat-input { width: calc( 100% - 60px ); }
+.chat-form .chat-submit { position: absolute; top:0; right:0;}
 
 .chat-box p { border: 1px solid blue; background-color:blue; color: white; border-radius: 0 10px 10px 0; padding: 2px 10px 2px 0; margin: 2px 15px 2px 0;}
 .chat-box p.my-chat { border-color: yellowgreen; background-color: hsla(120, 50%, 50%, 1); color: white; border-radius: 10px 0 0 10px; padding: 2px 0 2px 10px; margin: 2px 0 2px 15px; }

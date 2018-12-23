@@ -9,6 +9,12 @@ const Game = require("./lib/Game");
 const port = process.env.PORT || 8080;
 
 if(process.env.ENV == "DEV") {
+    process.once("SIGUSR2", function () {
+        console.log("Terminating http server");
+        http.close();
+        process.kill(process.pid, "SIGUSR2");
+    });
+    
     // Development code, will automatically package the javascript upon saving
     const child_process = require("child_process");
     var package = child_process.exec("npm run package", (error, stdout, stderr) => {

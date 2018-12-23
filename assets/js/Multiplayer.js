@@ -403,6 +403,7 @@
     Multiplayer.prototype.leave = function() {
         this._socket.emit("leave", null, function(){
             menu.set("room_uuid",null);
+            Sounds.play("wii-title");
         });
     };
 

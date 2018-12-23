@@ -4,7 +4,7 @@
         navigator.serviceWorker.controller.postMessage(data);
     }
 
-    if("serviceWorker" in navigator) {
+    if("serviceWorker" in navigator && typeof(serviceWorkerUrl) !== "undefined" && serviceWorkerUrl) {
         window.addEventListener("load", function() {
             navigator.serviceWorker.register(serviceWorkerUrl)
             .then(function(registration) {
