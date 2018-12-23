@@ -3368,6 +3368,18 @@ function MenuController($scope, $timeout, pref, menuInitialized, contentLoaded){
         });
     };
 
+    $scope.incrementDifficulty = function() {
+        if(++$scope.my_settings.difficulty > 20) {
+            $scope.my_settings.difficulty = 20;
+        }
+    };
+
+    $scope.decrementDifficulty = function() {
+        if(--$scope.my_settings.difficulty < 1) {
+            $scope.my_settings.difficulty = 1;
+        }
+    };
+
 
     $scope.contentLoaded = function() {
         contentLoaded.resolve();

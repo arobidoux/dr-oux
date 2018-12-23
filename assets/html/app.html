@@ -43,19 +43,22 @@
         </label>
         
         <label> Difficulty
-            <input type="number" min="1" max="20" ng-model="my_settings.difficulty">
+            <span>
+                <button ng-click="decrementDifficulty()">-</button>
+                <b style="padding: 0 10px; width: 2em;text-align: center;display: inline-block;">{{ my_settings.difficulty }}</b>
+                <button ng-click="incrementDifficulty()">+</button>
+            </span>
         </label>
 
         <label>
             Controls
+            <button ng-if="controls=='tap'" ng-click="preview_tap_controls()"> Preview Tap Zones</button>
             <select ng-model="$parent.controls" ng-options="key as kmap.label for ( key, kmap ) in keyMap"></select>
         </label>
         
         <label ng-if="controls == 'swipe'"> Touch Sensitivity
             <input type="number" min="1" max="16" ng-model="$parent.sensitivity">
         </label>
-
-        <button ng-if="controls=='tap'" ng-click="preview_tap_controls()"> Preview Tap Zones</button>
 
         <label>
             Soundtrack
@@ -138,9 +141,9 @@
                             {{player.name}}
                         </td>
                         <td class="lvl">
-                            <button ng-if="player.uuid==uuid" ng-click="my_settings.difficulty=my_settings.difficulty-1">-</button>
+                            <button ng-if="player.uuid==uuid" ng-click="decrementDifficulty()">-</button>
                             {{ player.difficulty }}
-                            <button ng-if="player.uuid==uuid" ng-click="my_settings.difficulty=my_settings.difficulty+1">+</button>
+                            <button ng-if="player.uuid==uuid" ng-click="incrementDifficulty()">+</button>
                         </td>
                         <td class="kick" ng-if="hosting && room.uuid == room_uuid && player.uuid != uuid"> <button ng-click="kick(player)"> x </button> </td>
                     </tr>

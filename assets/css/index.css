@@ -12,6 +12,8 @@ body { background: black; color: white; }
     #opponents { width: 25%;}
 }
 
+select, input { border-radius: 10px; padding: 2px 6px; }
+
 #game-grid { width: 100%; height:100%; position: relative; touch-action: manipulation; }
 #game-status { display: inline-block; width: 25%; position:absolute; top:15px; }
 #main { display: inline-block; width: 50%; margin-left: 25%; position:absolute; }
@@ -33,11 +35,17 @@ body { background: black; color: white; }
 #multiplayer .my-room { /*background-color: #4caf50;*/ border-color:greenyellow;}
 
 
-#menu label { display: block; position:relative; margin-bottom:7px;}
-#menu label input, #menu label select { position:absolute; right:0;}
+
+#menu label { display: block; position:relative; margin-bottom:7px; line-height:35px; }
+#menu label > span, #menu label input, #menu label select { float:right; }
+#menu label::after { content: ""; clear: both; display: table; }
+
+#menu label input { height: 28px; }
+#menu label select { height: 36px; }
 
 #menu fieldset { width: calc( 100% - 32px); }
 #menu button, button { border-radius: 10px; margin-bottom: 7px; padding: 8px 10px; background-color: black; color: white; }
+#menu label button { margin-bottom: 0; }
 
 #menu .btn-group button { border-radius: 0;  }
 #menu .btn-group button:first-child { border-radius: 10px 0 0 10px;  }
