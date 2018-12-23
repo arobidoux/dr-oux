@@ -1,7 +1,8 @@
-var CACHE_NAME = "dr-oux-v1.0.1";
+var CACHE_NAME = "dr-oux-v1.0.2";
 
 var urlsToCache = [
   "/favicon.ico",
+  "/",
   "/index.html",
   "/assets/manifest/android-add-to-home.json",
   "/assets/css/index.css",
@@ -71,16 +72,9 @@ function updateCache(cache) {
 
 self.addEventListener("install", function(event) {
   // Perform install steps
-  if(!caches.has(CACHE_NAME)) {
-    event.waitUntil(
-      cleanCache().then(updateCache)
-    );
-  }
-  else {
-    event.waitUntil(
-      cleanCache()
-    );
-  }
+  event.waitUntil(
+    cleanCache().then(updateCache)
+  );
 });
 
 self.addEventListener("fetch", function(event) {
