@@ -8,6 +8,27 @@ const Game = require("./lib/Game");
 
 const port = process.env.PORT || 8080;
 
+if(process.env.ENV == "DEV") {
+    // Development code, will automatically package the javascript upon saving
+    const child_process = require("child_process");
+    var package = child_process.exec("npm run package", (error, stdout, stderr) => {
+        if(error)
+            console.error("[PACKAGE] Error: " + err);
+    });
+
+    package.stdout.on("data", (data) => {
+        console.log("[PACKAGE] " + data);
+    });
+
+    package.stderr.on("data", (data) => {
+        console.error("[PACKAGE] " + data);
+    });
+
+    package.on("close", (code) => {
+        console.log("[PACKAGE] exited with code " + code);
+    });
+}
+
 function serveIndex(req, res) {
     var isIos = /Mac OS X/.test(req.headers['user-agent']);
     if(isIos) {

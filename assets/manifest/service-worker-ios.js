@@ -1,4 +1,4 @@
-var CACHE_NAME = "dr-oux-v1.0.2s";
+var CACHE_NAME = "dr-oux-v1.0.2";
 var urlsToCache = [
     '/favicon.ico',
     '/',
