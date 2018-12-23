@@ -246,6 +246,33 @@ class Room {
         if(typeof(this._clients[target_idx]) !== "undefined")
             this._clients[target_idx].sendHandicap(frame);
     }
+
+    _handicap_rr(client, frame) {
+        // initialize
+        if(typeof(this._handicap_normal_rr) === "undefined")
+            this._handicap_normal_rr = {};
+
+        if(typeof(this._handicap_normal_rr[client.id]) === "undefined") 
+            this._handicap_normal_rr[client.id] = 0;
+
+
+        // process
+        var idx = 0;
+        for(var i=0; i<this._clients.length; i++) {
+            if(this._clients[i].id == client.id) {
+                idx = i;
+                break;
+            }
+        }
+
+        var offset = this._handicap_normal_rr[client.id]++;
+        var target = offset % (this._clients.length-1);
+        if(target >= idx)
+            target++;
+        
+        this._sendHandicap(target,frame);
+    }
+
     processHandicap(client, frame) {
         // determine who should get the handicap
         switch(this._game_rules.combos) {
@@ -253,29 +280,14 @@ class Room {
                 //"label": "Normal Round Robin",
                 //"description": "Send to each opponent, one at the time"
 
-                // initialize
-                if(typeof(this._handicap_normal_rr) === "undefined")
-                    this._handicap_normal_rr = {};
+                this._handicap_rr(client, frame);
+            break;
 
-                if(typeof(this._handicap_normal_rr[client.id]) === "undefined") 
-                    this._handicap_normal_rr[client.id] = 0;
-
-
-                // process
-                var idx = 0;
-                for(var i=0; i<this._clients.length; i++) {
-                    if(this._clients[i].id == client.id) {
-                        idx = i;
-                        break;
-                    }
-                }
-
-                var offset = this._handicap_normal_rr[client.id]++;
-                var target = offset % (this._clients.length-1);
-                if(target >= idx)
-                    target++;
-                
-                this._sendHandicap(target,frame);
+            case "coop-rr":
+                //"label": "Cooperative Round Robin",
+                //"description": "to each opponent, one at a time, but will try to drop it on the right colors"
+            
+                this._handicap_rr(client, frame);
             break;
             
             case "roundrobin":

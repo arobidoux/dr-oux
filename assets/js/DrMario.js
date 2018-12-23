@@ -108,6 +108,10 @@
         this._mainPillBottle.record();
     };
 
+    DrMario.prototype.setGameRules = function(game_rules) {
+        this._mainPillBottle.setGameRules(game_rules);
+    };
+
     DrMario.prototype.registerInputs = function(inputs) {
         this._inputs = inputs;
     };

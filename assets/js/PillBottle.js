@@ -147,6 +147,10 @@
         this._board.fillInVirus(difficulty);
     };
 
+    PillBottle.prototype.setGameRules = function(game_rules) {
+        this._board.setGameRules(game_rules);
+    };
+
     PillBottle.prototype.loadLvl = function (lvl) {
         this._board.fillInVirus(lvl);
     };

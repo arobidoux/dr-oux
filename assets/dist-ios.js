@@ -1200,15 +1200,25 @@
         Sounds.play("combo2");
     };
 
-    Board.prototype._processExternalHandicap = function() {
-        var l=this._handicaps.length
-        if(l) {
-            var step = this._width/l;
-            for(var i=0; i<l; i++) {
-                var x = Math.floor(Math.random()*step) + i*step;
-                this._data[x] = this._handicaps[i];
-            }
+    Board.prototype.setGameRules = function(game_rules) {
+        this._game_rules = game_rules;
+        if(typeof(this._game_rules) !== "object" || !this._game_rules)
+            this._game_rules = {};
 
+            if(typeof(this._game_rules.combos) === "undefined")
+                this._game_rules.combos = "n/a";
+    };
+
+    Board.prototype._processExternalHandicap = function() {
+        if(this._handicaps.length) {
+            switch(this._game_rules.combos) {
+                case "coop_rr":
+                    this._processExternalHandicap_coop();
+                    break;
+                default:
+                    this._processExternalHandicap_random();
+            }
+            
             // clear handicaps, they were processed
             this._handicaps = [];
 
@@ -1218,6 +1228,83 @@
 
         // done processing handicaps, allowing next pill to be dropped
         return true;
+    };
+    
+    Board.prototype._processExternalHandicap_random = function() {
+        var l = this._handicaps.length;
+        var step = this._width/l;
+        for(var i=0; i<l; i++) {
+            var x = Math.floor(Math.random()*step) + i*step;
+            this._data[x] = this._handicaps[i];
+        }
+    };
+
+    Board.prototype._processExternalHandicap_coop = function() {
+        var colors = this._getColumnsFirstColor();
+
+        var noMatches = [];
+        for(var i=0; i<this._handicaps.length; i++) {
+            var matches = [];
+            for(var x=0;x<this._width;x++) {
+                if(colors[x] === null || colors[x] === 0x00)
+                    continue;
+                
+                if(colors[x] == this._handicaps[i])
+                    matches.push(x);
+            }
+
+            if(matches.length == 0) {
+                // no color match, process this one at the end
+                noMatches.push(i);
+            }
+            else {
+                // randomize where to drop it
+                var x = this._randomizeDrop(this._handicaps[i], matches);
+                colors[x] = null;
+            }
+        }
+
+        for(var i=0; i<noMatches.length; i++) {
+            var available = [];
+            for(var j=0;j<colors.length;j++)
+                if(colors[j] !== null)
+                    available.push(j);
+            
+            // no more free slot available
+            if(available.length==0)
+                break;
+
+            // otherwise assign the drop
+            var x = this._randomizeDrop(this._handicaps[noMatches[i]], available);
+            colors[x] = null;
+        }
+    };
+
+    Board.prototype._getColumnsFirstColor = function() {
+        var colors = [];
+        for(var x=0;x<this._width;x++) {
+            colors[x] = 0x00;
+            
+            for(var y=0;y<this._height;y++) {
+                var coord = this.coordToPos(x,y);
+                if(this._data[coord] != 0x00) {
+                    if(y == 0)
+                    colors[x] = null;
+                    else
+                    colors[x] = this._data[coord] & Board.CODES.colors.mask;
+                    break;
+                }
+            }
+        }
+
+        return colors;
+    };
+
+    Board.prototype._randomizeDrop = function(code, matches) {
+        var i = Math.floor(Math.random()*matches.length);
+        var x = matches[i];
+        this._data[x] = code;
+        return x;
     };
 
     Board.prototype.action = function (method) {
@@ -1900,6 +1987,10 @@
         this._board.fillInVirus(difficulty);
     };
 
+    PillBottle.prototype.setGameRules = function(game_rules) {
+        this._board.setGameRules(game_rules);
+    };
+
     PillBottle.prototype.loadLvl = function (lvl) {
         this._board.fillInVirus(lvl);
     };
@@ -2186,6 +2277,10 @@
     DrMario.prototype.setForMultiPlayer = function(difficulty) {
         this._mainPillBottle.generateForDifficulty(difficulty);
         this._mainPillBottle.record();
+    };
+
+    DrMario.prototype.setGameRules = function(game_rules) {
+        this._mainPillBottle.setGameRules(game_rules);
     };
 
     DrMario.prototype.registerInputs = function(inputs) {
@@ -2522,6 +2617,7 @@
         this._game = game;
         this._name = null;
         this._difficulty = 1;
+        this._gamerules = null;
         this._opponents = [];
         menu.init.then(function(){
             menu.set("opponents", this._opponents);
@@ -2632,6 +2728,7 @@
                 }
                 else {
                     this._game.setForMultiPlayer(this._difficulty);
+                    this._game.setGameRules(this._gamerules);
                 }
                 this._game.run();
             }.bind(this));
@@ -2856,6 +2953,10 @@
         this._start_resolve && this._start_resolve();
         this._game.setStatus("");
         this._game.setForMultiPlayer(this._difficulty);
+
+        // get game rules this._game._mainPillBottle._board
+        this._game.setGameRules(this._gamerules);
+
         this._game.run();
     };
 
@@ -2923,6 +3024,9 @@
         menu.splice("rooms", function(elem) {
             return elem.uuid == data.uuid;
         }, data);
+        if(data.uuid == menu.get("room_uuid")) {
+            this._gamerules = data.gameRules;
+        }
     };
 
     Multiplayer.prototype.on_room_removed = function(data) {
@@ -3106,8 +3210,6 @@ menu.init = new Promise(function(resolve, reject){
 
     app.controller("MenuController",["$scope", "$timeout", "pref", "menuInitialized", "contentLoaded", MenuController]);
 });
-
-
 
 function MenuController($scope, $timeout, pref, menuInitialized, contentLoaded){
     $scope.uuid = null;
@@ -3392,6 +3494,10 @@ function MenuController($scope, $timeout, pref, menuInitialized, contentLoaded){
         "punitive": {
             "label": "Punitive",
             "description": "back to the sender"
+        },
+        "coop-rr": {
+            "label": "Cooperative Round Robin",
+            "description": "to each opponent, one at a time, but will try to drop it on the right colors"
         }
     };
 

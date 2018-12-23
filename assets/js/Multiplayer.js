@@ -15,6 +15,7 @@
         this._game = game;
         this._name = null;
         this._difficulty = 1;
+        this._gamerules = null;
         this._opponents = [];
         menu.init.then(function(){
             menu.set("opponents", this._opponents);
@@ -125,6 +126,7 @@
                 }
                 else {
                     this._game.setForMultiPlayer(this._difficulty);
+                    this._game.setGameRules(this._gamerules);
                 }
                 this._game.run();
             }.bind(this));
@@ -349,6 +351,10 @@
         this._start_resolve && this._start_resolve();
         this._game.setStatus("");
         this._game.setForMultiPlayer(this._difficulty);
+
+        // get game rules this._game._mainPillBottle._board
+        this._game.setGameRules(this._gamerules);
+
         this._game.run();
     };
 
@@ -416,6 +422,9 @@
         menu.splice("rooms", function(elem) {
             return elem.uuid == data.uuid;
         }, data);
+        if(data.uuid == menu.get("room_uuid")) {
+            this._gamerules = data.gameRules;
+        }
     };
 
     Multiplayer.prototype.on_room_removed = function(data) {

@@ -79,8 +79,6 @@ menu.init = new Promise(function(resolve, reject){
     app.controller("MenuController",["$scope", "$timeout", "pref", "menuInitialized", "contentLoaded", MenuController]);
 });
 
-
-
 function MenuController($scope, $timeout, pref, menuInitialized, contentLoaded){
     $scope.uuid = null;
     $scope.my_settings = {};
@@ -364,6 +362,10 @@ function MenuController($scope, $timeout, pref, menuInitialized, contentLoaded){
         "punitive": {
             "label": "Punitive",
             "description": "back to the sender"
+        },
+        "coop-rr": {
+            "label": "Cooperative Round Robin",
+            "description": "to each opponent, one at a time, but will try to drop it on the right colors"
         }
     };
 
