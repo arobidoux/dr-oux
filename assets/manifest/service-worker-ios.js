@@ -1,4 +1,4 @@
-var CACHE_NAME = "dr-oux-v1.0.3";
+var CACHE_NAME = "dr-oux-v1.0.4";
 var urlsToCache = [
     '/favicon.ico',
     '/',
@@ -57,7 +57,11 @@ function updateCache(cache) {
 self.addEventListener("install", function(event) {
   // Perform install steps
   event.waitUntil(
-    cleanCache().then(updateCache)
+    cleanCache()
+    .then(updateCache)
+    .then(function(){
+      self.skipWaiting();
+    })
   );
 });
 
