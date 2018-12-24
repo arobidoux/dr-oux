@@ -142,7 +142,7 @@
                         </td>
                         <td class="lvl">
                             <button ng-if="player.uuid==uuid" ng-click="decrementDifficulty()">-</button>
-                            {{ player.difficulty }}
+                            <b style="width: 1.1em;text-align: center;display: inline-block;">{{ player.difficulty }}</b>
                             <button ng-if="player.uuid==uuid" ng-click="incrementDifficulty()">+</button>
                         </td>
                         <td class="kick" ng-if="hosting && room.uuid == room_uuid && player.uuid != uuid"> <button ng-click="kick(player)"> x </button> </td>
