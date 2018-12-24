@@ -116,7 +116,7 @@ function MenuController($scope, $timeout, pref, menuInitialized, contentLoaded){
             },0);
         }
     });
-    pref($scope,"multi_name", preference("multi-name",""));
+    pref($scope,["my_settings.multi_name","multi_name"], preference("multi-name",""));
     pref($scope,["my_settings.enable_sound","enable_sound"], "yes", null, function(newValue, oldValue){
         if(newValue=="yes") {
             Sounds.unmute();
@@ -139,13 +139,27 @@ function MenuController($scope, $timeout, pref, menuInitialized, contentLoaded){
     $scope.chats = [];
 
     menu.get = function(name) {
-        return $scope[name];
+        var parts = name.split(".");
+        var e = $scope;
+        for(var i=0;i < parts.length;i++)
+            e = e[parts[i]];
+        return e;
     };
 
     menu.set = function(name,value) {
         return new Promise(function(resolve, reject){
             $timeout(function(){
-                $scope[name] = value;
+                var parts = name.split(".");
+                var e = $scope;
+                while(parts.length > 1) {
+                    var k = parts.shift();
+                    if(typeof(e[k]) === "undefined")
+                        e[k] = {};
+
+                    e = e[k];
+                }
+
+                e[parts[0]] = value;
                 resolve();
             });
         });
@@ -246,7 +260,7 @@ function MenuController($scope, $timeout, pref, menuInitialized, contentLoaded){
             return;
         
         $scope.hosting = true;
-        multiplayer.join($scope.multi_name + "'s Game");
+        multiplayer.join($scope.my_settings.multi_name + "'s Game");
     };
 
     $scope.join = function(room) {

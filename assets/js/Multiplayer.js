@@ -94,7 +94,7 @@
                 
                 // add Opponent
                 var opponent = addOpponent.call(this, roomDetails.clients[i]);
-                if(roomDetails.clients[i].board) {
+                if(opponent && roomDetails.clients[i].board) {
                     opponent.bottle._board.playFrame(decodeFrame(roomDetails.clients[i].board));
                 }
             }
@@ -189,7 +189,7 @@
     Multiplayer.prototype.once_connect = function() {
         menu.init.then(function(){
             menu.set("uuid", uuid);
-            this._name = menu.get("multi_name");
+            this._name = menu.get("my_settings.multi_name");
             if(!this._name) {
                 this._name = prompt("Please input your name:");
             }
@@ -197,12 +197,12 @@
             if(!this._name) {
                 pickRandomName().then(function(name) {
                     this._name = name;
-                    menu.set("multi_name",this._name);
+                    menu.set("my_settings.multi_name",this._name);
                     authenticate.call(this);
                 }.bind(this));
             }
             else {
-                menu.set("multi_name",this._name);
+                menu.set("my_settings.multi_name",this._name);
                 authenticate.call(this);
             }
         }.bind(this));
@@ -212,7 +212,10 @@
         authenticate.call(this).then(function(){
             // if we were in a room, try to rejoin
             if(this._last_room_joined) {
-                this._socket.emit("join", {room:this._last_room_joined});
+                this._socket.emit("join", {
+                    room:this._last_room_joined,
+                    board:encodeFrame(this._game._mainPillBottle._board.getNewFrame(true))
+                });
             }
         }.bind(this));
     };
@@ -267,7 +270,7 @@
         for(var i=0;i<this._opponents.length;i++) {
             if(this._opponents[i].id == data.id) {
                 console.warn("Ignoring duplicate opponent " + data.name);
-                return;
+                return null;
             }
         }
 

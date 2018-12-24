@@ -2743,7 +2743,7 @@
                 
                 // add Opponent
                 var opponent = addOpponent.call(this, roomDetails.clients[i]);
-                if(roomDetails.clients[i].board) {
+                if(opponent && roomDetails.clients[i].board) {
                     opponent.bottle._board.playFrame(decodeFrame(roomDetails.clients[i].board));
                 }
             }
@@ -2838,7 +2838,7 @@
     Multiplayer.prototype.once_connect = function() {
         menu.init.then(function(){
             menu.set("uuid", uuid);
-            this._name = menu.get("multi_name");
+            this._name = menu.get("my_settings.multi_name");
             if(!this._name) {
                 this._name = prompt("Please input your name:");
             }
@@ -2846,12 +2846,12 @@
             if(!this._name) {
                 pickRandomName().then(function(name) {
                     this._name = name;
-                    menu.set("multi_name",this._name);
+                    menu.set("my_settings.multi_name",this._name);
                     authenticate.call(this);
                 }.bind(this));
             }
             else {
-                menu.set("multi_name",this._name);
+                menu.set("my_settings.multi_name",this._name);
                 authenticate.call(this);
             }
         }.bind(this));
@@ -2861,7 +2861,10 @@
         authenticate.call(this).then(function(){
             // if we were in a room, try to rejoin
             if(this._last_room_joined) {
-                this._socket.emit("join", {room:this._last_room_joined});
+                this._socket.emit("join", {
+                    room:this._last_room_joined,
+                    board:encodeFrame(this._game._mainPillBottle._board.getNewFrame(true))
+                });
             }
         }.bind(this));
     };
@@ -2916,7 +2919,7 @@
         for(var i=0;i<this._opponents.length;i++) {
             if(this._opponents[i].id == data.id) {
                 console.warn("Ignoring duplicate opponent " + data.name);
-                return;
+                return null;
             }
         }
 
@@ -3304,7 +3307,7 @@ function MenuController($scope, $timeout, pref, menuInitialized, contentLoaded){
             },0);
         }
     });
-    pref($scope,"multi_name", preference("multi-name",""));
+    pref($scope,["my_settings.multi_name","multi_name"], preference("multi-name",""));
     pref($scope,["my_settings.enable_sound","enable_sound"], "yes", null, function(newValue, oldValue){
         if(newValue=="yes") {
             Sounds.unmute();
@@ -3327,13 +3330,27 @@ function MenuController($scope, $timeout, pref, menuInitialized, contentLoaded){
     $scope.chats = [];
 
     menu.get = function(name) {
-        return $scope[name];
+        var parts = name.split(".");
+        var e = $scope;
+        for(var i=0;i < parts.length;i++)
+            e = e[parts[i]];
+        return e;
     };
 
     menu.set = function(name,value) {
         return new Promise(function(resolve, reject){
             $timeout(function(){
-                $scope[name] = value;
+                var parts = name.split(".");
+                var e = $scope;
+                while(parts.length > 1) {
+                    var k = parts.shift();
+                    if(typeof(e[k]) === "undefined")
+                        e[k] = {};
+
+                    e = e[k];
+                }
+
+                e[parts[0]] = value;
                 resolve();
             });
         });
@@ -3434,7 +3451,7 @@ function MenuController($scope, $timeout, pref, menuInitialized, contentLoaded){
             return;
         
         $scope.hosting = true;
-        multiplayer.join($scope.multi_name + "'s Game");
+        multiplayer.join($scope.my_settings.multi_name + "'s Game");
     };
 
     $scope.join = function(room) {

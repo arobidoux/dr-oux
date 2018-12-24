@@ -100,12 +100,14 @@ class Room {
         this.log("Rules updated " + JSON.stringify(rule));
     }
 
-    addClient(client) {
+    addClient(client, board) {
         this._clearRoomRemoval();
 
         // returning client
         if(typeof(this._boards[client.uuid]) !== "undefined") {
             client.setId(this._boards[client.uuid].id);
+            // re-send it to everybody
+            client.lateReady();
         }
         else if(this._gameInProgress) {
             this._boards[client.uuid] = {
@@ -117,6 +119,10 @@ class Room {
             if(this._meta) {
                 this._meta.write(client.uuid + " " + client.name + "\n");
             }
+        }
+
+        if(board) {
+            this._boards[client.uuid].board.playFrame(decodeFrame(board));
         }
 
         this._clients.push(client);

@@ -93,7 +93,7 @@ class Client {
         console.error("[" + this._name + "]" + msg.join(" "));
     }
 
-    join(room) {
+    join(room, board) {
         this.leave();
         this._is_ready = false;
         if(room instanceof Room) {
@@ -102,7 +102,7 @@ class Client {
         else {
             this._room = this._game.getRoom(room, this);
         }
-        this._room.addClient(this);
+        this._room.addClient(this, board);
 
         this._soc.join(this._room.socRoomName);
 
@@ -165,7 +165,8 @@ class Client {
         
         this.log("Authenticated")
         this._game.addClient(this);
-        ack();
+        if(typeof(ack)==="function")
+            ack();
     }
 
     on_log(msg) {
@@ -189,7 +190,7 @@ class Client {
     }
 
     on_join(data) {
-        this.join(data.room);
+        this.join(data.room, data.board);
     }
 
     on_set_difficulty(difficulty) {
@@ -250,10 +251,7 @@ class Client {
         ack("left");
     }
 
-    on_ready(data, ack) {
-        if( !this._room )
-            return this.error("marked as ready but not in a room");
-            
+    lateReady() {
         // tell everybody else
         this._soc.broadcast.emit("ready", {
             id: this.id,
@@ -263,6 +261,13 @@ class Client {
 
         this._is_ready = true;
         this._game_status = Client.GAME_STATUS.PENDING;
+    }
+
+    on_ready(data, ack) {
+        if( !this._room )
+            return this.error("marked as ready but not in a room");
+            
+        this.lateReady();
 
         this._room.oneMoreReady();
     }
