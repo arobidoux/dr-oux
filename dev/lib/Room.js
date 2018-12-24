@@ -171,7 +171,14 @@ class Room {
         }
 
         if(this._clients.length == 0) {
-            this._removeRoomIn(15000);
+            if(this._gameInProgress) {
+                // give it some time, in case this is a timeout issue
+                this._removeRoomIn(15000);
+            }
+            else {
+                // game not in progress, remove it right away
+                this._removeRoom();
+            }
         }
 
         client._room = null;
