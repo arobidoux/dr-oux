@@ -26,6 +26,11 @@ class Room {
         this._initializing = null;
 
         this._io.emit("room_created", this.summary());
+        this.log("Room created");
+    }
+
+    log(msg) {
+        console.log("[" + this._name + "] " + msg);
     }
 
     get socRoomName() {
@@ -92,6 +97,7 @@ class Room {
     setGameRules(rule) {
         this._game_rules = rule;
         this._io.emit("room_updated", this.summary());
+        this.log("Rules updated " + JSON.stringify(rule));
     }
 
     addClient(client) {
@@ -112,6 +118,7 @@ class Room {
         }
 
         this._clients.push(client);
+        this.log("Client added " + client.name);
         //this._io.emit("room_updated", this.summary());
         if(!this._quiet_update)
             this._io.emit("update_one_client",client.getDetails());
@@ -122,6 +129,7 @@ class Room {
             if(this._clients[i].id == client.id) {       
                 //console.log("[Room::" + this._name + "] Removing client at idx " + i);
                 this._clients.splice(i,1);
+                this.log("Client removed " + client.name);
             }
         }
 
@@ -129,6 +137,8 @@ class Room {
             if(!this._quiet_update) {
                 this._game.removeRoom(this._name);
             }
+
+            this.log("Room removed");
 
             this._io.emit("room_removed", {
                 name: this._name,
@@ -165,6 +175,8 @@ class Room {
             return;
         
         this._gameInProgress = true;
+
+        this.log("Launching game");
 
         // countdown
         this.countDown(3);
@@ -322,6 +334,7 @@ class Room {
     }
 
     graspVictory(client) {
+        this.log("Victory grasped");
         this._io.in(this.socRoomName).emit("gameover", {winner:client.getDetails()});
 
         // write victor in the meta file
