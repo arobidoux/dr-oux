@@ -117,7 +117,7 @@ function MenuController($scope, $timeout, pref, menuInitialized, contentLoaded){
         }
     });
     pref($scope,"multi_name", preference("multi-name",""));
-    pref($scope,"enable_sound", "yes", null, function(newValue, oldValue){
+    pref($scope,["my_settings.enable_sound","enable_sound"], "yes", null, function(newValue, oldValue){
         if(newValue=="yes") {
             Sounds.unmute();
             if($scope.room_uuid)

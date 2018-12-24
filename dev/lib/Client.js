@@ -165,6 +165,7 @@ class Client {
         
         this.log("Authenticated")
         this._game.addClient(this);
+        ack();
     }
 
     on_log(msg) {

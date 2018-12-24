@@ -101,6 +101,8 @@ class Room {
     }
 
     addClient(client) {
+        this._clearRoomRemoval();
+
         // returning client
         if(typeof(this._boards[client.uuid]) !== "undefined") {
             client.setId(this._boards[client.uuid].id);
@@ -123,6 +125,35 @@ class Room {
         if(!this._quiet_update)
             this._io.emit("update_one_client",client.getDetails());
     }
+
+    _clearRoomRemoval() {
+        if(this._remove_room_timeout) {
+            this.log("Cancelling room removal");
+            clearTimeout(this._remove_room_timeout);
+            this._remove_room_timeout = null;
+        }
+    }
+
+    _removeRoomIn(delay) {
+        this.log("Removing room in " + delay);
+        this._remove_room_timeout = setTimeout(()=>{
+            this._remove_room_timeout = null;
+            this._removeRoom();
+        }, delay);
+    }
+
+    _removeRoom() {
+        if(!this._quiet_update) {
+            this._game.removeRoom(this._name);
+        }
+
+        this.log("Room removed");
+
+        this._io.emit("room_removed", {
+            name: this._name,
+            uuid: this._uuid
+        });
+    }
     
     removeClient(client) {
         for(var i=0; i<this._clients.length;i++) {
@@ -134,16 +165,7 @@ class Room {
         }
 
         if(this._clients.length == 0) {
-            if(!this._quiet_update) {
-                this._game.removeRoom(this._name);
-            }
-
-            this.log("Room removed");
-
-            this._io.emit("room_removed", {
-                name: this._name,
-                uuid: this._uuid
-            });
+            this._removeRoomIn(15000);
         }
 
         client._room = null;

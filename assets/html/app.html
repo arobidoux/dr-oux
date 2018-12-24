@@ -81,10 +81,10 @@
 
         <label>
             Enable Sound
-            <input type="checkbox" ng-model="$parent.enable_sound" ng-true-value="'yes'" ng-false-value="'no'">
+            <input type="checkbox" ng-model="my_settings.enable_sound" ng-true-value="'yes'" ng-false-value="'no'">
         </label>
 
-        <button class="row" ng-if="enable_sound!='no' && require_click_to_play" ng-click="tryAudio()" style="padding:25px; margin:25px 0;">
+        <button class="row" ng-if="my_settings.enable_sound!='no' && require_click_to_play" ng-click="tryAudio()" style="padding:25px; margin:25px 0;">
             Please tap here to allow audio
         </button>
         

@@ -57,6 +57,7 @@
     };
 
     Multiplayer.prototype.join = function(room) {
+        this._last_room_joined = room;
         this._socket.emit("join", {room:room});
     };
 
@@ -208,7 +209,12 @@
     };
 
     Multiplayer.prototype.on_reconnect = function() {
-        authenticate.call(this);
+        authenticate.call(this).then(function(){
+            // if we were in a room, try to rejoin
+            if(this._last_room_joined) {
+                this._socket.emit("join", {room:this._last_room_joined});
+            }
+        }.bind(this));
     };
 
     Multiplayer.prototype.kick = function(player_uuid) {
@@ -407,6 +413,7 @@
     };
 
     Multiplayer.prototype.leave = function() {
+        this._last_room_joined = null;
         this._socket.emit("leave", null, function(){
             menu.set("room_uuid",null);
             Sounds.play("wii-title");
@@ -508,13 +515,15 @@
     };
 
     function authenticate() {
-        this._socket.emit("authenticate",{
-            uuid: uuid,
-            name: this._name,
-            meta: btoa(JSON.stringify({
-                fps: this._game._fps
-            }))
-        });
+        return new Promise(function(resolve, reject){
+            this._socket.emit("authenticate",{
+                uuid: uuid,
+                name: this._name,
+                meta: btoa(JSON.stringify({
+                    fps: this._game._fps
+                }))
+            }, resolve);
+        }.bind(this));
     }
 
     function pickRandomName() {
