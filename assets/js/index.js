@@ -1,5 +1,5 @@
 "use strict";
-
+Sounds.debug();
 Sounds.initialize();
 var inputs = new Inputs().bindKeys();
 var game = new DrMario();

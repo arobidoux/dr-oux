@@ -270,6 +270,7 @@ function MenuController($scope, $timeout, pref, menuInitialized, contentLoaded){
         $scope.is_ready = false;
         $scope.chats = [];
 
+        game.setSoundTrack(getSoundTrack($scope.soundtrack));
         multiplayer.join(room.name);
     };
 
@@ -277,7 +278,6 @@ function MenuController($scope, $timeout, pref, menuInitialized, contentLoaded){
         if($scope.is_ready)
             return;
 
-        game.setSoundTrack(getSoundTrack($scope.soundtrack));
         multiplayer.readyToStart(parseInt($scope.my_settings.difficulty));
         $scope.is_ready = true;
     };
