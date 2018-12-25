@@ -3288,7 +3288,7 @@ function MenuController($scope, $timeout, pref, menuInitialized, contentLoaded){
             break;
     }
 
-    pref($scope,"controls", defaultControl, null, function(newValue, oldValue){
+    pref($scope,["my_settings.controls","controls"], defaultControl, null, function(newValue, oldValue){
         inputs.clearAll();
         inputs.loadKeyMap($scope.keyMap[newValue].map);
     });
