@@ -62,16 +62,7 @@
 
         <label>
             Soundtrack
-            <select id="soundtrack" ng-model="$parent.soundtrack">
-                <option value="none">None</option>
-                <option value="random">Random</option>
-                <!--option value="nes-fever">NES Fever</option>
-                <option value="nes-chill">NES Chill</option-->
-                <option value="wii-fever">Wii Fever</option>
-                <option value="wii-chill">Wii Chill</option>
-                <option value="wii-cough">Wii Cough</option>
-                <option value="wii-sneeze">Wii Sneeze</option>
-            </select>
+            <select id="soundtrack" ng-model="$parent.soundtrack" ng-options="snd.value as snd.label for snd in soundtracks"></select>
         </label>
 
         <label ng-if="platform!='ios'">

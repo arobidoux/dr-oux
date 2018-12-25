@@ -107,20 +107,32 @@
         Sounds.play(key);
     }
 
+    var debug = false;
     var muted = false;
     var volume = 1;
 
+    function log(msg) {
+        if(debug)
+            console.log(msg);
+    }
+    Sounds.debug = function(state) {
+        debug = typeof(state) == "undefined" ? true : state;
+    };
+
     Sounds.mute = function() {
+        log("muting");
         Sounds.stopAll();
         muted = true;
     };
 
     Sounds.unmute = function() {
+        log("un-muting");
         muted = false;
     };
 
     Sounds.setVolume = function(v) {
         volume = v < 1 ? v : (v>100 ? 1 : v/100);
+        log("setting volume to " + v);
         for(var key in elements) {
             for(var i=0; i<elements[key].audio.length; i++) {
                 elements[key].audio[i].volume = volume;
@@ -135,6 +147,7 @@
     function warmup_callback() {
         if(this.elem.currentTime > 0) {
             this.elem.removeEventListener("timeupdate", this.cb);
+            log("Pausing after callback " + this.k + ":" + this.i);
             this.elem.pause();
             this.elem.currentTime = 0;
             this.elem.volume = volume;
@@ -143,6 +156,7 @@
     }
 
     Sounds.warmup = function() {
+        log("warming up");
         var promises = [];
         for(var k in elements) {
             for(var i=0;i<elements[k].audio.length; i++) {
@@ -151,11 +165,14 @@
                         elem: elem,
                         resolve: resolve,
                         reject: reject,
-                        cb: null
+                        cb: null,
+                        k: k,
+                        i: i
                     };
                     ctx.cb = warmup_callback.bind(ctx);
                     elem.addEventListener("timeupdate", ctx.cb);
                     elem.volume = 0.01; 
+                    log("Playing element " + k + ":" + i);
                     elem.play().catch(function(k,i,err){
                         console.error(err);
                     }.bind(elem,k,i));
@@ -166,8 +183,12 @@
     };
 
     Sounds.play = function(key) {
-        if(muted)
+        if(muted) {
+            log("play of " + key + "inhibited, muted");
             return;
+        }
+
+        log("playing " + key);
 
         var idx = prepareToPlay(key);
         if(idx !== null) {  
@@ -178,7 +199,9 @@
                 // needed to be used with firefox
             }
             try {
+                log("Playing element " + elementKey + ":" + idx);
                 elements[elementKey].audio[idx].play().catch(function(err){
+                    log("Error while playing " + key + " (element " + elementKey + ":" + idx + ")");
                     if(menu)
                     menu.init.then(function(){
                         menu.set("require_click_to_play", true);
@@ -189,13 +212,19 @@
     };
 
     Sounds.resume = function(key) {
-        if(muted)
+        if(muted) {
+            log("resuming of " + key + "inhibited, muted");
             return;
+        }
+
+        log("resuming " + key);
 
         var idx = prepareToPlay(key);
         if(idx !== null) {  
             try {
+                log("Playing element " + key + ":" + idx);
                 elements[key].audio[idx].play().catch(function(err){
+                    log("Error while playing " + key);
                     if(menu)
                     menu.init.then(function(){
                         menu.set("require_click_to_play", true);
@@ -245,8 +274,11 @@
 
 
     Sounds.stop = function(key) {
-        if(elements === null)
+        if(elements === null) {
+            log("Cannot stop " + key + ", elements not loaded");
             return;
+        }
+        log("Stopping " + key);
         if(typeof(elements[key]) === "undefined") {
             if(typeof(library[key]) !== "undefined" && typeof(library[key].group) !== "undefined") {
                 key = Sounds._parseElementGroupName(library[key].group);
@@ -259,16 +291,20 @@
             }
         }
 
-        for(var i=0;i<elements[key].audio.length;i++)
+        for(var i=0;i<elements[key].audio.length;i++) {
+            log("Pausing element " + key + ":" + i );
             elements[key].audio[i].pause();
+        }
     };
     
     Sounds.stopAll = function() {
+        log("stopAll");
         for(var k in elements)
             Sounds.stop(k);
     };
 
     Sounds.stopGroup = function(grp) {
+        log("stopGroup " + grp);
         Sounds._parseElementGroupName(grp);
         Sounds.stop(Sounds._parseElementGroupName(grp));
     };
