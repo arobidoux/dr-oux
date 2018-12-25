@@ -121,7 +121,7 @@ class Room {
             }
         }
 
-        if(board) {
+        if(board && typeof(this._boards[client.uuid]) != "undefined") {
             this._boards[client.uuid].board.playFrame(decodeFrame(board));
         }
 
