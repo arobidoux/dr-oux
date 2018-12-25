@@ -190,6 +190,9 @@ class Room {
 
             this._io.emit("update_one_client", client.getDetails());
         }
+
+        // give an opportunity to start the game if the player was kicked
+        this.oneMoreReady();
     }
 
     oneMoreReady() {

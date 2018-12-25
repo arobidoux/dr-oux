@@ -189,7 +189,7 @@
                 </tr>
             </thead>
             <tbody>
-                <tr ng-repeat="player in opponents | orderBy : '-virus'">
+                <tr ng-repeat="player in opponents | orderBy : 'virus'">
                     <td>{{player.name}}</td>
                     <td>{{player.virus==256?'':player.virus}}</td>
                 </tr>
