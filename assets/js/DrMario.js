@@ -127,7 +127,7 @@
         this.$animate();
         this.preventScrolling();
 
-        switch(this._control_used = menu.get("controls")) {
+        switch(this._control_used = menu.get("my_settings.controls")) {
             case "swipe": this.bindTouch(); break;
             case "tap": this.enableTap(); break;
             default:;
