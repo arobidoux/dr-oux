@@ -3703,7 +3703,7 @@ return;
     }
 })();
 "use strict";
-Sounds.debug();
+//Sounds.debug();
 Sounds.initialize();
 var inputs = new Inputs().bindKeys();
 var game = new DrMario();
