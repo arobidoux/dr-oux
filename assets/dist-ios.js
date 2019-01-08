@@ -516,22 +516,72 @@
 })(this, "Inputs");
 
 (function(global, ns){
-    function TapController(parentElement, inputs) {
+    function TapController(parentElement, inputs, swaps) {
         var root = this._root = document.createElement("div");
         root.className = "tap-controller";
         root.addEventListener("touchstart", this._touchStart.bind(this));
         root.addEventListener("touchend", this._touchEnd.bind(this));
 
-        this._zones = TapController.defaultZones();
+        this.swapZones(swaps);
+
         this._touches = {};
         this._inputs = inputs;
 
         document.getElementById("main").style.bottom = (Math.floor(window.innerHeight*.25)-20)+"px";
 
         parentElement.appendChild(root);
+        this._root.addEventListener("mousedown", function(e){ e.preventDefault(); }, false);
     }
 
+    /**
+     * Reset Zones and swap those provided
+     */
+    TapController.prototype.swapZones = function(swaps) {
+        var zones = TapController.defaultZones();
+        this._zones = [];
+        for(var fromLabel in swaps) {
+            var from=-1, to=-1;
+            for(var i=0;i<zones.length && (from == -1 || to == -1) ;i++) {
+                switch(zones[i].label) {
+                    case fromLabel: from=i; break;
+                    case swaps[fromLabel]: to=i; break;
+                }
+            }
+
+            if(from==-1 || to==-1) {
+                console.error("Invalid Swap " + fromLabel + " <-> " + swaps[fromLabel]);
+                continue;
+            }
+
+            //{keyCode:40, label:"DOWN",  zone:[  0, h75, w50,   h]},
+
+            
+
+            this._zones.push({
+                keyCode:zones[from].keyCode,
+                label:zones[from].label,
+                zone:zones[to].zone
+            });
+
+            zones[to].handled = true;
+        }
+
+        for(var i=0;i<zones.length;i++)
+            if(typeof(zones[i].handled) === "undefined" || !zones[i].handled)
+                this._zones.push(zones[i]);
+
+        // redraw if already on screen
+        if(this._root.lastElementChild)
+            this.display();
+        
+        return this;
+    };
+
     TapController.prototype.display = function() {
+        while(this._root.lastElementChild)
+            this._root.removeChild(this._root.lastElementChild);
+
+
         for(var i=0;i<this._zones.length;i++) {
             var elem = document.createElement("div");
             elem.className = "zone";
@@ -544,7 +594,7 @@
 
             this._root.appendChild(elem);
         }
-        this._root.addEventListener("mousedown", function(e){ e.preventDefault(); }, false);
+
         this._root.className += " shown";
     };
 
@@ -2298,10 +2348,12 @@
         this.$animate();
         this.preventScrolling();
 
-        switch(this._control_used = menu.get("controls")) {
+        switch(this._control_used = menu.get("my_settings.controls")) {
             case "swipe": this.bindTouch(); break;
-            case "tap": this.enableTap(); break;
-            default:;
+            default:
+                if(this._control_used.substr(0,3) == 'tap') {
+                    this.enableTap();
+                }
         }
     };
 
@@ -2311,8 +2363,10 @@
         this._running = false;
         switch(this._control_used) {
             case "swipe": this.releaseTouch(); break;
-            case "tap": this.disableTap(); break;
-            default:;
+            default:
+                if(this._control_used.substr(0,3) == 'tap') {
+                    this.disableTap();
+                }
         }
         this._control_used=null;
     };
@@ -2460,9 +2514,10 @@
         document.removeEventListener("touchend", this.$touchend,{passive: false});
     };
 
-    DrMario.prototype.enableTap = function() {
+    DrMario.prototype.enableTap = function(swaps) {
         this.disableTap();
-        this._tapController = new TapController(document.getElementsByTagName("body")[0], this._inputs);
+        var swaps = menu.get("keyMap." + menu.get("my_settings.controls") + ".tapSwap");
+        this._tapController = new TapController(document.getElementsByTagName("body")[0], this._inputs, swaps);
         this._tapController.display();
     };
 
@@ -3230,7 +3285,7 @@ function MenuController($scope, $timeout, pref, menuInitialized, contentLoaded){
     pref($scope,["my_settings.difficulty","difficulty"], 4, parseInt, function(newValue, oldValue){
         multiplayer.setDifficulty(newValue)
     });
-    pref($scope,"sensitivity", 16, parseInt, function(newValue, oldValue){
+    pref($scope,["my_settings.sensitivity","sensitivity"], 16, parseInt, function(newValue, oldValue){
         game.touch_sensitivity = newValue;
     });
     
@@ -3241,7 +3296,7 @@ function MenuController($scope, $timeout, pref, menuInitialized, contentLoaded){
             break;
     }
 
-    pref($scope,"controls", defaultControl, null, function(newValue, oldValue){
+    pref($scope,["my_settings.controls","controls"], defaultControl, null, function(newValue, oldValue){
         inputs.clearAll();
         inputs.loadKeyMap($scope.keyMap[newValue].map);
     });
@@ -3450,11 +3505,24 @@ function MenuController($scope, $timeout, pref, menuInitialized, contentLoaded){
     };
 
     $scope.preview_tap_controls = function() {
-        var tap = new TapController(document.getElementsByTagName("body")[0]);
+        var swaps = menu.get("keyMap." + menu.get("my_settings.controls") + ".tapSwap");
+
+        var tap = new TapController(document.getElementsByTagName("body")[0], null, swaps);
         tap.display();
         tap._root.addEventListener("click", function(){
             tap.destroy();
         });
+    };
+
+    var tapMap = {
+        40: "DOWN",
+        38: "UP",
+        37: "LEFT",
+        39: "RIGHT",
+        88: "ROTATE_CLOCKWISE",
+        90: "ROTATE_COUNTER_CLOCKWISE",
+        19: "PAUSE",
+        27: "ESC"
     };
 
     $scope.keyMap = {
@@ -3473,28 +3541,20 @@ function MenuController($scope, $timeout, pref, menuInitialized, contentLoaded){
         },
         swipe: {
             label: "Swipe",
-            map: {
-                40: "DOWN",
-                38: "UP",
-                37: "LEFT",
-                39: "RIGHT",
-                88: "ROTATE_CLOCKWISE",
-                90: "ROTATE_COUNTER_CLOCKWISE",
-                19: "PAUSE",
-                27: "ESC"
-            }
+            map: tapMap
         },
         tap: {
             label: "Tap",
-            map: {
-                40: "DOWN",
-                38: "UP",
-                37: "LEFT",
-                39: "RIGHT",
-                88: "ROTATE_CLOCKWISE",
-                90: "ROTATE_COUNTER_CLOCKWISE",
-                19: "PAUSE",
-                27: "ESC"
+            map: tapMap
+        },
+        "tap-joel": {
+            label: "Tap - Joël",
+            map: tapMap,
+            tapSwap: {
+                DOWN: "B",
+                SINK: "A",
+                A: "SINK",
+                B: "DOWN"
             }
         },
         wasd: {

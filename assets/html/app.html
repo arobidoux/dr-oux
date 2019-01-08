@@ -52,12 +52,12 @@
 
         <label>
             Controls
-            <button ng-if="controls=='tap'" ng-click="preview_tap_controls()"> Preview Tap Zones</button>
-            <select ng-model="$parent.controls" ng-options="key as kmap.label for ( key, kmap ) in keyMap"></select>
+            <button ng-if="my_settings.controls.substr(0,3)=='tap'" ng-click="preview_tap_controls()"> Preview Tap Zones</button>
+            <select ng-model="my_settings.controls" ng-options="key as kmap.label for ( key, kmap ) in keyMap"></select>
         </label>
         
-        <label ng-if="controls == 'swipe'"> Touch Sensitivity
-            <input type="number" min="1" max="16" ng-model="$parent.sensitivity">
+        <label ng-if="my_settings.controls == 'swipe'"> Touch Sensitivity
+            <input type="number" min="1" max="16" ng-model="my_settings.sensitivity">
         </label>
 
         <label>

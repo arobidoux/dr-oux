@@ -86,7 +86,7 @@ function MenuController($scope, $timeout, pref, menuInitialized, contentLoaded){
     pref($scope,["my_settings.difficulty","difficulty"], 4, parseInt, function(newValue, oldValue){
         multiplayer.setDifficulty(newValue)
     });
-    pref($scope,"sensitivity", 16, parseInt, function(newValue, oldValue){
+    pref($scope,["my_settings.sensitivity","sensitivity"], 16, parseInt, function(newValue, oldValue){
         game.touch_sensitivity = newValue;
     });
     
@@ -97,7 +97,7 @@ function MenuController($scope, $timeout, pref, menuInitialized, contentLoaded){
             break;
     }
 
-    pref($scope,"controls", defaultControl, null, function(newValue, oldValue){
+    pref($scope,["my_settings.controls","controls"], defaultControl, null, function(newValue, oldValue){
         inputs.clearAll();
         inputs.loadKeyMap($scope.keyMap[newValue].map);
     });
@@ -306,11 +306,24 @@ function MenuController($scope, $timeout, pref, menuInitialized, contentLoaded){
     };
 
     $scope.preview_tap_controls = function() {
-        var tap = new TapController(document.getElementsByTagName("body")[0]);
+        var swaps = menu.get("keyMap." + menu.get("my_settings.controls") + ".tapSwap");
+
+        var tap = new TapController(document.getElementsByTagName("body")[0], null, swaps);
         tap.display();
         tap._root.addEventListener("click", function(){
             tap.destroy();
         });
+    };
+
+    var tapMap = {
+        40: "DOWN",
+        38: "UP",
+        37: "LEFT",
+        39: "RIGHT",
+        88: "ROTATE_CLOCKWISE",
+        90: "ROTATE_COUNTER_CLOCKWISE",
+        19: "PAUSE",
+        27: "ESC"
     };
 
     $scope.keyMap = {
@@ -329,28 +342,20 @@ function MenuController($scope, $timeout, pref, menuInitialized, contentLoaded){
         },
         swipe: {
             label: "Swipe",
-            map: {
-                40: "DOWN",
-                38: "UP",
-                37: "LEFT",
-                39: "RIGHT",
-                88: "ROTATE_CLOCKWISE",
-                90: "ROTATE_COUNTER_CLOCKWISE",
-                19: "PAUSE",
-                27: "ESC"
-            }
+            map: tapMap
         },
         tap: {
             label: "Tap",
-            map: {
-                40: "DOWN",
-                38: "UP",
-                37: "LEFT",
-                39: "RIGHT",
-                88: "ROTATE_CLOCKWISE",
-                90: "ROTATE_COUNTER_CLOCKWISE",
-                19: "PAUSE",
-                27: "ESC"
+            map: tapMap
+        },
+        "tap-joel": {
+            label: "Tap - Joël",
+            map: tapMap,
+            tapSwap: {
+                DOWN: "B",
+                SINK: "A",
+                A: "SINK",
+                B: "DOWN"
             }
         },
         wasd: {

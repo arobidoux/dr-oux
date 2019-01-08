@@ -1,20 +1,70 @@
 (function(global, ns){
-    function TapController(parentElement, inputs) {
+    function TapController(parentElement, inputs, swaps) {
         var root = this._root = document.createElement("div");
         root.className = "tap-controller";
         root.addEventListener("touchstart", this._touchStart.bind(this));
         root.addEventListener("touchend", this._touchEnd.bind(this));
 
-        this._zones = TapController.defaultZones();
+        this.swapZones(swaps);
+
         this._touches = {};
         this._inputs = inputs;
 
         document.getElementById("main").style.bottom = (Math.floor(window.innerHeight*.25)-20)+"px";
 
         parentElement.appendChild(root);
+        this._root.addEventListener("mousedown", function(e){ e.preventDefault(); }, false);
     }
 
+    /**
+     * Reset Zones and swap those provided
+     */
+    TapController.prototype.swapZones = function(swaps) {
+        var zones = TapController.defaultZones();
+        this._zones = [];
+        for(var fromLabel in swaps) {
+            var from=-1, to=-1;
+            for(var i=0;i<zones.length && (from == -1 || to == -1) ;i++) {
+                switch(zones[i].label) {
+                    case fromLabel: from=i; break;
+                    case swaps[fromLabel]: to=i; break;
+                }
+            }
+
+            if(from==-1 || to==-1) {
+                console.error("Invalid Swap " + fromLabel + " <-> " + swaps[fromLabel]);
+                continue;
+            }
+
+            //{keyCode:40, label:"DOWN",  zone:[  0, h75, w50,   h]},
+
+            
+
+            this._zones.push({
+                keyCode:zones[from].keyCode,
+                label:zones[from].label,
+                zone:zones[to].zone
+            });
+
+            zones[to].handled = true;
+        }
+
+        for(var i=0;i<zones.length;i++)
+            if(typeof(zones[i].handled) === "undefined" || !zones[i].handled)
+                this._zones.push(zones[i]);
+
+        // redraw if already on screen
+        if(this._root.lastElementChild)
+            this.display();
+        
+        return this;
+    };
+
     TapController.prototype.display = function() {
+        while(this._root.lastElementChild)
+            this._root.removeChild(this._root.lastElementChild);
+
+
         for(var i=0;i<this._zones.length;i++) {
             var elem = document.createElement("div");
             elem.className = "zone";
@@ -27,7 +77,7 @@
 
             this._root.appendChild(elem);
         }
-        this._root.addEventListener("mousedown", function(e){ e.preventDefault(); }, false);
+
         this._root.className += " shown";
     };
 

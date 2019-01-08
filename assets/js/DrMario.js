@@ -127,10 +127,12 @@
         this.$animate();
         this.preventScrolling();
 
-        switch(this._control_used = menu.get("controls")) {
+        switch(this._control_used = menu.get("my_settings.controls")) {
             case "swipe": this.bindTouch(); break;
-            case "tap": this.enableTap(); break;
-            default:;
+            default:
+                if(this._control_used.substr(0,3) == 'tap') {
+                    this.enableTap();
+                }
         }
     };
 
@@ -140,8 +142,10 @@
         this._running = false;
         switch(this._control_used) {
             case "swipe": this.releaseTouch(); break;
-            case "tap": this.disableTap(); break;
-            default:;
+            default:
+                if(this._control_used.substr(0,3) == 'tap') {
+                    this.disableTap();
+                }
         }
         this._control_used=null;
     };
@@ -289,9 +293,10 @@
         document.removeEventListener("touchend", this.$touchend,{passive: false});
     };
 
-    DrMario.prototype.enableTap = function() {
+    DrMario.prototype.enableTap = function(swaps) {
         this.disableTap();
-        this._tapController = new TapController(document.getElementsByTagName("body")[0], this._inputs);
+        var swaps = menu.get("keyMap." + menu.get("my_settings.controls") + ".tapSwap");
+        this._tapController = new TapController(document.getElementsByTagName("body")[0], this._inputs, swaps);
         this._tapController.display();
     };
 
