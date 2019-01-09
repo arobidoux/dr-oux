@@ -270,6 +270,7 @@ function MenuController($scope, $timeout, pref, menuInitialized, contentLoaded){
         $scope.is_ready = false;
         $scope.chats = [];
 
+        game.setSoundTrack(getSoundTrack($scope.soundtrack));
         multiplayer.join(room.name);
     };
 
@@ -277,7 +278,6 @@ function MenuController($scope, $timeout, pref, menuInitialized, contentLoaded){
         if($scope.is_ready)
             return;
 
-        game.setSoundTrack(getSoundTrack($scope.soundtrack));
         multiplayer.readyToStart(parseInt($scope.my_settings.difficulty));
         $scope.is_ready = true;
     };
@@ -400,29 +400,38 @@ function MenuController($scope, $timeout, pref, menuInitialized, contentLoaded){
         }
     };
 
-    menuInitialized.resolve();
-}
+    $scope.soundtracks = [
+        { value:"none", label:"None"},
+        { value:"random", label:"Random"},
+        { value:"wii-fever", label:"Wii Fever"},
+        { value:"wii-chill", label:"Wii Chill"},
+        { value:"wii-cough", label:"Wii Cough"},
+        { value:"wii-sneeze", label:"Wii Sneeze"}
+    ];
 
-function getSoundTrack(soundtrack) {
-    if(soundtrack === "random") {
-        var options = document.querySelectorAll("#soundtrack option");
-        var count = options.length-2;
-        var idx = Math.floor(Math.random()*count);
-        for(var i=0;i<options.length;i++) {
-            if(options[i].value == "none" || options[i].value == "random") {
-                continue;
-            }
-            else if(--idx<=0) {
-                return options[i].value;
+    menuInitialized.resolve();
+
+    function getSoundTrack(soundtrack) {
+        if(soundtrack === "random") {
+            var count = $scope.soundtracks.length-2;
+            var idx = Math.floor(Math.random()*count);
+            for(var i=0;i<$scope.soundtracks.length;i++) {
+                if($scope.soundtracks[i].value == "none" || $scope.soundtracks[i].value == "random") {
+                    continue;
+                }
+                else if(--idx<=0) {
+                    return $scope.soundtracks[i].value;
+                }
             }
         }
+        else if(soundtrack === "none") {
+            return null
+        }
+    
+        return soundtrack;
     }
-    else if(soundtrack === "none") {
-        return null
-    }
-
-    return soundtrack;
 }
+
 
 global[ns] = menu;
 return;

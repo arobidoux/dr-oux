@@ -121,7 +121,7 @@ class Room {
             }
         }
 
-        if(board) {
+        if(board && typeof(this._boards[client.uuid]) != "undefined") {
             this._boards[client.uuid].board.playFrame(decodeFrame(board));
         }
 
@@ -190,6 +190,9 @@ class Room {
 
             this._io.emit("update_one_client", client.getDetails());
         }
+
+        // give an opportunity to start the game if the player was kicked
+        this.oneMoreReady();
     }
 
     oneMoreReady() {
