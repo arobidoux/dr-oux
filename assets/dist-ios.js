@@ -3100,8 +3100,8 @@
             return false;
         });
 
-        if(data.uuid == menu.get("room_uuid")) {
-            this._gamerules = data.gameRules;
+        if(room.uuid == menu.get("room_uuid")) {
+            this._gamerules = room.gameRules;
         }
     }
 
