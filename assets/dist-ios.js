@@ -2351,7 +2351,7 @@
         switch(this._control_used = menu.get("my_settings.controls")) {
             case "swipe": this.bindTouch(); break;
             default:
-                if(this._control_used.substr(0,3) == 'tap') {
+                if(typeof(this._control_used) == "string" && this._control_used.substr(0,3) == 'tap') {
                     this.enableTap();
                 }
         }
@@ -2364,7 +2364,7 @@
         switch(this._control_used) {
             case "swipe": this.releaseTouch(); break;
             default:
-                if(this._control_used.substr(0,3) == 'tap') {
+                if(typeof(this._control_used) == "string" && this._control_used.substr(0,3) == 'tap') {
                     this.disableTap();
                 }
         }
@@ -3085,10 +3085,20 @@
         //upsertRoom(data);
     };
 
-    Multiplayer.prototype.on_room_updated = function(data) {
+    function updateRoom(room) {
         menu.splice("rooms", function(elem) {
-            return elem.uuid == data.uuid;
-        }, data);
+            if(elem.uuid == room.uuid) {
+                for(var k in room)
+                    if(k != "uuid")
+                        elem[k] = room[k];
+            }
+            return false;
+        });
+    }
+
+    Multiplayer.prototype.on_room_updated = function(data) {
+        updateRoom(data);
+
         if(data.uuid == menu.get("room_uuid")) {
             this._gamerules = data.gameRules;
         }
@@ -3125,9 +3135,7 @@
             }
         }
         else {
-            menu.splice("rooms", function(elem) {
-                return elem.uuid == details.room.uuid;
-            }, details.room);
+            updateRoom(details.room);
         }
             
         menu.splice("players", function(elem){

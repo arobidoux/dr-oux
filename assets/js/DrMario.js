@@ -130,7 +130,7 @@
         switch(this._control_used = menu.get("my_settings.controls")) {
             case "swipe": this.bindTouch(); break;
             default:
-                if(this._control_used.substr(0,3) == 'tap') {
+                if(typeof(this._control_used) == "string" && this._control_used.substr(0,3) == 'tap') {
                     this.enableTap();
                 }
         }
@@ -143,7 +143,7 @@
         switch(this._control_used) {
             case "swipe": this.releaseTouch(); break;
             default:
-                if(this._control_used.substr(0,3) == 'tap') {
+                if(typeof(this._control_used) == "string" && this._control_used.substr(0,3) == 'tap') {
                     this.disableTap();
                 }
         }
