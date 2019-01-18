@@ -1344,12 +1344,17 @@
 
     Board.prototype._processExternalHandicap = function() {
         if(this._handicaps.length) {
-            switch(this._game_rules.combos) {
-                case "coop_rr":
-                    this._processExternalHandicap_coop();
+            if(this._game_rules) {
+                switch(this._game_rules.combos) {
+                    case "coop-rr":
+                        this._processExternalHandicap_coop();
                     break;
-                default:
-                    this._processExternalHandicap_random();
+                    default:
+                        this._processExternalHandicap_random();
+                }
+            }
+            else {
+                this._processExternalHandicap_random();
             }
             
             // clear handicaps, they were processed
