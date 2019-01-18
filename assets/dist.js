@@ -2862,6 +2862,11 @@
                 }
             }
         }
+        
+        delete roomDetails.clients;
+        this.updateRoom(roomDetails);
+        // override this since the room_uuid won't update until next tick
+        this._gamerules = roomDetails.gameRules;
 
         if(roomDetails.gameInProgress) {
             // auto set ready & start my game
@@ -2885,16 +2890,6 @@
             }
         }
 
-        delete roomDetails.clients;
-        var found = false;
-        menu.splice("rooms", function(elem){
-            if(elem.uuid == roomDetails.uuid)
-                return found = true;
-            return false;
-        },roomDetails).then(function(){
-            if(!found)
-                menu.push("rooms", roomDetails);
-        });
     };
 
     Multiplayer.prototype._prepareStreaming = function() {
@@ -3173,14 +3168,19 @@
         //upsertRoom(data);
     };
 
-    function updateRoom(room) {
+    Multiplayer.prototype.updateRoom = function(room) {
+        var found = false;
         menu.splice("rooms", function(elem) {
             if(elem.uuid == room.uuid) {
+                found = true;
                 for(var k in room)
                     if(k != "uuid")
                         elem[k] = room[k];
             }
             return false;
+        }).then(function(){
+            if(!found)
+                menu.push("rooms", room);
         });
 
         if(room.uuid == menu.get("room_uuid")) {
@@ -3189,7 +3189,7 @@
     }
 
     Multiplayer.prototype.on_room_updated = function(data) {
-        updateRoom(data);
+        this.updateRoom(data);
     };
 
     Multiplayer.prototype.on_room_removed = function(data) {
@@ -3223,7 +3223,7 @@
             }
         }
         else {
-            updateRoom(details.room);
+            this.updateRoom(details.room);
         }
             
         menu.splice("players", function(elem){
@@ -3254,8 +3254,10 @@
         for(var i=0; i < this._opponents.length; i++) {
             this._opponents[i].bottle.destroy();
         }
+        
         this._opponents = [];
         menu.set("opponents", this._opponents);
+        menu.set("is_ready", false);
     };
 
     Multiplayer.prototype.invite = function(player_id) {

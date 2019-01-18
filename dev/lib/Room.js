@@ -17,9 +17,11 @@ class Room {
         this._clients = [];
         this._boards = {};
         this._gameInProgress = false;
+        this._gameOver = false;
         this._uuid = uuidv1();
         this._id = nextRoomID++;
         this._game_rules = {};
+        this._log_prefix = "";
 
         this._previous_game_uuid = null;
         this._quiet_update = false;
@@ -30,7 +32,7 @@ class Room {
     }
 
     log(msg) {
-        console.log("[" + this._name + "] " + msg);
+        console.log("[" + this._log_prefix + this._name + "] " + msg);
     }
 
     get socRoomName() {
@@ -196,12 +198,12 @@ class Room {
     }
 
     oneMoreReady() {
-        if(this._gameInProgress)
+        if(this._gameInProgress || this._gameOver)
             return false;
         
         var summary = this.summary();
 
-        if(summary.clientCount <= summary.clientReady) {
+        if(summary.clientCount && summary.clientCount <= summary.clientReady) {
             this.launchGame();
             summary = this.summary();
         }
@@ -275,7 +277,7 @@ class Room {
     }
 
     countDown(sec) {
-        console.log("Countdown " + sec);
+        this.log("Countdown " + sec);
         if(sec) {
             this._countdown = sec;
             this._io.in(this.socRoomName).emit("countdown", {sec:sec});
@@ -288,7 +290,7 @@ class Room {
     }
 
     startGame() {
-        console.log("Starting");
+        this.log("Starting");
         this._io.in(this.socRoomName).emit("start");
     }
     
@@ -373,6 +375,9 @@ class Room {
 
     graspVictory(client) {
         this.log("Victory grasped");
+        this._log_prefix += "-";
+        this._gameOver = true;
+        
         this._io.in(this.socRoomName).emit("gameover", {winner:client.getDetails()});
 
         // write victor in the meta file
