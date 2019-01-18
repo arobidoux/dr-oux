@@ -437,14 +437,14 @@
             }
             return false;
         });
-    }
-
-    Multiplayer.prototype.on_room_updated = function(data) {
-        updateRoom(data);
 
         if(data.uuid == menu.get("room_uuid")) {
             this._gamerules = data.gameRules;
         }
+    }
+
+    Multiplayer.prototype.on_room_updated = function(data) {
+        updateRoom(data);
     };
 
     Multiplayer.prototype.on_room_removed = function(data) {
