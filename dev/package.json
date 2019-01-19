@@ -9,7 +9,8 @@
     "package-ios": "concat -o ../assets/dist-ios.js ../assets/vendor/js/uuidv1.js ../assets/js/Debug.js ../assets/js/jsonp.js ../assets/js/preference.js ../assets/js/Sounds.js ../assets/js/Inputs.js ../assets/js/TapController.js ../assets/js/Pill.js ../assets/js/Board.js ../assets/js/PillBottle.js ../assets/js/DrMario.js ../assets/js/Multiplayer.js ../assets/js/ng-menu.js ../assets/js/registerServiceWorker.js ../assets/js/index.js",
     "package-android": "concat -o ../assets/dist.js ../assets/vendor/js/uuidv1.js ../assets/js/Debug.js ../assets/js/jsonp.js ../assets/js/preference.js ../assets/js/Sounds.Android.js ../assets/js/Inputs.js ../assets/js/TapController.js ../assets/js/Pill.js ../assets/js/Board.js ../assets/js/PillBottle.js ../assets/js/DrMario.js ../assets/js/Multiplayer.js ../assets/js/ng-menu.js ../assets/js/registerServiceWorker.js ../assets/js/index.js",
     "package": "npm run package-ios&&npm run package-android",
-    "dev": "nodemon server.js"
+    "dev": "nodemon server.js",
+    "init-replay": "node init-replay.js"
   },
   "author": "Antoine Robidoux",
   "license": "ISC",
@@ -17,7 +18,9 @@
     "atob": "^2.1.2",
     "btoa": "^1.2.1",
     "express": "^4.16.4",
+    "sequelize": "^4.42.0",
     "socket.io": "^2.1.1",
+    "sqlite3": "^4.0.6",
     "uuid": "^3.3.2"
   },
   "devDependencies": {
@@ -25,6 +28,9 @@
     "nodemon": "^1.18.6"
   },
   "nodemonConfig": {
-    "watch": ["../assets/js","./*"]
+    "watch": [
+      "../assets/js",
+      "./*"
+    ]
   }
 }
