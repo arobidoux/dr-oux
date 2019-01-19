@@ -1,3 +1,4 @@
+const config = require("config");
 const uuidv1 = require("uuid/v1");
 const fs = require("fs");
 const path = require("path");
@@ -255,7 +256,7 @@ class Room {
 
     _initReplayFolder() { 
         return new Promise((resolve, reject) => {
-            var folder = path.resolve("../replay/", this._uuid);
+            var folder = config.storage("replay/"+this._uuid);
             fs.access(folder, fs.constants.F_OK, (err) => {
                 if(err) {
                     // create it

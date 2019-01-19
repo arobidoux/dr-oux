@@ -1,3 +1,4 @@
+const config = require("lib/config");
 const path = require("path");
 const express = require("express");
 const app = express();
@@ -6,7 +7,6 @@ var io = require("socket.io")(http);
 
 const Game = require("./lib/Game");
 
-const port = process.env.PORT || 8080;
 
 if(process.env.ENV == "DEV") {
     process.once("SIGUSR2", function () {
@@ -72,4 +72,4 @@ app.use("/assets/uuid/",express.static(path.resolve("node_modules/uuid-browser")
 
 var game = new Game(io);
 
-http.listen(port, () => console.log(`DrMario listening on port ${port}!`));
+http.listen(config.port, () => console.log(`DrMario listening on port ${config.port}!`));
