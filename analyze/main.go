@@ -3,6 +3,8 @@ package main
 import (
 	"bufio"
 	b64 "encoding/base64"
+	"encoding/json"
+	"flag"
 	"fmt"
 	"log"
 	"os"
@@ -23,18 +25,20 @@ type Board struct {
 type Stats struct {
 	initialized bool
 
-	pillcount       int
-	virustotalcount int
-	viruskillcount  int
-	viruskilled     map[int]bool
+	Pillcount       int
+	Virustotalcount int
+	Viruskillcount  int
+	Meta            string
+
+	viruskilled map[int]bool
 }
 
 func (s *Stats) String() string {
 	b := strings.Builder{}
 	b.WriteString("Stats\n--------------------------------------\n")
-	b.WriteString(fmt.Sprint("   PillCount:", s.pillcount, "\n"))
-	b.WriteString(fmt.Sprint(" Virus Total:", s.virustotalcount, "\n"))
-	b.WriteString(fmt.Sprint("Virus Killed:", s.viruskillcount, "\n"))
+	b.WriteString(fmt.Sprint("   PillCount:", s.Pillcount, "\n"))
+	b.WriteString(fmt.Sprint(" Virus Total:", s.Virustotalcount, "\n"))
+	b.WriteString(fmt.Sprint("Virus Killed:", s.Viruskillcount, "\n"))
 
 	return b.String()
 }
@@ -102,6 +106,15 @@ func (i Cell) describe() string {
 	return b.String()
 }
 
+func (s *Stats) setMeta(frame string) {
+	raw, err := b64.StdEncoding.DecodeString(frame)
+	if err != nil {
+		log.Fatalln("Failed to decode meta instructions:", frame)
+	}
+
+	s.Meta = fmt.Sprintf("%s", raw)
+}
+
 func (b *Board) playFrame(frame string) (int, error) {
 	//log.Println("playing frame:", frame)
 	raw, err := b64.StdEncoding.DecodeString(frame)
@@ -140,7 +153,7 @@ func (b *Board) initStats(stats *Stats) {
 
 	for i := range b.data {
 		if b.data[i].isCode("form", "virus") {
-			stats.virustotalcount++
+			stats.Virustotalcount++
 		}
 	}
 
@@ -152,7 +165,7 @@ func (b *Board) analyze(stats *Stats) {
 
 	// look if a new pill is in the middle
 	if b.data[3].isCode("form", "right") && b.data[4].isCode("form", "left") {
-		stats.pillcount++
+		stats.Pillcount++
 	}
 
 	// look for virus kill
@@ -164,7 +177,7 @@ func (b *Board) analyze(stats *Stats) {
 				if counted, ok := stats.viruskilled[i]; counted && ok {
 					// already counted
 				} else {
-					stats.viruskillcount++
+					stats.Viruskillcount++
 					stats.viruskilled[i] = true
 				}
 			}
@@ -174,12 +187,19 @@ func (b *Board) analyze(stats *Stats) {
 
 func main() {
 	replayPath := ""
-	if len(os.Args) > 1 {
-		replayPath = os.Args[1]
-	} else {
-		//replayPath = "../replay/00a4e8f0-f12d-11e8-bb8a-29710d0295ed/7f65ecb0-f11a-11e8-855d-d727072d1472"
-		replayPath = "../replay/0a438f30-fb08-11e8-a269-2974deac9dc1/d8449d60-faff-11e8-add6-f1f1ce23fffb"
-		//replayPath = "../replay/test.txt"
+	flag.StringVar(&replayPath, "f", "", "path to Replay file to analyse")
+	formatJSON := flag.Bool("json", false, "Output as json")
+
+	flag.Parse()
+
+	if replayPath == "" {
+		args := flag.Args()
+		if len(args) > 0 {
+			replayPath = args[0]
+		} else {
+			flag.Usage()
+			return
+		}
 	}
 
 	board := Board{
@@ -218,8 +238,18 @@ func main() {
 					board.analyze(&stats)
 				}
 			}
+		} else if line[0:1] == "m" {
+			stats.setMeta(line[1:])
 		}
 	}
 
-	log.Println(stats.String())
+	if *formatJSON == true {
+		bs, err := json.Marshal(stats)
+		if err != nil {
+			log.Fatalln("Failed to json encode result", err)
+		}
+		fmt.Printf("%s", bs)
+	} else {
+		log.Println(stats.String())
+	}
 }
