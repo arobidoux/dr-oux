@@ -3,34 +3,129 @@ package main
 import (
 	"bufio"
 	b64 "encoding/base64"
+	"fmt"
 	"log"
 	"os"
+	"strings"
 )
+
+/*Cell represent a single space in a DrMario game
+ */
+type Cell uint8
 
 /*Board represent the content of a Pill Bottle in the game*/
 type Board struct {
-	data [512]uint8
+	data      [512]Cell
+	prevFrame [512]Cell
 }
 
-enum CODES {
-	
+/*Stats represent the statistic of an analysed game */
+type Stats struct {
+	initialized bool
+
+	pillcount       int
+	virustotalcount int
+	viruskillcount  int
+	viruskilled     map[int]bool
+}
+
+func (s *Stats) String() string {
+	b := strings.Builder{}
+	b.WriteString("Stats\n--------------------------------------\n")
+	b.WriteString(fmt.Sprint("   PillCount:", s.pillcount, "\n"))
+	b.WriteString(fmt.Sprint(" Virus Total:", s.virustotalcount, "\n"))
+	b.WriteString(fmt.Sprint("Virus Killed:", s.viruskillcount, "\n"))
+
+	return b.String()
+}
+
+/*Code represent a single type of elements contained in a DrMario Cell value
+ */
+type Code struct {
+	mask   uint8
+	values map[string]uint8
+}
+
+/*Codes contains the list of mask and values that represent the
+  data board of a DrMario game */
+var Codes = map[string]Code{
+	"color": Code{
+		mask: 0x03, //0b00000011
+		values: map[string]uint8{
+			"red":    0x01, //0b00000001
+			"blue":   0x02, //0b00000010
+			"yellow": 0x03, //0b00000011
+		},
+	},
+	"form": Code{
+		mask: 0x1C, //0b00011100
+		values: map[string]uint8{
+			"single":    0x00, //0b00000000
+			"up":        0x04, //0b00000100
+			"right":     0x08, //0b00001000
+			"down":      0x0C, //0b00001100
+			"left":      0x10, //0b00010000
+			"virus":     0x14, //0b00010100
+			"exploding": 0x18, //0b00011000
+			"exploded":  0x1C, //0b00011100
+		},
+	},
+	"state": Code{
+		mask: 0x20, //0b00100000
+		values: map[string]uint8{
+			"alive": 0x20, //0b00100000
+			"dead":  0x00, //0b00000000
+		},
+	},
+}
+
+func (i Cell) isCode(category, value string) bool {
+	if code, ok := Codes[category]; ok {
+		if value, ok := code.values[value]; ok {
+			return i != 0 && ((uint8(i) & code.mask) == value)
+		}
+		log.Fatalln("Undefined value", value, "in category", category)
+	}
+	log.Fatalln("Undefined Code category", category)
+	return false
+}
+
+func (i Cell) describe() string {
+	b := strings.Builder{}
+	for _, category := range []string{"form", "color" /*, "state"*/} {
+		for key := range Codes[category].values {
+			if i.isCode(category, key) {
+				b.WriteString(fmt.Sprintf("%s ", key))
+			}
+		}
+	}
+	return b.String()
 }
 
 func (b *Board) playFrame(frame string) (int, error) {
+	//log.Println("playing frame:", frame)
 	raw, err := b64.StdEncoding.DecodeString(frame)
 	if err != nil {
 		return 0, err
 	}
 
+	// save the frame before modifying it
+	b.prevFrame = b.data
+
+	//log.Println("Decoded frame:", raw)
+
 	j := 0
 	updated := 0
-	for c := range raw {
+	for _, c := range raw {
 		// decompress
 		if c&0x80 != 0 {
-			j += c & 0x7f
+			//log.Println("Decompressing, skipping", c&0x7f, "position")
+			j += int(c) & 0x7f
 		} else {
 			updated++
-			b.data[j] = uint8(c)
+			//log.Printf("Updating cell %v with %X: %s", j, c, Cell(c).describe())
+
+			b.data[j] = Cell(c)
 			j++
 		}
 	}
@@ -38,9 +133,43 @@ func (b *Board) playFrame(frame string) (int, error) {
 	return updated, nil
 }
 
-func (b *Board) analyze() {
+func (b *Board) initStats(stats *Stats) {
+	if stats.initialized {
+		return
+	}
+
+	for i := range b.data {
+		if b.data[i].isCode("form", "virus") {
+			stats.virustotalcount++
+		}
+	}
+
+	stats.initialized = true
+}
+
+func (b *Board) analyze(stats *Stats) {
 	// run the analisis here
 
+	// look if a new pill is in the middle
+	if b.data[3].isCode("form", "right") && b.data[4].isCode("form", "left") {
+		stats.pillcount++
+	}
+
+	// look for virus kill
+	for i := range b.data {
+		if b.data[i].isCode("form", "exploding") {
+			// look it was a virus
+			if b.prevFrame[i].isCode("form", "virus") {
+				// look if we didn't count it already
+				if counted, ok := stats.viruskilled[i]; counted && ok {
+					// already counted
+				} else {
+					stats.viruskillcount++
+					stats.viruskilled[i] = true
+				}
+			}
+		}
+	}
 }
 
 func main() {
@@ -48,11 +177,18 @@ func main() {
 	if len(os.Args) > 1 {
 		replayPath = os.Args[1]
 	} else {
-		replayPath = "../replay/00a4e8f0-f12d-11e8-bb8a-29710d0295ed/7f65ecb0-f11a-11e8-855d-d727072d1472"
+		//replayPath = "../replay/00a4e8f0-f12d-11e8-bb8a-29710d0295ed/7f65ecb0-f11a-11e8-855d-d727072d1472"
+		replayPath = "../replay/0a438f30-fb08-11e8-a269-2974deac9dc1/d8449d60-faff-11e8-add6-f1f1ce23fffb"
+		//replayPath = "../replay/test.txt"
 	}
 
 	board := Board{
-		data: [512]uint8{},
+		data:      [512]Cell{},
+		prevFrame: [512]Cell{},
+	}
+
+	stats := Stats{
+		viruskilled: map[int]bool{},
 	}
 
 	// open file
@@ -73,10 +209,17 @@ func main() {
 				if err != nil {
 					log.Fatalln("Playing frame", err)
 				}
+
 				if updated > 0 {
-					board.analyze()
+					if stats.initialized == false {
+						board.initStats(&stats)
+					}
+
+					board.analyze(&stats)
 				}
 			}
 		}
 	}
+
+	log.Println(stats.String())
 }
