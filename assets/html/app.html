@@ -57,10 +57,10 @@
         </tbody>
         <tfoot>
             <tr>
-                <td colspan="4">
+                <td colspan="3">
                     <button ng-repeat="p in $players.pages()" ng-class="{'current':p==page}" ng-click="$players.loadPage(p)">{{p}}</button>
                 </td>
-                <td>Total Players: {{$players.count}}</td>
+                <td colspan="2">Total Players: {{$players.count}}</td>
             </tr>
         </tfoot>
     </table>
