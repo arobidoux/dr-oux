@@ -14,6 +14,9 @@ module.exports = {
       room_id: {
         type: Sequelize.INTEGER
       },
+      replay_uuid: {
+        type: Sequelize.STRING
+      },
       virustotal: {
         type: Sequelize.INTEGER
       },

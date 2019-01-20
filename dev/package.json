@@ -4,14 +4,15 @@
   "description": "A Multiplayer web base port of Dr Mario",
   "main": "server.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "mocha",
     "start": "node server.js",
     "package-ios": "concat -o ../assets/dist-ios.js ../assets/vendor/js/uuidv1.js ../assets/js/Debug.js ../assets/js/jsonp.js ../assets/js/preference.js ../assets/js/Sounds.js ../assets/js/Inputs.js ../assets/js/TapController.js ../assets/js/Pill.js ../assets/js/Board.js ../assets/js/PillBottle.js ../assets/js/DrMario.js ../assets/js/Multiplayer.js ../assets/js/ng-menu.js ../assets/js/registerServiceWorker.js ../assets/js/index.js",
     "package-android": "concat -o ../assets/dist.js ../assets/vendor/js/uuidv1.js ../assets/js/Debug.js ../assets/js/jsonp.js ../assets/js/preference.js ../assets/js/Sounds.Android.js ../assets/js/Inputs.js ../assets/js/TapController.js ../assets/js/Pill.js ../assets/js/Board.js ../assets/js/PillBottle.js ../assets/js/DrMario.js ../assets/js/Multiplayer.js ../assets/js/ng-menu.js ../assets/js/registerServiceWorker.js ../assets/js/index.js",
     "package": "npm run package-ios&&npm run package-android",
     "dev": "nodemon server.js",
     "init-db": "node scripts/create-sqlite-db.js && sequelize db:migrate",
-    "parse-all-replay": "node scripts/parse-all-replay.js"
+    "analyze-all-replay": "node scripts/analyze-all-replay.js",
+    "analyze-replay": "node scripts/analyze-replay.js"
   },
   "author": "Antoine Robidoux",
   "license": "ISC",
@@ -27,6 +28,7 @@
   },
   "devDependencies": {
     "concat": "^1.0.3",
+    "mocha": "^5.2.0",
     "nodemon": "^1.18.6"
   },
   "nodemonConfig": {

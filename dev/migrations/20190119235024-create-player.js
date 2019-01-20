@@ -8,9 +8,6 @@ module.exports = {
         primaryKey: true,
         type: Sequelize.INTEGER
       },
-      uuid: {
-        type: Sequelize.STRING
-      },
       name: {
         type: Sequelize.STRING
       },
@@ -23,7 +20,7 @@ module.exports = {
         type: Sequelize.DATE
       }
     }).then(() => {
-      queryInterface.addIndex('Players', ['uuid'])
+      queryInterface.addIndex('Players', ['name'])
     });
   },
   down: (queryInterface, Sequelize) => {

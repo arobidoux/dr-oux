@@ -3,6 +3,7 @@ module.exports = (sequelize, DataTypes) => {
   const Gamestats = sequelize.define('Gamestats', {
     player_id: DataTypes.INTEGER,
     room_id: DataTypes.INTEGER,
+    replay_uuid: DataTypes.STRING,
     virustotal: DataTypes.INTEGER,
     viruskilled: DataTypes.INTEGER,
     pillcount: DataTypes.INTEGER

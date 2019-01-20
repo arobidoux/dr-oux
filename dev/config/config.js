@@ -9,7 +9,7 @@ module.exports = {
     "storage": config.storage.sqlite.stats.dev,
     "operatorsAliases": false,
     "migrationStorage": "sequelize",
-    logging: false
+    "logging": false
   },
   "test": {
     "username": "",
@@ -18,7 +18,7 @@ module.exports = {
     "dialect": "sqlite",
     "operatorsAliases": false,
     "migrationStorage": "none",
-    logging: false
+    "logging": false
   },
   "production": {
     "username": "",
@@ -27,6 +27,6 @@ module.exports = {
     "storage": config.storage.sqlite.stats.prod,
     "operatorsAliases": false,
     "migrationStorage": "sequelize",
-    logging: false
+    "logging": false
   }
 };
