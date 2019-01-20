@@ -12,7 +12,7 @@ function StatsController($scope, $timeout, $http) {
     };
 
     $scope.pillefficacy = function(player) {
-        return Math.floor( player.totalviruskilled*3 / player.totalpillused * 1000 ) / 10;
+        return Math.floor( player.totalviruskilled*3 / (player.totalpillused*2) * 1000 ) / 10;
     };
 
     $scope.$replays = new Paginator(function(params) {
