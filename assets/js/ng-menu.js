@@ -255,6 +255,10 @@ function MenuController($scope, $timeout, pref, menuInitialized, contentLoaded){
         $scope.error = "";
     };
 
+    $scope.showStats = function(state) {
+        $scope.stats = state === false ? state : true;
+    };
+
     $scope.host = function() {
         if($scope.hosting)
             return;

@@ -1,4 +1,4 @@
-const config = require("config");
+const config = require("../config");
 const uuidv1 = require("uuid/v1");
 const fs = require("fs");
 const path = require("path");
@@ -7,6 +7,8 @@ const btoa = require("btoa");
 
 const File = require("./File");
 const Board = require("../../assets/js/Board");
+
+const spawn = require("child_process").spawn;
 
 var nextRoomID=1;
 
@@ -34,6 +36,10 @@ class Room {
 
     log(msg) {
         console.log("[" + this._log_prefix + this._name + "] " + msg);
+    }
+
+    logErr(msg) {
+        console.error("[" + this._log_prefix + this._name + "] " + msg);
     }
 
     get socRoomName() {
@@ -435,14 +441,45 @@ class Room {
             setTimeout(()=>{
                 // transfer the clients
                 while(this._clients.length)
-                this._clients[0].join(newRoom);
+                    this._clients[0].join(newRoom);
                 
                 newRoom._quiet_update = false;
                 resolve();
             });
         });
 
+        // queue game analysis
+        this.analyze(5000);
+
         return newRoom.uuid;
+    }
+
+    analyze(delay) {
+        this.log("Queuing analysis");
+        var args = ["scripts/analyze-replay.js",this.uuid];
+        setTimeout(()=>{
+            this.log("Spawning analysis");
+            var prc = spawn("node", args,{cwd:path.resolve(__dirname,"../")});
+
+            prc.stdout.setEncoding("utf8");
+            prc.stdout.on("data", (data) => {
+                this.log(data.toString());
+            });
+
+            prc.stderr.setEncoding("utf8");
+            prc.stderr.on("data", (data) => {
+                this.logErr(data.toString());
+            });
+            
+            prc.on("close", (code) => {
+                if(code != 0) {
+                    this.logErr(`analyze returned err code ${code}`);
+                }
+                else {
+                    this.log("analisis completed");
+                }
+            });
+        }, delay);
     }
 
     reset() {

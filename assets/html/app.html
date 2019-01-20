@@ -32,8 +32,67 @@
     </div>
 </div>
 
+<div id="stats" ng-show="stats" ng-controller="StatsController">
+    <button ng-click="showStats(false)">Back</button>
+    
+    <h3>Hall of Fame</h3>
+    <table class="stats-table">
+        <thead>
+            <tr>
+                <th>Player</th>
+                <th class="num">Game Played</th>
+                <th class="num">Game Won</th>
+                <th class="num">Virus Killed</th>
+                <th class="num">Pill Used</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr ng-repeat="player in players">
+                <td>{{player.name}}</td>
+                <td class="num">{{player.totalgameplayed}}</td>
+                <td class="num">{{player.totalgamewon}}</td>
+                <td class="num">{{player.totalviruskilled}}</td>
+                <td class="num">{{player.totalpillused}}</td>
+            </tr>
+        </tbody>
+        <tfoot>
+            <tr>
+                <td colspan="4">
+                    <button ng-repeat="p in $players.pages()" ng-class="{'current':p==page}" ng-click="$players.loadPage(p)">{{p}}</button>
+                </td>
+                <td>Total Players: {{$players.count}}</td>
+            </tr>
+        </tfoot>
+    </table>
+    <!--h3>Replays</h3>
+    <table class="stats-table">
+        <thead>
+            <tr>
+                <th>Winner</th>
+                <th>Started At</th>
+                <th>Players</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr ng-repeat="replay in replays">
+                <td>{{replay.winner.name||"n/a"}}</td>
+                <td>{{replay.startedat}}</td>
+                <td>{{replay.stats?formatPlayers(replay.stats):"n/a"}}</td>
+            </tr>
+        </tbody>
+        <tfoot>
+            <tr>
+                <td colspan="2">
+                    <button ng-repeat="p in $replays.pages()" ng-class="{'current':p==page}" ng-click="$replays.loadPage(p)">{{p}}</button>
+                </td>
+                <td>Total Replay: {{$replays.count}}</td>
+            </tr>
+        </tfoot>
+    </table-->
 
-<div id="menu" ng-hide="playing">
+</div>
+
+<div id="menu" ng-hide="playing||stats">
     <div ng-if="room_uuid" style="padding:5px;">
         <button ng-click="leaveRoom()" style="width:100%">Leave Multiplayer</button>
     </div>
@@ -83,6 +142,8 @@
         <button id="start-single" class="row" ng-click="startSingle()"> Start Single Player </button>
         
         <button ng-if="!hosting" ng-click="host()" class="row"> New MultiPlayer Game </button>
+
+        <button ng-click="showStats()" class="row"> Show Stats </button>
         
         <p ng-if="hosting && !room_uuid">
             Creating game...

@@ -12,7 +12,7 @@ module.exports = (sequelize, DataTypes) => {
   Room.associate = function(models) {
     // associations can be defined here
     Room.hasMany(models.Gamestats, {foreignKey:'room_id'});
-    Room.belongsToMany(models.Player, {through:'gamestats', foreignKey:'player_id', otherKey:'room_id'});
+    Room.belongsToMany(models.Player, {through:'gamestats', foreignKey:'room_id', otherKey:'player_id'});
     Room.belongsTo(models.Player, {as:"Winner", foreignKey:'winner_id'});
     Room.belongsTo(models.Room, {as:"NextRoom", foreignKey:'next_id'});
     Room.belongsTo(models.Room, {as:"prevRoom", foreignKey:'prev_id'});

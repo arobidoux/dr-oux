@@ -1,4 +1,5 @@
 'use strict';
+
 module.exports = (sequelize, DataTypes) => {
   const Gamestats = sequelize.define('Gamestats', {
     player_id: DataTypes.INTEGER,
@@ -7,7 +8,24 @@ module.exports = (sequelize, DataTypes) => {
     virustotal: DataTypes.INTEGER,
     viruskilled: DataTypes.INTEGER,
     pillcount: DataTypes.INTEGER
-  }, {});
+  }, {
+    getterMethods: {
+      toObject() {
+        var result = {
+          id: this.id,
+          virustotal : this.virustotal,
+          viruskilled : this.viruskilled,
+          pillcount : this.pillcount
+        };
+
+        if(this.Player) {
+          result.player = this.Player.toObject;
+        }
+        
+        return result;
+      }
+    }
+  });
   Gamestats.associate = function(models) {
     // associations can be defined here
     Gamestats.belongsTo(models.Player, {foreignKey:'player_id'});

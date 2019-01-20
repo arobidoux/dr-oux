@@ -7,7 +7,12 @@ const readFile = util.promisify(fs.readFile);
 
 const config = require("../../config");
 const db = require("../../models/index");
-const analyze_bin_path = path.resolve("../analyze/analyze.exe");
+const analyze_bin_path = path.resolve(
+    process.platform === "win32" ?
+    "../analyze/analyze.exe" :
+    "../analyze/analyze"
+);
+
 const Channel = require("../../utils/Channel");
 
 var dbChannel = new Channel(1, async (cb)=>{ return await cb(); });

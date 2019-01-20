@@ -6,8 +6,8 @@
   "scripts": {
     "test": "mocha",
     "start": "node server.js",
-    "package-ios": "concat -o ../assets/dist-ios.js ../assets/vendor/js/uuidv1.js ../assets/js/Debug.js ../assets/js/jsonp.js ../assets/js/preference.js ../assets/js/Sounds.js ../assets/js/Inputs.js ../assets/js/TapController.js ../assets/js/Pill.js ../assets/js/Board.js ../assets/js/PillBottle.js ../assets/js/DrMario.js ../assets/js/Multiplayer.js ../assets/js/ng-menu.js ../assets/js/registerServiceWorker.js ../assets/js/index.js",
-    "package-android": "concat -o ../assets/dist.js ../assets/vendor/js/uuidv1.js ../assets/js/Debug.js ../assets/js/jsonp.js ../assets/js/preference.js ../assets/js/Sounds.Android.js ../assets/js/Inputs.js ../assets/js/TapController.js ../assets/js/Pill.js ../assets/js/Board.js ../assets/js/PillBottle.js ../assets/js/DrMario.js ../assets/js/Multiplayer.js ../assets/js/ng-menu.js ../assets/js/registerServiceWorker.js ../assets/js/index.js",
+    "package-ios": "concat -o ../assets/dist-ios.js ../assets/vendor/js/uuidv1.js ../assets/js/Debug.js ../assets/js/jsonp.js ../assets/js/preference.js ../assets/js/Sounds.js ../assets/js/Inputs.js ../assets/js/TapController.js ../assets/js/Pill.js ../assets/js/Board.js ../assets/js/PillBottle.js ../assets/js/DrMario.js ../assets/js/Multiplayer.js ../assets/js/ng-menu.js ../assets/js/ng-stats.js ../assets/js/registerServiceWorker.js ../assets/js/index.js",
+    "package-android": "concat -o ../assets/dist.js ../assets/vendor/js/uuidv1.js ../assets/js/Debug.js ../assets/js/jsonp.js ../assets/js/preference.js ../assets/js/Sounds.Android.js ../assets/js/Inputs.js ../assets/js/TapController.js ../assets/js/Pill.js ../assets/js/Board.js ../assets/js/PillBottle.js ../assets/js/DrMario.js ../assets/js/Multiplayer.js ../assets/js/ng-menu.js ../assets/js/ng-stats.js ../assets/js/registerServiceWorker.js ../assets/js/index.js",
     "package": "npm run package-ios&&npm run package-android",
     "dev": "nodemon server.js",
     "init-db": "node scripts/create-sqlite-db.js && sequelize db:migrate",
