@@ -11,6 +11,10 @@ function StatsController($scope, $timeout, $http) {
         return Math.floor( player.totalgamewon / player.totalgameplayed * 1000 ) / 10;
     };
 
+    $scope.pillefficacy = function(player) {
+        return Math.floor( player.totalviruskilled*3 / player.totalpillused * 1000 ) / 10;
+    };
+
     $scope.$replays = new Paginator(function(params) {
         var p = $http.get("/stats/replays", { params: params });
         p.then(function(res){

@@ -45,6 +45,7 @@
                 <th class="Num">Win Rate</th>
                 <th class="num">Virus Killed</th>
                 <th class="num">Pill Used</th>
+                <th class="num">Pill Efficacy</th>
             </tr>
         </thead>
         <tbody>
@@ -55,6 +56,7 @@
                 <td class="num">{{winrate(player)}}%</td>
                 <td class="num">{{player.totalviruskilled}}</td>
                 <td class="num">{{player.totalpillused}}</td>
+                <td class="num">{{pillefficacy(player)}}%</td>
             </tr>
         </tbody>
         <tfoot>
@@ -62,7 +64,7 @@
                 <td colspan="4">
                     <button ng-repeat="p in $players.pages()" ng-class="{'current':p==page}" ng-click="$players.loadPage(p)">{{p}}</button>
                 </td>
-                <td colspan="2">Total Players: {{$players.count}}</td>
+                <td colspan="3">Total Players: {{$players.count}}</td>
             </tr>
         </tfoot>
     </table>
