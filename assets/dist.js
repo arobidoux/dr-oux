@@ -3747,6 +3747,10 @@ function StatsController($scope, $timeout, $http) {
     };
 
 
+    $scope.winrate = function(player) {
+        return Math.floor( player.totalgamewon / player.totalgameplayed * 1000 ) / 10;
+    };
+
     $scope.$replays = new Paginator(function(params) {
         var p = $http.get("/stats/replays", { params: params });
         p.then(function(res){

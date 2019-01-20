@@ -37,7 +37,9 @@ var staticMap = {
     "/favicon.ico": path.resolve("../assets/img/favicon.ico")
 };
 for(var url in staticMap)
-    app.get(url, (req, res) => { res.sendFile(staticMap[url]); });
+    ((url, file_path)=>{
+        app.get(url, (req, res) => { res.sendFile(file_path); })
+    })(url, staticMap[url]);
 
 // static paths
 app.use( "/assets", express.static(path.resolve("../assets")));

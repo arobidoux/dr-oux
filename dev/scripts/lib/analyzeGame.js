@@ -155,6 +155,7 @@ async function analyze(room_uuid, player_uuid) {
             stdout += data.toString();
         });
 
+        prc.stderr.setEncoding("utf8");
         prc.stderr.on("data", function (data) {
             console.error(data.toString());
         });
