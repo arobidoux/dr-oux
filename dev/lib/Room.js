@@ -256,7 +256,7 @@ class Room {
 
     _initReplayFolder() { 
         return new Promise((resolve, reject) => {
-            var folder = config.storage("replay/"+this._uuid);
+            var folder = path.resolve(config.storage.replay,this._uuid);
             fs.access(folder, fs.constants.F_OK, (err) => {
                 if(err) {
                     // create it
