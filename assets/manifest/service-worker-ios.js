@@ -1,4 +1,4 @@
-var CACHE_NAME = "dr-oux-v1.1.7";
+var CACHE_NAME = "dr-oux-ios-v1.2.0";
 
 var urlsToCache = [
     '/favicon.ico',
@@ -78,4 +78,12 @@ self.addEventListener("fetch", function(event) {
       }
     )
   );
+});
+
+self.addEventListener("message", function(ev){
+  switch(ev.data.event) {
+    case "getversion":
+      postMessage({event:"version",data:{version:CACHE_NAME}})
+      break;
+  }
 });
