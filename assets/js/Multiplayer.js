@@ -388,7 +388,7 @@
             
             menu.set("playing", false);
             Sounds.play("wii-select");
-            document.getElementById("game-grid").removeEventListener("click", this.__reset);
+            document.getElementById("overlay").removeEventListener("click", this.__reset);
             menu.set("info","");
             menu.set("game_stats", null);
 
@@ -417,7 +417,7 @@
         setTimeout(function(){
             if(!this._received_stats) {
                 menu.set("info",menu.get("info") + "<br/>Tap to skip");
-                document.getElementById("game-grid").addEventListener("click", this.__reset);
+                document.getElementById("overlay").addEventListener("click", this.__reset);
             }
         }.bind(this),1000);
     };
@@ -427,7 +427,7 @@
         this._received_stats = true;
         menu.set("game_stats", data.stats);
         menu.set("info","Tap to dismiss");
-        document.getElementById("game-grid").addEventListener("click", this.__reset);
+        document.getElementById("overlay").addEventListener("click", this.__reset);
     };
 
     Multiplayer.prototype.leave = function() {
