@@ -7,7 +7,7 @@ class Replay {
     }
 
     close() {
-        this._file.close();
+        return this._file.close();
     }
 
     meta(meta) {

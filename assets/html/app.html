@@ -226,7 +226,36 @@
 </div>
 
 <div id="overlay" ng-if="info">
-    <p>{{info}}</p>
+    <div>
+        <p>{{info}}</p>
+
+        <table ng-if="game_stats" class="stats-table after-game-stats">
+            <thead>
+                <tr>
+                    <th>Player</th>
+                    <th>Level</th>
+                    <th>Virus Killed</th>
+                    <th>Pill Used</th>
+                    <th>Pill Efficacy</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr ng-repeat="player in game_stats.players" ng-class="{'winner':player.id==game_stats.winnder_id}">
+                    <td>{{player.name}}</td>
+                    <td>{{player.virustotal/4}}</td>
+                    <td>{{player.viruskilled}}</td>
+                    <td>{{player.pillcount}}</td>
+                    <td>{{pillefficacy(player)}}%</td>
+                </tr>
+            </tbody>
+            <tfoot>
+                <tr>
+                    <td colspan="3" style="text-align:right;">Game Duration:</td>
+                    <td colspan="2">{{formatTime(game_stats.time)}}</td>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
 </div>
 
 <div ng-if="error" style="position:fixed;background-color:darkred">

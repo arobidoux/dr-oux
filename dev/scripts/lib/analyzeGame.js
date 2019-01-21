@@ -25,9 +25,13 @@ async function analyzeGame(game_uuid, force_rescan) {
         }).spread((room, created)=>{ return room; });
     });
 
+    var result = {
+        uuid: game_uuid
+    };
+
     if(room.startedat != null && force_rescan !== true) {
-        console.log(`Skipping completed game ${game_uuid}`)
-        return 1;
+        console.error(`Skipping completed game ${game_uuid}`)
+        return result;
     }
 
     var content = await readFile(path.join(config.storage.replay, game_uuid, "meta"));
@@ -66,6 +70,7 @@ async function analyzeGame(game_uuid, force_rescan) {
                     }
                     else {
                         room.winner_id = players[match[2]].id;
+                        result.winner_id = players[match[2]].id;
                     }
                     break;
             }
@@ -88,7 +93,7 @@ async function analyzeGame(game_uuid, force_rescan) {
 
         // skipping line..
         if(lines[i]) {
-            console.log(`skipping line ${lines[i]}`);
+            console.error(`skipping line ${lines[i]}`);
         }
     }
 
@@ -97,17 +102,21 @@ async function analyzeGame(game_uuid, force_rescan) {
         return room.save();
     });
 
+    result.time = room.endedat - room.startedat;
+    result.players = [];
     var promises = [];
     for(var player_uuid in players) {
         promises.push(
-            processPlayer(room, player_uuid, players[player_uuid])
+            processPlayer(room, player_uuid, players[player_uuid]).then((player)=>{
+                result.players.push(player);
+            })
         );
     }
     
     await Promise.all(promises);
 
     // done!
-    return 0;
+    return result;
 }
 
 async function processPlayer(room, player_uuid, player) {
@@ -143,6 +152,14 @@ async function processPlayer(room, player_uuid, player) {
     await dbChannel.push(()=>{
         return gamestats.save();
     });
+
+    return {
+        id: player.id,
+        name: player.name,
+        virustotal: stats.Virustotalcount,
+        viruskilled: stats.Viruskillcount,
+        pillcount: stats.Pillcount
+    };
 }
     
 async function analyze(room_uuid, player_uuid) {

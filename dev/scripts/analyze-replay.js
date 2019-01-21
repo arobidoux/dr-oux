@@ -3,6 +3,16 @@ const workerCount = 5;
 var game_uuid = null;
 var force_rescan = false;
 var analyze_all = false;
+var passthrough = false;
+
+function log(msg) {
+    if(!passthrough) {
+        console.log(msg);
+    }
+    else {
+        console.error(msg)
+    }
+}
 
 for(var i=2; i < process.argv.length; i++) {
     switch(process.argv[i]) {
@@ -11,6 +21,9 @@ for(var i=2; i < process.argv.length; i++) {
             break;
         case "-a": case "--all":
             analyze_all = true;
+            break;
+        case "-p": case "--passthrough":
+            passthrough = true;
             break;
         default:
             if(process.argv[i][0] == "-") {
@@ -40,7 +53,7 @@ function now() {
 
 console.time("Processed In");
 if(analyze_all) {
-    console.log("Loading all games...");
+    log("Loading all games...");
     
     fs.readdir(config.storage.replay, (err,games)=>{
         if(err) {
@@ -53,15 +66,15 @@ if(analyze_all) {
         var totalgame = games.length;
         var processed = 0;
         var processTime = [];
-        console.log(`${games.length} games found`);
+        log(`${games.length} games found`);
         Handler.processWithPool(
             ()=>{
                 if( games.length == 0) {
-                    console.log(`Returning null - killing worker`);
+                    log(`Returning null - killing worker`);
                     return null;
                 }
 
-                console.log(`Processing game ${++processed} / ${totalgame}`);
+                log(`Processing game ${++processed} / ${totalgame}`);
                 return games.shift();
             },
             async (game_uuid) => {
@@ -71,7 +84,7 @@ if(analyze_all) {
             }, 
             workerCount
         ).then((done)=>{
-            console.log(`processing of ${done} item completed`);
+            log(`processing of ${done} item completed`);
             console.timeEnd("Processed In");
 
             var avg = 0;
@@ -80,16 +93,22 @@ if(analyze_all) {
                 avg += processTime[i];
             avg /= l;
 
-            console.log(`Average process time of ${avg}ms`);
+            log(`Average process time of ${avg}ms`);
             db.sequelize.close();
             
         });
     });
 }
 else {
-    analyzeGame(game_uuid, force_rescan).then(()=>{
-        console.log("Complete");
-        console.timeEnd("Processed In");
+    analyzeGame(game_uuid, force_rescan).then((stats)=>{
+        log("Complete");
+        if(passthrough) {
+            console.log(JSON.stringify(stats));
+        }
+        else {
+            console.timeEnd("Processed In");
+        }
+
         db.sequelize.close();
     });
 }

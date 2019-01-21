@@ -259,6 +259,23 @@ function MenuController($scope, $timeout, pref, menuInitialized, contentLoaded){
         $scope.stats = state === false ? state : true;
     };
 
+    $scope.pillefficacy = function(player) {
+        // a copy exists in the ng-stats.js file
+        return Math.floor( player.viruskilled*3 / (player.pillcount*2) * 1000 ) / 10;
+    };
+
+    $scope.formatTime = function(ms) {
+        var r = "";
+        var s = Math.floor(ms/1000);
+        if(s > 60) {
+            var m = Math.floor(s/60);
+            s -= 60*m;
+            r += m+"m ";
+        }
+        r += s+"s";
+        return r;
+    };
+
     $scope.host = function() {
         if($scope.hosting)
             return;

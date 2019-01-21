@@ -396,13 +396,35 @@ class Room {
         }
 
         // prepare next game
-        var nextUuid = this.rematch();
+        var nextRoom = this.rematch();
+
+        var resetPromises = [];
 
         if(this._meta) {
-            this._meta.write("\nnext-game " + nextUuid + "\n");
-            this._meta.close();
+            this._meta.write("\nnext-game " + nextRoom.uuid + "\n");
+            resetPromises.push(this._meta.close());
             this._meta = null;
         }
+
+        
+        for(var i=0;i< this._clients.length; i++)
+            resetPromises.push(this._clients[i].reset());
+
+        Promise.all(resetPromises)
+        .then(()=>{
+            return this.analyze();
+        })
+        .then((stats)=>{
+            this._io.in(this.socRoomName).emit("statsready", {stats:stats});
+        })
+        .then(()=>{
+            this.log("initiating transfer to new game");
+            nextRoom.transfer();
+        })
+        .catch((err)=>{
+            this.logErr(err);
+            console.error(err);
+        });
     }
 
     playFrame(client, frame) {
@@ -428,7 +450,7 @@ class Room {
 
     rematch() {
         this._quiet_update = true;
-        this.reset();
+        this._gameInProgress = false;
 
         // add a copy of this room
         var newRoom = new Room(this._name, this._io, this._game);
@@ -437,8 +459,16 @@ class Room {
         // add the Room to the Game
         this._game.replaceRoom(newRoom);
 
-        newRoom._initializing = new Promise((resolve, reject)=>{
-            setTimeout(()=>{
+        var result = {
+            uuid: newRoom.uuid,  
+        };
+        var transfer_promise = new Promise((resolve, reject)=>{
+            result.transfer = resolve;
+        });
+
+        newRoom._initializing = transfer_promise.then(()=>{
+            return new Promise((resolve, reject)=>{
+                this.log("Transfering Clients");
                 // transfer the clients
                 while(this._clients.length)
                     this._clients[0].join(newRoom);
@@ -448,44 +478,40 @@ class Room {
             });
         });
 
-        // queue game analysis
-        this.analyze(5000);
-
-        return newRoom.uuid;
+        return result;
     }
 
     analyze(delay) {
-        this.log("Queuing analysis");
-        var args = ["scripts/analyze-replay.js",this.uuid];
-        setTimeout(()=>{
-            this.log("Spawning analysis");
-            var prc = spawn("node", args,{cwd:path.resolve(__dirname,"../")});
-
-            prc.stdout.setEncoding("utf8");
-            prc.stdout.on("data", (data) => {
-                this.log(data.toString());
-            });
-
-            prc.stderr.setEncoding("utf8");
-            prc.stderr.on("data", (data) => {
-                this.logErr(data.toString());
-            });
-            
-            prc.on("close", (code) => {
-                if(code != 0) {
-                    this.logErr(`analyze returned err code ${code}`);
-                }
-                else {
-                    this.log("analisis completed");
-                }
-            });
-        }, delay);
-    }
-
-    reset() {
-        this._gameInProgress = false;
-        for(var i=0;i< this._clients.length; i++)
-            this._clients[i].reset();
+        return new Promise((resolve, reject)=>{
+            this.log("Queuing analysis");
+            var args = ["scripts/analyze-replay.js","-p", this.uuid];
+            setTimeout(()=>{
+                this.log("Spawning analysis");
+                var stdout = "";
+                var prc = spawn("node", args, {cwd:path.resolve(__dirname,"../")});
+                
+                prc.stdout.setEncoding("utf8");
+                prc.stdout.on("data", (data) => {
+                    stdout += data.toString();
+                });
+                
+                prc.stderr.setEncoding("utf8");
+                prc.stderr.on("data", (data) => {
+                    this.logErr(data.toString());
+                });
+                
+                prc.on("close", (code) => {
+                    if(code != 0) {
+                        this.logErr(`analyze returned err code ${code}`);
+                        reject(code);
+                    }
+                    else {
+                        this.log("analisis completed");
+                        resolve(JSON.parse(stdout));
+                    }
+                });
+            }, delay);
+        });
     }
 }
 

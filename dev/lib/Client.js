@@ -135,13 +135,18 @@ class Client {
     }
 
     reset() {
-        if(this._replay) {
-            this._replay.close();
-            this._replay = null;
-        }
+        return new Promise((resolve, reject)=>{            
+            this._is_ready = false;
+            this._game_status = null;
 
-        this._is_ready = false;
-        this._game_status = null;
+            if(this._replay) {
+                this._replay.close().then(resolve, reject);
+                this._replay = null;
+            }
+            else {
+                resolve();
+            }
+        });
     }
 
     sendHandicap(frame) {

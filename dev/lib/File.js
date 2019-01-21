@@ -6,6 +6,10 @@ class File {
         this._path = path;
         this._state = File.OPENING;
 
+        this._close_promise = null;
+        this._close_resolve = null;
+        this._close_reject = null;
+
         this._operations = 0;
         this._fd = new Promise((resolve, reject)=>{
             fs.open(path, "w", (err,fd)=>{
@@ -38,13 +42,20 @@ class File {
     }
 
     close() {
-        if(this._state > 0) {
-            this._state = File.CLOSING;
+        if(!this._close_promise)
+            this._close_promise = new Promise((resolve, reject)=>{
+                this._close_resolve = resolve;
+                this._close_reject = reject;
 
-            if(this._operations === 0) {
-                this._close();
-            }
-        }
+                if(this._state > 0) {
+                    this._state = File.CLOSING;
+                    
+                    if(this._operations === 0) {
+                        this._close();
+                    }
+                }
+            });
+        return this._close_promise;
     }
 
     _close() {
@@ -54,9 +65,12 @@ class File {
                     if(err) {
                         this._state = File.ERROR;
                         console.error(err);
+                        this._close_reject(err)
                     }
-                    else
-                    this._state = File.CLOSED;
+                    else {
+                        this._state = File.CLOSED;
+                        this._close_resolve();
+                    }
                 });
             });
     }

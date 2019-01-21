@@ -383,12 +383,14 @@
             this._game._mainPillBottle.setMessage("You won!");
         }
 
-        var reset = function() {
+        this.__reset = function() {
             this.resetGame();
+            
             menu.set("playing", false);
             Sounds.play("wii-select");
-            document.getElementById("game-grid").removeEventListener("click", reset);
+            document.getElementById("game-grid").removeEventListener("click", this.__reset);
             menu.set("info","");
+            menu.set("game_stats", null);
 
             // re add player that are already ready
             var room_uuid = menu.get("room_uuid");
@@ -397,17 +399,35 @@
                 var players = menu.get("players");
                 for(var i=0; i<players.length; i++) {
                     
+                    if(players[i].uuid == my_uuid) {
+                        players[i].ready = false;
+                    }
                     // check if we are in the same game
-                    if(players[i].uuid != uuid && players[i].ready && players[i].room && players[i].room.uuid==room_uuid)
+                    else if(players[i].ready && players[i].room && players[i].room.uuid==room_uuid) {
                         addOpponent.call(this, players[i]);
+                    }
                 }
             }
+
+            this.__reset = null;
         }.bind(this);
 
+        menu.set("info","Waiting game stats...");
+
         setTimeout(function(){
-            menu.set("info","Tap to continue");
-            document.getElementById("game-grid").addEventListener("click", reset);
-        },1000);
+            if(!this._received_stats) {
+                menu.set("info",menu.get("info") + "<br/>Tap to skip");
+                document.getElementById("game-grid").addEventListener("click", this.__reset);
+            }
+        }.bind(this),1000);
+    };
+
+    Multiplayer.prototype.on_statsready = function(data) {
+        // display stats
+        this._received_stats = true;
+        menu.set("game_stats", data.stats);
+        menu.set("info","Tap to dismiss");
+        document.getElementById("game-grid").addEventListener("click", this.__reset);
     };
 
     Multiplayer.prototype.leave = function() {
@@ -511,6 +531,7 @@
         }
         
         this._opponents = [];
+        this._received_stats = false;
         menu.set("opponents", this._opponents);
         menu.set("is_ready", false);
     };
