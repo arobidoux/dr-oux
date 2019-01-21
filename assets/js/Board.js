@@ -86,13 +86,13 @@
         }
         if (delta) {
             var p2 = p + delta;
-            if (p2 > 0 && p2 < this._size) {
+            if (p2 >= 0 && p2 < this._size) {
                 this._data[p2] = this._data[p2] & Board.CODES.colors.mask;
             }
         }
 
         this._data[p] = Board.CODES.forms.values.exploding.code | (this._data[p] & Board.CODES.colors.mask);
-    }
+    };
 
     Board.prototype._checkPillDestruction = function (x, y) {
         var l = this.getColorLength(x, y);
