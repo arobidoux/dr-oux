@@ -261,7 +261,11 @@ function MenuController($scope, $timeout, pref, menuInitialized, contentLoaded){
 
     $scope.pillefficacy = function(player) {
         // a copy exists in the ng-stats.js file
-        return Math.floor( player.viruskilled*3 / (player.pillcount*2) * 1000 ) / 10;
+        return Math.floor( (player.viruskilled*3) / (player.pillcount*2) * 1000 ) / 10;
+    };
+
+    $scope.pillwasted = function(player) {
+        return Math.floor( player.endclutter / (player.pillcount*2) * 1000) / 10;
     };
 
     $scope.formatTime = function(ms) {

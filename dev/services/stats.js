@@ -88,7 +88,8 @@ async function players (req, res) {
             [fn("count",col("Gamestats->Room.id")),"totalgamewon"],
             [fn("count",col("Gamestats.id")),"totalgameplayed"],
             [fn("sum",col("Gamestats.viruskilled")),"totalviruskilled"],
-            [fn("sum",col("Gamestats.pillcount")),"totalpillused"]
+            [fn("sum",col("Gamestats.pillcount")),"totalpillused"],
+            [fn("avg",col("Gamestats.endclutter")),"avgendclutter"],
         ],
         limit: 10,
         order: [
@@ -144,7 +145,8 @@ async function players (req, res) {
                 totalgamewon: player.get("totalgamewon"),
                 totalgameplayed: player.get("totalgameplayed"),
                 totalviruskilled: player.get("totalviruskilled"),
-                totalpillused: player.get("totalpillused")
+                totalpillused: player.get("totalpillused"),
+                avgendclutter: player.get("avgendclutter")
             };
         })
     };

@@ -28,7 +28,9 @@ type Stats struct {
 	Pillcount       int
 	Virustotalcount int
 	Viruskillcount  int
-	Meta            string
+	Endclutter      int
+
+	Meta string
 
 	viruskilled map[int]bool
 }
@@ -39,6 +41,7 @@ func (s *Stats) String() string {
 	b.WriteString(fmt.Sprint("   PillCount:", s.Pillcount, "\n"))
 	b.WriteString(fmt.Sprint(" Virus Total:", s.Virustotalcount, "\n"))
 	b.WriteString(fmt.Sprint("Virus Killed:", s.Viruskillcount, "\n"))
+	b.WriteString(fmt.Sprint(" End Clutter:", s.Endclutter, "\n"))
 
 	return b.String()
 }
@@ -160,6 +163,20 @@ func (b *Board) initStats(stats *Stats) {
 	stats.initialized = true
 }
 
+func (b *Board) getEndClutter(stats *Stats) {
+	for i := range b.data {
+		if b.data[i] != 0 {
+			switch uint8(b.data[i]) & Codes["form"].mask {
+			case Codes["form"].values["virus"]:
+			case Codes["form"].values["exploding"]:
+			case Codes["form"].values["exploded"]:
+			default:
+				stats.Endclutter++
+			}
+		}
+	}
+}
+
 func (b *Board) analyze(stats *Stats) {
 	// run the analisis here
 
@@ -242,6 +259,8 @@ func main() {
 			stats.setMeta(line[1:])
 		}
 	}
+
+	board.getEndClutter(&stats)
 
 	if *formatJSON == true {
 		bs, err := json.Marshal(stats)

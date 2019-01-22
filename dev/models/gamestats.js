@@ -7,7 +7,8 @@ module.exports = (sequelize, DataTypes) => {
     replay_uuid: DataTypes.STRING,
     virustotal: DataTypes.INTEGER,
     viruskilled: DataTypes.INTEGER,
-    pillcount: DataTypes.INTEGER
+    pillcount: DataTypes.INTEGER,
+    endclutter: DataTypes.INTEGER,
   }, {
     getterMethods: {
       toObject() {
@@ -15,7 +16,8 @@ module.exports = (sequelize, DataTypes) => {
           id: this.id,
           virustotal : this.virustotal,
           viruskilled : this.viruskilled,
-          pillcount : this.pillcount
+          pillcount : this.pillcount,
+          endclutter : this.endclutter
         };
 
         if(this.Player) {

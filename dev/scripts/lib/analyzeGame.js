@@ -147,6 +147,7 @@ async function processPlayer(room, player_uuid, player) {
     gamestats.pillcount = stats.Pillcount;
     gamestats.virustotal = stats.Virustotalcount;
     gamestats.viruskilled = stats.Viruskillcount;
+    gamestats.endclutter = stats.Endclutter;
     
     // save gamestats
     await dbChannel.push(()=>{
@@ -158,7 +159,8 @@ async function processPlayer(room, player_uuid, player) {
         name: player.name,
         virustotal: stats.Virustotalcount,
         viruskilled: stats.Viruskillcount,
-        pillcount: stats.Pillcount
+        pillcount: stats.Pillcount,
+        endclutter: stats.Endclutter,
     };
 }
     

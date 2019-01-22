@@ -13,7 +13,11 @@ function StatsController($scope, $timeout, $http) {
 
     $scope.pillefficacy = function(player) {
         // a copy exists in the ng-menu.js file
-        return Math.floor( player.totalviruskilled*3 / (player.totalpillused*2) * 1000 ) / 10;
+        return Math.floor( (player.totalviruskilled*3) / (player.totalpillused*2) * 1000 ) / 10;
+    };
+
+    $scope.avgendclutter = function(player) {
+        return Math.floor(player.avgendclutter)/2;
     };
 
     $scope.$replays = new Paginator(function(params) {

@@ -3579,7 +3579,11 @@ function MenuController($scope, $timeout, pref, menuInitialized, contentLoaded){
 
     $scope.pillefficacy = function(player) {
         // a copy exists in the ng-stats.js file
-        return Math.floor( player.viruskilled*3 / (player.pillcount*2) * 1000 ) / 10;
+        return Math.floor( (player.viruskilled*3) / (player.pillcount*2) * 1000 ) / 10;
+    };
+
+    $scope.pillwasted = function(player) {
+        return Math.floor( player.endclutter / (player.pillcount*2) * 1000) / 10;
     };
 
     $scope.formatTime = function(ms) {
@@ -3791,7 +3795,11 @@ function StatsController($scope, $timeout, $http) {
 
     $scope.pillefficacy = function(player) {
         // a copy exists in the ng-menu.js file
-        return Math.floor( player.totalviruskilled*3 / (player.totalpillused*2) * 1000 ) / 10;
+        return Math.floor( (player.totalviruskilled*3) / (player.totalpillused*2) * 1000 ) / 10;
+    };
+
+    $scope.avgendclutter = function(player) {
+        return Math.floor(player.avgendclutter)/2;
     };
 
     $scope.$replays = new Paginator(function(params) {
