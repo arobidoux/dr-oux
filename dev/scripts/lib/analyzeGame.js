@@ -34,7 +34,12 @@ async function analyzeGame(game_uuid, force_rescan) {
         return result;
     }
 
-    var content = await readFile(path.join(config.storage.replay, game_uuid, "meta"));
+    try {   
+        var content = await readFile(path.join(config.storage.replay, game_uuid, "meta"));
+    } catch (e) {
+        console.error(`Error while opening meta file for ${game_uuid} : ${e}`);
+        return result;
+    }
             
     var lines = content.toString("utf8").split("\n");
     var players = null;
